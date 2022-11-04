@@ -3,12 +3,26 @@ import argparse
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
+
+    def list_of_paths(p):
+        path = Path(p)
+        child_dirs = []
+        for child in path.iterdir():
+            if child.is_dir():
+                child_dirs.append(child)
+        return child_dirs
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
         '--package',
         type=Path,
         nargs='+',
+        dest='packages'
+    )
+    parser.add_argument(
+        '--directory',
+        type=list_of_paths,
         dest='packages'
     )
 
@@ -20,6 +34,7 @@ def lint_package() -> bool:
 
 def main():
     args = parse_args()
+    print(args.packages)
 
     if not lint_package():
         print('package did not lint')
