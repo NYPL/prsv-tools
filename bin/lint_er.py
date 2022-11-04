@@ -18,12 +18,14 @@ def parse_args() -> argparse.Namespace:
         '--package',
         type=Path,
         nargs='+',
-        dest='packages'
+        dest='packages',
+        action='extend'
     )
     parser.add_argument(
         '--directory',
         type=list_of_paths,
-        dest='packages'
+        dest='packages',
+        action='extend'
     )
 
     return parser.parse_args()
