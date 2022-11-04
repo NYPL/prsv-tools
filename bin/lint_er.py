@@ -1,9 +1,15 @@
 from pathlib import Path
 import argparse
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
     parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--package',
+        nargs='+',
+        dest='packages'
+    )
 
     return parser.parse_args()
 
