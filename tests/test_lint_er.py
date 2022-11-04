@@ -63,13 +63,29 @@ def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
 
 
 # Functional tests
-def test_lint_valid_package():
+def test_lint_valid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
+
+    monkeypatch.setattr(
+        'sys.argv', [
+            '../bin/lint_er.py',
+            '--package', str(tmp_path)
+        ]
+    )
+
     lint_er.main()
     assert False
 
-def test_lint_invalid_package():
+def test_lint_invalid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
+
+    monkeypatch.setattr(
+        'sys.argv', [
+            '../bin/lint_er.py',
+            '--package', str(tmp_path)
+        ]
+    )
+
     lint_er.main()
     assert False
 

@@ -36,7 +36,6 @@ def lint_package() -> bool:
 
 def main():
     args = parse_args()
-    print(args.packages)
 
     if not lint_package():
         print('package did not lint')
