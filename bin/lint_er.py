@@ -7,6 +7,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         '--package',
+        type=Path,
         nargs='+',
         dest='packages'
     )

@@ -1,10 +1,12 @@
 import bin.lint_er as lint_er
 
+from pathlib import Path
+
 
 # Unit tests
 ## Argument tests
 def test_accepts_paths(monkeypatch):
-    """Test that packages are returned as a list"""
+    """Test that packages are returned as a list of pathlib paths"""
     paths = ['firstPath', 'secondPath']
 
     monkeypatch.setattr(
@@ -15,7 +17,8 @@ def test_accepts_paths(monkeypatch):
     )
 
     args = lint_er.parse_args()
-    assert paths == args.packages
+    for x in paths:
+        assert Path(x) in args.packages
 
 
 # Functional tests
