@@ -4,6 +4,14 @@ import argparse
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
 
+    def extant_dir(p):
+        path = Path(p)
+        if not path.is_dir():
+            raise argparse.ArgumentTypeError(
+                f'{path} does not exist'
+            )
+        return path
+
     def list_of_paths(p):
         path = Path(p)
         child_dirs = []
@@ -16,7 +24,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         '--package',
-        type=Path,
+        type=extant_dir,
         nargs='+',
         dest='packages',
         action='extend'
