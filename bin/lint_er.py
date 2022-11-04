@@ -13,7 +13,7 @@ def parse_args() -> argparse.Namespace:
         return path
 
     def list_of_paths(p):
-        path = Path(p)
+        path = extant_dir(p)
         child_dirs = []
         for child in path.iterdir():
             if child.is_dir():
