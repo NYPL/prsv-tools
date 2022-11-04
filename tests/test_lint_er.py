@@ -1,5 +1,6 @@
 import bin.lint_er as lint_er
 
+import pytest
 from pathlib import Path
 
 
@@ -19,7 +20,6 @@ def test_accepts_paths(monkeypatch):
     args = lint_er.parse_args()
     for x in paths:
         assert Path(x) in args.packages
-
 
 def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
     """Test that a directory returns a list of child paths"""
@@ -60,6 +60,27 @@ def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
 
     assert child1 in args.packages
     assert grandchild in args.packages
+
+def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
+    """Test that error is thrown if package doesn't exist"""
+    child = tmp_path.joinpath('one')
+
+    monkeypatch.setattr(
+        'sys.argv', [
+            '../bin/lint_er.py',
+            '--package', str(child)
+        ]
+    )
+
+    with pytest.raises(SystemExit):
+        lint_er.parse_args()
+
+    stderr = capsys.readouterr().err
+
+    assert f'{child} does not exist' in stderr
+
+def test_nonexistent_directory(monkeypatch, tmp_path: Path):
+    assert True
 
 
 # Functional tests
