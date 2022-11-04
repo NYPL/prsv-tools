@@ -40,6 +40,27 @@ def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
     assert child1 in args.packages
     assert child2 in args.packages
 
+def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
+    child1 = tmp_path.joinpath('one')
+    child1.mkdir()
+    child2 = tmp_path.joinpath('two')
+    child2.mkdir()
+    grandchild = child2.joinpath('2.4')
+    grandchild.mkdir()
+
+    monkeypatch.setattr(
+        'sys.argv', [
+            '../bin/lint_er.py',
+            '--package', str(child1),
+            '--directory', str(child2)
+        ]
+    )
+
+    args = lint_er.parse_args()
+
+    assert child1 in args.packages
+    assert grandchild in args.packages
+
 
 # Functional tests
 def test_lint_valid_package():
