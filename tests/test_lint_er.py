@@ -83,8 +83,23 @@ def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
 
     assert f'{child} does not exist' in stderr
 
-def test_nonexistent_directory(monkeypatch, tmp_path: Path):
-    assert True
+def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
+    """Test that error is thrown if directory doesn't exist"""
+    child = tmp_path.joinpath('one')
+
+    monkeypatch.setattr(
+        'sys.argv', [
+            '../bin/lint_er.py',
+            '--directory', str(child)
+        ]
+    )
+
+    with pytest.raises(SystemExit):
+        lint_er.parse_args()
+
+    stderr = capsys.readouterr().err
+
+    assert f'{child} does not exist' in stderr
 
 
 # Functional tests
