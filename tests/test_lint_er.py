@@ -101,6 +101,14 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
 
     assert f'{child} does not exist' in stderr
 
+def test_top_folder_valid_name(tmp_path: Path):
+    """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
+    pkg = tmp_path.joinpath('M12345_ER_0001')
+    pkg.mkdir()
+
+    result = lint_er.package_has_valid_name(pkg)
+
+    assert result == True
 
 # Functional tests
 def test_lint_valid_package(monkeypatch, tmp_path: Path):
