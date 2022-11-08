@@ -119,7 +119,7 @@ def test_sec_level_folder_valid_names(tmp_path: Path):
     f_metadata = pkg.joinpath('metadata')
     f_metadata.mkdir()
 
-    result = lint_er.package_has_valid_subfolders(pkg)
+    result = lint_er.package_has_valid_subfolder_names(pkg)
 
     assert result == True
 
