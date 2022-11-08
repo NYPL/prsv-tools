@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import re
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -37,6 +38,14 @@ def parse_args() -> argparse.Namespace:
     )
 
     return parser.parse_args()
+
+def package_has_valid_name(package: Path):
+    """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
+    folder_name = package.name
+    match = re.fullmatch(r'M\d+_(ER|DI|EM)_\d+', folder_name)
+    
+    if match:
+        return True
 
 def lint_package() -> bool:
     """Run all linting tests against a package"""
