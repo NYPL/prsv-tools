@@ -47,6 +47,16 @@ def package_has_valid_name(package: Path):
     if match:
         return True
 
+def package_has_valid_subfolder_names(package: Path):
+    """Second level folders must have objects and metadata folder"""
+    expected = set(['objects', 'metadata'])
+    found = set([x.name for x in package.iterdir()])
+
+    if expected == found:
+        return True
+    else:
+        return False
+
 def lint_package() -> bool:
     """Run all linting tests against a package"""
     return True
