@@ -101,25 +101,26 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
 
     assert f'{child} does not exist' in stderr
 
-def test_top_folder_valid_name(tmp_path: Path):
-    """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
-    pkg = tmp_path.joinpath('M12345_ER_0001')
-    pkg.mkdir()
-
-    result = lint_er.package_has_valid_name(pkg)
-
-    assert result == True
-
-def test_sec_level_folder_valid_names(tmp_path: Path):
-    """Second level folders must have objects and metadata folder"""
+@pytest.fixture
+def good_package(tmp_path: Path):
     pkg = tmp_path.joinpath('M12345_ER_0001')
     f_object = pkg.joinpath('objects')
-    f_object.mkdir()
+    f_object.mkdir(parents=True)
 
     f_metadata = pkg.joinpath('metadata')
     f_metadata.mkdir()
 
-    result = lint_er.package_has_valid_subfolder_names(pkg)
+    return pkg
+
+def test_top_folder_valid_name(good_package):
+    """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
+    result = lint_er.package_has_valid_name(good_package)
+
+    assert result == True
+
+def test_sec_level_folder_valid_names(good_package):
+    """Second level folders must have objects and metadata folder"""
+    result = lint_er.package_has_valid_subfolder_names(good_package)
 
     assert result == True
 
