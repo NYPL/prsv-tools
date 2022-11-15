@@ -57,6 +57,16 @@ def package_has_valid_subfolder_names(package: Path):
     else:
         return False
 
+def metadata_file_has_valid_filename(package: Path):
+    """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
+    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata']
+    md_file_ls = [x for x in metadata_dir[0].iterdir() if x.is_file()]
+    for file in md_file_ls:
+        if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
+            return True
+        else:
+            return False
+
 def lint_package() -> bool:
     """Run all linting tests against a package"""
     return True
