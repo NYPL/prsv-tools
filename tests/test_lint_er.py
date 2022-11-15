@@ -110,6 +110,9 @@ def good_package(tmp_path: Path):
     f_metadata = pkg.joinpath('metadata')
     f_metadata.mkdir()
 
+    metadata_filepath = f_metadata.joinpath('M12345_ER_0001.csv')
+    Path(metadata_filepath).touch()
+
     return pkg
 
 def test_top_folder_valid_name(good_package):
