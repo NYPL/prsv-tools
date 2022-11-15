@@ -111,7 +111,7 @@ def good_package(tmp_path: Path):
     f_metadata.mkdir()
 
     metadata_filepath = f_metadata.joinpath('M12345_ER_0001.csv')
-    Path(metadata_filepath).touch()
+    metadata_filepath.touch()
 
     return pkg
 
