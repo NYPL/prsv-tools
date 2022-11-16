@@ -60,6 +60,20 @@ def package_has_valid_subfolder_names(package: Path):
     else:
         return False
 
+def metadata_folder_is_flat(package: Path):
+    """The metadata folder should not have folder structure"""
+    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata'][0]
+    md_dir_ls = [x for x in metadata_dir.iterdir() if x.is_dir()]
+    
+    if not md_dir_ls:
+        return True
+    elif len(md_dir_ls) == 1 and md_dir_ls[0].name == 'submissionDocumentation':
+        LOGGER.error(f'{metadata_dir} has submissionDocumentation folder')
+        if any(md_dir_ls[0].iterdir()):
+            LOGGER.error(f'{md_dir_ls[0]} has file(s) in it')
+    elif len(md_dir_ls) != 0:
+        LOGGER.error(f'{metadata_dir} has unexpected directory')
+
 def metadata_file_has_valid_filename(package: Path):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     metadata_dir = [x for x in package.iterdir() if x.name == 'metadata']
