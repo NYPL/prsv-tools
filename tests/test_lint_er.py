@@ -127,6 +127,13 @@ def test_sec_level_folder_valid_names(good_package):
 
     assert result == True
 
+def test_metadata_folder_valid_structure(good_package):
+    """The metadata folder should have one CSV file.
+    Create warnings or errors for common cases."""
+    result = lint_er.metadata_folder_has_valid_structure(good_package)
+
+    assert result == True
+
 def test_metadata_file_valid_name(good_package):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     result = lint_er.metadata_file_has_valid_filename(good_package)
