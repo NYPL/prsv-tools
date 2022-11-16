@@ -128,7 +128,7 @@ def test_sec_level_folder_valid_names(good_package):
     assert result == True
 
 def test_metadata_folder_is_flat(good_package):
-    """The metadata folder should only has zero or one file, no folder structure"""
+    """The metadata folder should not have folder structure"""
     result = lint_er.metadata_folder_is_flat(good_package)
 
     assert result == True
