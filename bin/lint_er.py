@@ -1,6 +1,9 @@
 from pathlib import Path
 import argparse
 import re
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -65,7 +68,8 @@ def metadata_file_has_valid_filename(package: Path):
         if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
             return True
         else:
-            return False
+            if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
+                LOGGER.warning(f"The metadata file, {file.name}, is a TSV file.")
 
 def lint_package() -> bool:
     """Run all linting tests against a package"""
