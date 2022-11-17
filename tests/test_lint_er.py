@@ -133,6 +133,12 @@ def test_metadata_folder_is_flat(good_package):
 
     assert result == True
 
+def test_metadata_folder_has_one_or_less_file(good_package):
+    """metadata folder should have zero to one file"""
+    result = lint_er.metadata_folder_has_one_or_less_file()
+
+    assert result == True
+
 def test_metadata_file_valid_name(good_package):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     result = lint_er.metadata_file_has_valid_filename(good_package)
