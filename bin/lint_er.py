@@ -74,6 +74,16 @@ def metadata_folder_is_flat(package: Path):
     elif len(md_dir_ls) != 0:
         LOGGER.error(f'{metadata_dir} has unexpected directory')
 
+def metadata_folder_has_one_or_less_file(package: Path):
+    """The metadata folder should have zero to one file"""
+    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata'][0]
+    md_file_ls = [x for x in metadata_dir.iterdir() if x.is_file()]
+    if len(md_file_ls) > 1:
+        LOGGER.warning('There are more than one file in the metadata folder')
+        return False
+    else:
+        return True
+
 def metadata_file_has_valid_filename(package: Path):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     metadata_dir = [x for x in package.iterdir() if x.name == 'metadata']
