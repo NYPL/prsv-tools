@@ -86,14 +86,36 @@ def metadata_folder_has_one_or_less_file(package: Path):
 
 def metadata_file_has_valid_filename(package: Path):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
-    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata']
-    md_file_ls = [x for x in metadata_dir[0].iterdir() if x.is_file()]
-    for file in md_file_ls:
-        if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
-            return True
-        else:
-            if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
-                LOGGER.warning(f"The metadata file, {file.name}, is a TSV file.")
+    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata'][0]
+    md_file_ls = [x for x in metadata_dir.iterdir() if x.is_file()]
+    if len(md_file_ls) == 1:
+        for file in md_file_ls:
+            if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
+                return True
+            else:
+                if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
+                    LOGGER.warning(f"The metadata file, {file.name}, is a TSV file.")
+                    return False
+    elif len(md_file_ls) > 1:
+        good_csv = []
+        good_tsv = []
+        unknown_files = []
+        for file in md_file_ls:
+            if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
+                good_csv.append(file)
+            elif re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
+                good_tsv.append(file)
+            else:
+                unknown_files.append(file)
+        if any(good_tsv):
+            LOGGER.warning("The metadata folder has FTK TSV files")
+        if any(unknown_files):
+            LOGGER.warning("The metadata folder has non-FTK exported files")
+        if any(good_csv):
+            LOGGER.warning("There are more than one FTK-exported CSV files")
+        if any(good_tsv) or any(unknown_files) or any(good_csv):
+            return False
+        
 
 def lint_package() -> bool:
     """Run all linting tests against a package"""
