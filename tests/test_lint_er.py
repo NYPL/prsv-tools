@@ -135,7 +135,7 @@ def test_metadata_folder_is_flat(good_package):
 
 def test_metadata_folder_has_one_or_less_file(good_package):
     """metadata folder should have zero to one file"""
-    result = lint_er.metadata_folder_has_one_or_less_file()
+    result = lint_er.metadata_folder_has_one_or_less_file(good_package)
 
     assert result == True
 
