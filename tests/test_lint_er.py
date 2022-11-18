@@ -145,6 +145,12 @@ def test_metadata_file_valid_name(good_package):
 
     assert result == True
 
+def test_objects_folder_has_file(good_package):
+    """The objects folder must have one or more files, which can be in folder(s)"""
+    result = lint_er.objects_folder_has_file(good_package)
+
+    assert result == True
+
 # Functional tests
 def test_lint_valid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
