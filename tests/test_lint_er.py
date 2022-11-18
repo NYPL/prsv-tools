@@ -106,6 +106,8 @@ def good_package(tmp_path: Path):
     pkg = tmp_path.joinpath('M12345_ER_0001')
     f_object = pkg.joinpath('objects')
     f_object.mkdir(parents=True)
+    object_filepath = f_object.joinpath('randomFile.txt')
+    object_filepath.touch()
 
     f_metadata = pkg.joinpath('metadata')
     f_metadata.mkdir()
