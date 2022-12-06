@@ -153,6 +153,12 @@ def test_objects_folder_has_file(good_package):
 
     assert result == True
 
+def test_objects_folder_has_no_bag(good_package):
+    """The objects folder should not have bag structures"""
+    result = lint_er.objects_folder_has_no_bag(good_package)
+
+    assert result == True
+
 # Functional tests
 def test_lint_valid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
