@@ -124,6 +124,13 @@ def objects_folder_has_file(package: Path):
         return False
     return True
 
+def package_has_no_bag(package: Path):
+    if list(package.rglob('manifest-md5.txt')):
+        LOGGER.error("The package has bag structure")
+        return False
+    else:
+        return True
+
 def lint_package() -> bool:
     """Run all linting tests against a package"""
     return True
