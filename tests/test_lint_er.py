@@ -160,7 +160,7 @@ def test_package_has_no_bag(good_package):
     assert result == True
 
 def test_package_has_no_zip(good_package):
-    """The package should not have bag structures"""
+    """The package should not have zip structures"""
     result = lint_er.package_has_no_zip(good_package)
 
     assert result == True
