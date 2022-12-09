@@ -131,6 +131,14 @@ def package_has_no_bag(package: Path):
     else:
         return True
 
+def package_has_no_zip(package: Path):
+    zip_exts = ['.zip', 'zipx', '.rar', '.tar', '.gz', '.7z']
+    zipfiles = [z for z in package.rglob('*') if z.suffix in zip_exts]
+    if zipfiles:
+        return False
+    else:
+        return True
+
 def lint_package() -> bool:
     """Run all linting tests against a package"""
     return True
