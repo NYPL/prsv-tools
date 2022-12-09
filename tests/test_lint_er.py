@@ -159,6 +159,12 @@ def test_package_has_no_bag(good_package):
 
     assert result == True
 
+def test_package_has_no_zip(good_package):
+    """The package should not have bag structures"""
+    result = lint_er.package_has_no_zip(good_package)
+
+    assert result == True
+
 # Functional tests
 def test_lint_valid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
