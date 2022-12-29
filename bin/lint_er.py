@@ -49,6 +49,9 @@ def package_has_valid_name(package: Path):
     
     if match:
         return True
+    else:
+        LOGGER.error(f'{folder_name} does not conform to M###_(ER|DI|EM)_####')
+        return False
 
 def package_has_valid_subfolder_names(package: Path):
     """Second level folders must have objects and metadata folder"""
@@ -137,7 +140,7 @@ def package_has_no_zip(package: Path):
     if zipfiles:
         return False
     else:
-        return True
+        return True 
 
 def lint_package() -> bool:
     """Run all linting tests against a package"""
