@@ -123,6 +123,13 @@ def test_top_folder_valid_name(good_package):
 
     assert result == True
 
+def test_top_folder_invalid_name(tmp_path: Path):
+    bad_package = tmp_path.joinpath('M1234_0001')
+    result = lint_er.package_has_valid_name(bad_package)
+
+    assert result == False
+
+
 def test_sec_level_folder_valid_names(good_package):
     """Second level folders must have objects and metadata folder"""
     result = lint_er.package_has_valid_subfolder_names(good_package)
