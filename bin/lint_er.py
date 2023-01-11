@@ -151,7 +151,16 @@ def package_has_no_zip(package: Path):
     if zipfiles:
         return False
     else:
-        return True 
+        return True
+
+def package_has_no_hidden_file(package: Path):
+    hidden_ls = [h for h in package.rglob('*') if h.name.startswith('.') or
+                 h.name.startswith('Thumbs')]
+    if hidden_ls:
+        LOGGER.warning(f"The package has hidden files {hidden_ls}")
+        return False
+    else:
+        return True
 
 def lint_package() -> bool:
     """Run all linting tests against a package"""
