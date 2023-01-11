@@ -63,6 +63,16 @@ def package_has_valid_subfolder_names(package: Path):
     else:
         return False
 
+def objects_folder_has_no_access_folder(package: Path):
+    """An access folder within the objects folder indicates it is an older package,
+    and the files within the access folder was created by the Library, and should not be ingested"""
+    access_dir = list(package.rglob('access'))
+
+    if access_dir:
+        return False
+    else:
+        return True
+
 def metadata_folder_is_flat(package: Path):
     """The metadata folder should not have folder structure"""
     metadata_dir = [x for x in package.iterdir() if x.name == 'metadata'][0]
