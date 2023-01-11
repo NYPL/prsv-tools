@@ -136,6 +136,14 @@ def test_sec_level_folder_valid_names(good_package):
 
     assert result == True
 
+def test_objects_folder_has_no_access_folder(good_package):
+    """An access folder within the objects folder indicates it is an older package,
+    and the files within the access folder was created by the Library, and should not be ingested"""
+    result = lint_er.objects_folder_has_no_access_folder(good_package)
+
+    assert result == True
+
+
 def test_metadata_folder_is_flat(good_package):
     """The metadata folder should not have folder structure"""
     result = lint_er.metadata_folder_is_flat(good_package)
