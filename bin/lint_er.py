@@ -69,6 +69,7 @@ def objects_folder_has_no_access_folder(package: Path):
     access_dir = list(package.rglob('access'))
 
     if access_dir:
+        LOGGER.error(f'There is an access folder in this package')
         return False
     else:
         return True
