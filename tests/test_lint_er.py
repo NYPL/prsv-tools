@@ -186,6 +186,12 @@ def test_package_has_no_hidden_file(good_package):
 
     assert result == True
 
+def test_package_has_no_zero_bytes_file(good_package):
+    """The package should not have any zero bytes file"""
+    result = lint_er.package_has_no_zero_bytes_file(good_package)
+
+    assert result == True
+
 # Functional tests
 def test_lint_valid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
