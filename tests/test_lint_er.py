@@ -108,12 +108,14 @@ def good_package(tmp_path: Path):
     f_object.mkdir(parents=True)
     object_filepath = f_object.joinpath('randomFile.txt')
     object_filepath.touch()
+    object_filepath.write_bytes(b'some bytes for object')
 
     f_metadata = pkg.joinpath('metadata')
     f_metadata.mkdir()
 
     metadata_filepath = f_metadata.joinpath('M12345_ER_0001.csv')
     metadata_filepath.touch()
+    metadata_filepath.write_bytes(b'some bytes for metadata')
 
     return pkg
 
