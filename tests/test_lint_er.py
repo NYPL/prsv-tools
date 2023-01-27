@@ -100,7 +100,7 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
     stderr = capsys.readouterr().err
 
     assert f'{child} does not exist' in stderr
-
+'''
 @pytest.fixture
 def good_package(tmp_path: Path):
     pkg = tmp_path.joinpath('M12345_ER_0001')
@@ -117,7 +117,45 @@ def good_package(tmp_path: Path):
     metadata_filepath.touch()
     metadata_filepath.write_bytes(b'some bytes for metadata')
 
+    #pkg = Path(pkg)
+
     return pkg
+'''
+
+@pytest.fixture
+def top_folder(tmp_path: Path):
+    top_f = tmp_path.joinpath('M12345_ER_0001')
+    top_f.mkdir()
+    
+    return top_f
+
+@pytest.fixture
+def metadata_folder(top_folder: Path):
+    md_f = top_folder.joinpath('metadata')
+    md_f.mkdir()
+    md_filepath = md_f.joinpath('M12345_ER_0001.csv')
+    md_filepath.touch()
+    md_filepath.write_bytes(b'some bytes for metadata')
+    
+    return md_f
+
+@pytest.fixture
+def objects_folder(top_folder: Path):
+    obj_f = top_folder.joinpath('objects')
+    obj_f.mkdir()
+    obj_filepath = obj_f.joinpath('randomFile.txt')
+    obj_filepath.touch()
+    obj_filepath.write_bytes(b'some bytes for object')
+    
+    return obj_f
+
+@pytest.fixture
+def good_package(top_folder, metadata_folder, objects_folder):
+    top_folder
+    metadata_folder
+    objects_folder
+
+    return top_folder
 
 def test_top_folder_valid_name(good_package):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
