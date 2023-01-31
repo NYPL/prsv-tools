@@ -100,27 +100,6 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
     stderr = capsys.readouterr().err
 
     assert f'{child} does not exist' in stderr
-'''
-@pytest.fixture
-def good_package(tmp_path: Path):
-    pkg = tmp_path.joinpath('M12345_ER_0001')
-    f_object = pkg.joinpath('objects')
-    f_object.mkdir(parents=True)
-    object_filepath = f_object.joinpath('randomFile.txt')
-    object_filepath.touch()
-    object_filepath.write_bytes(b'some bytes for object')
-
-    f_metadata = pkg.joinpath('metadata')
-    f_metadata.mkdir()
-
-    metadata_filepath = f_metadata.joinpath('M12345_ER_0001.csv')
-    metadata_filepath.touch()
-    metadata_filepath.write_bytes(b'some bytes for metadata')
-
-    #pkg = Path(pkg)
-
-    return pkg
-'''
 
 @pytest.fixture
 def top_folder(tmp_path: Path):
@@ -157,15 +136,17 @@ def good_package(top_folder, metadata_folder, objects_folder):
 
     return top_folder
 
-def test_top_folder_valid_name(good_package):
+def test_top_folder_valid_name(top_folder):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
-    result = lint_er.package_has_valid_name(good_package)
+    result = lint_er.package_has_valid_name(top_folder)
 
     assert result == True
 
-def test_top_folder_invalid_name(tmp_path: Path):
-    bad_package = tmp_path.joinpath('M1234_0001')
-    result = lint_er.package_has_valid_name(bad_package)
+def test_top_folder_invalid_name(top_folder):
+    """Negative test for top level folder naming convention"""
+    wrong_name = top_folder.rename('M12345')
+    
+    result = lint_er.package_has_valid_name(wrong_name)
 
     assert result == False
 
