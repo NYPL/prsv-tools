@@ -61,6 +61,7 @@ def package_has_valid_subfolder_names(package: Path):
     if expected == found:
         return True
     else:
+        LOGGER.error(f'Subfolders should have objects and metadata, found {found}')
         return False
 
 def objects_folder_has_no_access_folder(package: Path):
