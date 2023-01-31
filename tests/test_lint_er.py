@@ -157,6 +157,16 @@ def test_sec_level_folder_valid_names(good_package):
 
     assert result == True
 
+def test_sec_level_folder_invalid_names(good_package):
+    """Negative test for second level folders structure, objects and metadata folders"""
+    bad_package = good_package
+    for objects_path in bad_package.glob('objects'):
+        objects_path.rename(bad_package / 'obj')
+
+    result = lint_er.package_has_valid_subfolder_names(bad_package)
+
+    assert result == False
+
 def test_objects_folder_has_no_access_folder(good_package):
     """An access folder within the objects folder indicates it is an older package,
     and the files within the access folder was created by the Library, and should not be ingested"""
