@@ -77,17 +77,16 @@ def objects_folder_has_no_access_folder(package: Path):
 
 def metadata_folder_is_flat(package: Path):
     """The metadata folder should not have folder structure"""
-    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata'][0]
-    md_dir_ls = [x for x in metadata_dir.iterdir() if x.is_dir()]
-    
+    for metadata_path in package.glob('metadata'):
+        md_dir_ls = [x for x in metadata_path.iterdir() if x.is_dir()]
     if not md_dir_ls:
         return True
     elif len(md_dir_ls) == 1 and md_dir_ls[0].name == 'submissionDocumentation':
-        LOGGER.error(f'{metadata_dir} has submissionDocumentation folder')
-        if any(md_dir_ls[0].iterdir()):
-            LOGGER.error(f'{md_dir_ls[0]} has file(s) in it')
+        LOGGER.error(f'The metadata folder has submissionDocumentation folder')
+        return False
     elif len(md_dir_ls) != 0:
-        LOGGER.error(f'{metadata_dir} has unexpected directory')
+        LOGGER.error(f'The metadata folder has unexpected directory: {md_dir_ls}')
+        return False
 
 def metadata_folder_has_one_or_less_file(package: Path):
     """The metadata folder should have zero to one file"""
