@@ -269,7 +269,7 @@ def test_objects_folder_has_file(good_package):
     assert result == True
 
 def test_objects_folder_has_no_file(good_package):
-    """Negative test for jobjects_folder_has_file"""
+    """Negative test for objects_folder_has_file"""
     bad_package = good_package
     obj_filepaths = [x for x in bad_package.glob('objects/*') if x.is_file()]
     for file in obj_filepaths:
