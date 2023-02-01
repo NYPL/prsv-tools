@@ -119,17 +119,18 @@ def good_package(tmp_path: Path):
 
     return pkg
 
-def test_top_folder_valid_name(top_folder):
+def test_top_folder_valid_name(good_package):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
-    result = lint_er.package_has_valid_name(top_folder)
+    result = lint_er.package_has_valid_name(good_package)
 
     assert result == True
 
-def test_top_folder_invalid_name(top_folder):
+def test_top_folder_invalid_name(good_package):
     """Negative test for top level folder naming convention"""
-    wrong_name = top_folder.rename('M12345')
+    bad_package = good_package
+    bad_package = bad_package.rename(bad_package.parent / 'M12345')
     
-    result = lint_er.package_has_valid_name(wrong_name)
+    result = lint_er.package_has_valid_name(bad_package)
 
     assert result == False
 
