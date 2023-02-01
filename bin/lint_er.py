@@ -162,6 +162,7 @@ def package_has_no_hidden_file(package: Path):
         return True
 
 def package_has_no_zero_bytes_file(package: Path):
+    """The package should not have any zero bytes file"""
     all_file = [f for f in package.rglob('*') if f.is_file()]
     zero_bytes_ls = [f for f in all_file if f.stat().st_size == 0]
     if zero_bytes_ls:
