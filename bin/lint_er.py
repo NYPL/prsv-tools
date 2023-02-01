@@ -90,10 +90,10 @@ def metadata_folder_is_flat(package: Path):
 
 def metadata_folder_has_one_or_less_file(package: Path):
     """The metadata folder should have zero to one file"""
-    metadata_dir = [x for x in package.iterdir() if x.name == 'metadata'][0]
-    md_file_ls = [x for x in metadata_dir.iterdir() if x.is_file()]
+    for metadata_path in package.glob('metadata'):
+        md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
-        LOGGER.warning('There are more than one file in the metadata folder')
+        LOGGER.warning(f'There are more than one file in the metadata folder: {md_file_ls}')
         return False
     else:
         return True
