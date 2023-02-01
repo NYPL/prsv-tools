@@ -245,7 +245,7 @@ def test_metadata_file_invalid_name_tsv(good_package):
     
     result = lint_er.metadata_file_has_valid_filename(bad_package)
 
-    assert result == True
+    assert result == False
 
 def test_objects_folder_has_file(good_package):
     """The objects folder must have one or more files, which can be in folder(s)"""
