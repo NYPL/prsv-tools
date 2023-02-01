@@ -152,6 +152,7 @@ def package_has_no_bag(package: Path):
         return True
 
 def package_has_no_hidden_file(package: Path):
+    """The package should not have any hidden file"""
     hidden_ls = [h for h in package.rglob('*') if h.name.startswith('.') or
                  h.name.startswith('Thumbs')]
     if hidden_ls:
