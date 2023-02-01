@@ -146,14 +146,6 @@ def package_has_no_bag(package: Path):
     else:
         return True
 
-def package_has_no_zip(package: Path):
-    zip_exts = ['.zip', 'zipx', '.rar', '.tar', '.gz', '.7z']
-    zipfiles = [z for z in package.rglob('*') if z.suffix in zip_exts]
-    if zipfiles:
-        return False
-    else:
-        return True
-
 def package_has_no_hidden_file(package: Path):
     hidden_ls = [h for h in package.rglob('*') if h.name.startswith('.') or
                  h.name.startswith('Thumbs')]
