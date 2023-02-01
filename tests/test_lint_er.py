@@ -309,6 +309,17 @@ def test_package_has_no_zero_bytes_file(good_package):
 
     assert result == True
 
+def test_package_has_zero_bytes_file(good_package):
+    """Negative test for package_has_no_zero_bytes_file"""
+    bad_package = good_package
+    for objects_path in bad_package.glob('objects'):
+        zero_bytes = objects_path.joinpath('zerobytes.txt')
+        zero_bytes.touch()
+
+    result = lint_er.package_has_no_zero_bytes_file(bad_package)
+
+    assert result == False
+
 # Functional tests
 def test_lint_valid_package(monkeypatch, tmp_path: Path):
     """Run entire script with valid ER"""
