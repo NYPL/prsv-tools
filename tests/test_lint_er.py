@@ -202,6 +202,17 @@ def test_metadata_folder_has_random_folder(good_package):
 
     assert result == False
 
+def test_metadata_folder_has_submissionDocumentation_folder(good_package):
+    """Negative test for metadata_folder_is_flat"""
+    bad_package = good_package
+    for metadata_path in bad_package.glob('metadata'):
+        random_dir = metadata_path.joinpath('submissionDocumentation')
+        random_dir.mkdir()
+
+    result = lint_er.metadata_folder_is_flat(bad_package)
+
+    assert result == False
+
 def test_metadata_folder_has_one_or_less_file(good_package):
     """metadata folder should have zero to one file"""
     result = lint_er.metadata_folder_has_one_or_less_file(good_package)
