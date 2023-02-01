@@ -247,6 +247,21 @@ def test_metadata_file_invalid_name_tsv(good_package):
 
     assert result == False
 
+def test_metadata_file_invalid_name_more_files(good_package):
+    """Negative test for metadata_file_valid_name"""
+    bad_package = good_package
+    for metadata_path in bad_package.glob('metadata'):
+        new_csv = metadata_path.joinpath('M12345_ER_0003.csv')
+        new_csv.touch()
+        new_tsv = metadata_path.joinpath('M12345_ER_0004.tsv')
+        new_tsv.touch()
+        random_file = metadata_path.joinpath('M1234.txt')
+        random_file.touch()
+    
+    result = lint_er.metadata_file_has_valid_filename(bad_package)
+
+    assert result == False
+
 def test_objects_folder_has_file(good_package):
     """The objects folder must have one or more files, which can be in folder(s)"""
     result = lint_er.objects_folder_has_file(good_package)
