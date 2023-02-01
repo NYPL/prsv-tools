@@ -219,6 +219,17 @@ def test_metadata_folder_has_one_or_less_file(good_package):
 
     assert result == True
 
+def test_metadata_folder_has_more_than_one_file(good_package):
+    """Negative test for metadata_folder_has_one_or_less_file"""
+    bad_package = good_package
+    for metadata_path in bad_package.glob('metadata'):
+        new_md_file = metadata_path.joinpath('M12345_ER_0002.csv')
+        new_md_file.touch()
+
+    result = lint_er.metadata_folder_has_one_or_less_file(bad_package)
+
+    assert result == False
+
 def test_metadata_file_valid_name(good_package):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     result = lint_er.metadata_file_has_valid_filename(good_package)
