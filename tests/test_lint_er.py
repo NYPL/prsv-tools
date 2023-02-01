@@ -290,6 +290,19 @@ def test_package_has_no_hidden_file(good_package):
 
     assert result == True
 
+def test_package_has_hidden_file(good_package):
+    """Negative test for package_has_no_hidden_file"""
+    bad_package = good_package
+    for objects_path in bad_package.glob('objects'):
+        folder = objects_path.joinpath('folder')
+        folder.mkdir()
+        hidden_file = folder.joinpath('.DS_Store')
+        hidden_file.touch()
+
+    result = lint_er.package_has_no_hidden_file(bad_package)
+
+    assert result == False
+
 def test_package_has_no_zero_bytes_file(good_package):
     """The package should not have any zero bytes file"""
     result = lint_er.package_has_no_zero_bytes_file(good_package)
