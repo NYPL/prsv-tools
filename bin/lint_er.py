@@ -137,9 +137,8 @@ def metadata_file_has_valid_filename(package: Path):
         return True
         
 def objects_folder_has_file(package: Path):
-    objects_dir = [x for x in package.iterdir() if x.name == 'objects'][0]
-    obj_file = [x for x in objects_dir.iterdir() if x.is_file()]
-    if not any(obj_file):
+    obj_filepaths = [x for x in package.glob('objects/*') if x.is_file()]
+    if not any(obj_filepaths):
         LOGGER.error("The objects folder does not have any file")
         return False
     return True
