@@ -262,7 +262,8 @@ def test_objects_folder_has_file(good_package):
     assert result == True
 
 def test_objects_folder_has_no_file(good_package):
-    """Negative test for objects_folder_has_file"""
+    """Test that package fails function when there is no file at all
+    within the second-level objects folder"""
     bad_package = good_package
     obj_filepaths = [x for x in bad_package.glob('objects/*') if x.is_file()]
     for file in obj_filepaths:
