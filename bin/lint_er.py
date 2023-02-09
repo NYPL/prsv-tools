@@ -145,7 +145,7 @@ def objects_folder_has_file(package: Path):
     return True
 
 def package_has_no_bag(package: Path):
-    if list(package.rglob('manifest-md5.txt')):
+    if list(package.rglob('bagit.txt')):
         LOGGER.error("The package has bag structure")
         return False
     else:
