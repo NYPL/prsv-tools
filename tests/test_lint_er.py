@@ -126,7 +126,8 @@ def test_top_folder_valid_name(good_package):
     assert result == True
 
 def test_top_folder_invalid_name(good_package):
-    """Negative test for top level folder naming convention"""
+    """Test that package fails function when the top level folder name
+    does not conform to the naming convention, M###_(ER|DI|EM)_####"""
     bad_package = good_package
     bad_package = bad_package.rename(bad_package.parent / 'M12345')
     
