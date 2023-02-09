@@ -333,7 +333,7 @@ def test_package_has_no_zero_bytes_file(good_package):
     assert result == True
 
 def test_package_has_zero_bytes_file(good_package):
-    """Negative test for package_has_no_zero_bytes_file"""
+    """Test that package fails function when there is any zero bytes file"""
     bad_package = good_package
     for objects_path in bad_package.glob('objects'):
         zero_bytes = objects_path.joinpath('zerobytes.txt')
