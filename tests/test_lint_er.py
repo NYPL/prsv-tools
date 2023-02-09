@@ -268,6 +268,20 @@ def test_package_has_no_bag(good_package):
 
     assert result == True
 
+def test_package_has_bag(good_package):
+    """Test that package fails function when there is any bagit.txt file, 
+    indicating bag structure exists in the package"""
+    bad_package = good_package
+    for obj_path in bad_package.glob('objects'):
+        bag_folder = obj_path.joinpath('bagfolder')
+        bag_folder.mkdir()
+        bag_file = bag_folder.joinpath('bagit.txt')
+        bag_file.touch()
+    
+    result = lint_er.package_has_no_bag(bad_package)
+
+    assert result == False
+
 def test_package_has_no_hidden_file(good_package):
     """The package should not have any hidden file"""
     result = lint_er.package_has_no_hidden_file(good_package)
