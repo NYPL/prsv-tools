@@ -240,7 +240,8 @@ def test_metadata_file_invalid_name_tsv(good_package):
     assert result == False
 
 def test_metadata_file_invalid_name_more_files(good_package):
-    """Negative test for metadata_file_valid_name"""
+    """Test that package fails function and gives out correct warning when
+    there are more than one file in the second-level metadata folder"""
     bad_package = good_package
     for metadata_path in bad_package.glob('metadata'):
         new_csv = metadata_path.joinpath('M12345_ER_0003.csv')
