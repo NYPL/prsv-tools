@@ -155,8 +155,8 @@ def test_sec_level_folder_invalid_names(good_package):
     assert result == False
 
 def test_objects_folder_has_no_access_folder(good_package):
-    """An access folder within the objects folder indicates it is an older package,
-    and the files within the access folder was created by the Library, and should not be ingested"""
+    """The package should not have an 'access' folder that was created by the Library. 
+    As the access folder and files in it were created by the Library, they should not be ingested"""
     result = lint_er.objects_folder_has_no_access_folder(good_package)
 
     assert result == True
