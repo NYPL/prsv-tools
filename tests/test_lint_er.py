@@ -314,7 +314,7 @@ def test_package_has_no_hidden_file(good_package):
     assert result == True
 
 def test_package_has_hidden_file(good_package):
-    """Negative test for package_has_no_hidden_file"""
+    """Test that package fails function when there is any hidden file"""
     bad_package = good_package
     for objects_path in bad_package.glob('objects'):
         folder = objects_path.joinpath('folder')
