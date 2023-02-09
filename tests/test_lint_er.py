@@ -162,7 +162,7 @@ def test_objects_folder_has_no_access_folder(good_package):
     assert result == True
 
 def test_objects_folder_has_access_folder(good_package):
-    """Negative test for access folder in objects folder"""
+    """Test that package fails function when it includes folder(s) named access"""
     bad_package = good_package
     for objects_path in bad_package.glob('objects'):
         access_dir = objects_path.joinpath('access')
