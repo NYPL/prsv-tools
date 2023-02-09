@@ -209,7 +209,8 @@ def test_metadata_folder_has_one_or_less_file(good_package):
     assert result == True
 
 def test_metadata_folder_has_more_than_one_file(good_package):
-    """Negative test for metadata_folder_has_one_or_less_file"""
+    """Test that package fails when there are more then one file
+    in the second-level metadata folder"""
     bad_package = good_package
     for metadata_path in bad_package.glob('metadata'):
         new_md_file = metadata_path.joinpath('M12345_ER_0002.csv')
