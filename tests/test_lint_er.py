@@ -179,7 +179,8 @@ def test_metadata_folder_is_flat(good_package):
     assert result == True
 
 def test_metadata_folder_has_random_folder(good_package):
-    """Negative test for metadata_folder_is_flat"""
+    """Test that package fails function when the second-level metadata folder
+    has any folder in it, such as the submissionDocumentation folder"""
     bad_package = good_package
     for metadata_path in bad_package.glob('metadata'):
         random_dir = metadata_path.joinpath('random_dir')
