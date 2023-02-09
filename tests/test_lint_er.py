@@ -227,7 +227,8 @@ def test_metadata_file_valid_name(good_package):
     assert result == True
 
 def test_metadata_file_invalid_name_tsv(good_package):
-    """Negative test for metadata_file_valid_name"""
+    """Test that package fails function when the metadata file name
+    does not conform to the naming convention, M###_(ER|DI|EM)_####.(csv|CSV)"""
     bad_package = good_package
     for metadata_path in bad_package.glob('metadata'):
         for file in [x for x in metadata_path.iterdir() if x.is_file()]:
