@@ -143,7 +143,9 @@ def test_sec_level_folder_valid_names(good_package):
     assert result == True
 
 def test_sec_level_folder_invalid_names(good_package):
-    """Negative test for second level folders structure, objects and metadata folders"""
+    """Test that package fails function when second level folders are not named
+    objects and metadata, OR when there are more folders other than
+    the objects and metadata folders."""
     bad_package = good_package
     for objects_path in bad_package.glob('objects'):
         objects_path.rename(bad_package / 'obj')
