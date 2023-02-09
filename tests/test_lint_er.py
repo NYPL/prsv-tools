@@ -137,7 +137,7 @@ def test_top_folder_invalid_name(good_package):
 
 
 def test_sec_level_folder_valid_names(good_package):
-    """Second level folders must have objects and metadata folder"""
+    """Second level folders must only have objects and metadata folder"""
     result = lint_er.package_has_valid_subfolder_names(good_package)
 
     assert result == True
