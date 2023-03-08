@@ -190,9 +190,9 @@ def lint_package(package: Path) -> bool:
 
     if not False in ls_result or 'review' in ls_result:
         return True
-    if False in ls_result:
+    elif False in ls_result:
         return False
-    if 'review' in ls_result:
+    elif 'review' in ls_result:
         return 'Package includes warning message(s). Review before ingest.'
 
 def main():
