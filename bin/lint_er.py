@@ -94,7 +94,7 @@ def metadata_folder_has_one_or_less_file(package: Path):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
         LOGGER.warning(f'There are more than one file in the metadata folder: {md_file_ls}')
-        return False
+        return 'review'
     else:
         return True
 
@@ -174,9 +174,26 @@ def package_has_no_zero_bytes_file(package: Path):
     else:
         return True
 
-def lint_package() -> bool:
+def lint_package(package: Path) -> bool:
     """Run all linting tests against a package"""
-    return True
+    ls_result = []
+    ls_result.append(package_has_valid_name(package))
+    ls_result.append(package_has_valid_subfolder_names(package))
+    ls_result.append(objects_folder_has_no_access_folder(package))
+    ls_result.append(metadata_folder_is_flat(package))
+    ls_result.append(metadata_folder_has_one_or_less_file(package))
+    ls_result.append(metadata_file_has_valid_filename(package))
+    ls_result.append(objects_folder_has_file(package))
+    ls_result.append(package_has_no_bag(package))
+    ls_result.append(package_has_no_hidden_file(package))
+    ls_result.append(package_has_no_zero_bytes_file(package))
+
+    if not False in ls_result or 'review' in ls_result:
+        return True
+    if False in ls_result:
+        return False
+    if 'review' in ls_result:
+        return 'Package includes warning message(s). Review before ingest.'
 
 def main():
     args = parse_args()
