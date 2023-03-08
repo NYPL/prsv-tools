@@ -218,7 +218,7 @@ def test_metadata_folder_has_more_than_one_file(good_package):
 
     result = lint_er.metadata_folder_has_one_or_less_file(bad_package)
 
-    assert result == False
+    assert result == 'review'
 
 def test_metadata_file_valid_name(good_package):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
