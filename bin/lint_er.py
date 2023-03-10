@@ -2,6 +2,7 @@ from pathlib import Path
 import argparse
 import re
 import logging
+from typing import Literal
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,18 +43,18 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def package_has_valid_name(package: Path):
+def package_has_valid_name(package: Path) -> bool:
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
     folder_name = package.name
     match = re.fullmatch(r'M\d+_(ER|DI|EM)_\d+', folder_name)
-    
+
     if match:
         return True
     else:
         LOGGER.error(f'{folder_name} does not conform to M###_(ER|DI|EM)_####')
         return False
 
-def package_has_valid_subfolder_names(package: Path):
+def package_has_valid_subfolder_names(package: Path) -> bool:
     """Second level folders must have objects and metadata folder"""
     expected = set(['objects', 'metadata'])
     found = set([x.name for x in package.iterdir()])
@@ -64,7 +65,7 @@ def package_has_valid_subfolder_names(package: Path):
         LOGGER.error(f'Subfolders should have objects and metadata, found {found}')
         return False
 
-def objects_folder_has_no_access_folder(package: Path):
+def objects_folder_has_no_access_folder(package: Path) -> bool:
     """An access folder within the objects folder indicates it is an older package,
     and the files within the access folder was created by the Library, and should not be ingested"""
     access_dir = list(package.rglob('access'))
@@ -75,7 +76,7 @@ def objects_folder_has_no_access_folder(package: Path):
     else:
         return True
 
-def metadata_folder_is_flat(package: Path):
+def metadata_folder_is_flat(package: Path) -> bool:
     """The metadata folder should not have folder structure"""
     for metadata_path in package.glob('metadata'):
         md_dir_ls = [x for x in metadata_path.iterdir() if x.is_dir()]
@@ -88,7 +89,7 @@ def metadata_folder_is_flat(package: Path):
         LOGGER.error(f'The metadata folder has unexpected directory: {md_dir_ls}')
         return False
 
-def metadata_folder_has_one_or_less_file(package: Path):
+def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     """The metadata folder should have zero to one file"""
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
@@ -98,7 +99,7 @@ def metadata_folder_has_one_or_less_file(package: Path):
     else:
         return True
 
-def metadata_file_has_valid_filename(package: Path):
+def metadata_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
@@ -135,18 +136,18 @@ def metadata_file_has_valid_filename(package: Path):
     else:
         LOGGER.warning("There are no files in the metadata folder")
         return True
-        
-def objects_folder_has_file(package: Path):
+
+def objects_folder_has_file(package: Path) -> bool:
     """The objects folder must have one or more files, which can be in folder(s)"""
     for objects_path in package.glob('objects'):
         obj_filepaths = [x for x in objects_path.rglob('*') if x.is_file()]
-    
+
     if not any(obj_filepaths):
         LOGGER.error("The objects folder does not have any file")
         return False
     return True
 
-def package_has_no_bag(package: Path):
+def package_has_no_bag(package: Path) -> bool:
     """The whole package should not contain any bag"""
     if list(package.rglob('bagit.txt')):
         LOGGER.error("The package has bag structure")
@@ -154,7 +155,7 @@ def package_has_no_bag(package: Path):
     else:
         return True
 
-def package_has_no_hidden_file(package: Path):
+def package_has_no_hidden_file(package: Path) -> bool:
     """The package should not have any hidden file"""
     hidden_ls = [h for h in package.rglob('*') if h.name.startswith('.') or
                  h.name.startswith('Thumbs')]
@@ -164,7 +165,7 @@ def package_has_no_hidden_file(package: Path):
     else:
         return True
 
-def package_has_no_zero_bytes_file(package: Path):
+def package_has_no_zero_bytes_file(package: Path) -> bool:
     """The package should not have any zero bytes file"""
     all_file = [f for f in package.rglob('*') if f.is_file()]
     zero_bytes_ls = [f for f in all_file if f.stat().st_size == 0]
@@ -174,7 +175,7 @@ def package_has_no_zero_bytes_file(package: Path):
     else:
         return True
 
-def lint_package(package: Path) -> bool:
+def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
     """Run all linting tests against a package"""
     ls_result = []
     ls_result.append(package_has_valid_name(package))
