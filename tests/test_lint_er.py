@@ -218,7 +218,7 @@ def test_metadata_folder_has_more_than_one_file(good_package):
 
     result = lint_er.metadata_folder_has_one_or_less_file(bad_package)
 
-    assert result == 'review'
+    assert result == False
 
 def test_metadata_file_valid_name(good_package):
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
@@ -357,7 +357,10 @@ def test_invalid_package(good_package):
 
 def test_unclear_package(good_package):
     """Test that package returns 'needs review' when all tests are passed"""
-    result = lint_er.lint_package(good_package)
+    bad_package = good_package
+    bad_package.joinpath('metadata').joinpath('M12345_ER_0002.csv').write_text('a')
+
+    result = lint_er.lint_package(bad_package)
 
     assert result == 'needs review'
 
