@@ -95,7 +95,7 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
         LOGGER.warning(f'There are more than one file in the metadata folder: {md_file_ls}')
-        return 'review'
+        return False
     else:
         return True
 
@@ -103,6 +103,7 @@ def metadata_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
+
     if len(md_file_ls) == 1:
         for file in md_file_ls:
             if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
@@ -125,14 +126,18 @@ def metadata_file_has_valid_filename(package: Path) -> bool:
                 good_tsv.append(file)
             else:
                 unknown_files.append(file)
-        if any(good_tsv):
-            LOGGER.warning("The metadata folder has FTK TSV files")
-        if any(unknown_files):
-            LOGGER.warning("The metadata folder has non-FTK exported files")
+
+        if good_tsv or unknown_files:
+            if good_tsv:
+                LOGGER.warning("The metadata folder has FTK TSV files")
+            if unknown_files:
+                LOGGER.warning("The metadata folder has non-FTK exported files")
+            return False
+
         if any(good_csv):
             LOGGER.warning("There are more than one FTK-exported CSV files")
-        if any(good_tsv) or any(unknown_files) or any(good_csv):
-            return False
+            return True
+
     else:
         LOGGER.warning("There are no files in the metadata folder")
         return True
@@ -177,24 +182,33 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
 
 def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
     """Run all linting tests against a package"""
-    ls_result = []
-    ls_result.append(package_has_valid_name(package))
-    ls_result.append(package_has_valid_subfolder_names(package))
-    ls_result.append(objects_folder_has_no_access_folder(package))
-    ls_result.append(metadata_folder_is_flat(package))
-    ls_result.append(metadata_folder_has_one_or_less_file(package))
-    ls_result.append(metadata_file_has_valid_filename(package))
-    ls_result.append(objects_folder_has_file(package))
-    ls_result.append(package_has_no_bag(package))
-    ls_result.append(package_has_no_hidden_file(package))
-    ls_result.append(package_has_no_zero_bytes_file(package))
+    result = 'valid'
 
-    if not False in ls_result or 'review' in ls_result:
-        return True
-    elif False in ls_result:
-        return False
-    elif 'review' in ls_result:
-        return 'Package includes warning message(s). Review before ingest.'
+    strict_tests = [
+        package_has_valid_name,
+        package_has_valid_subfolder_names,
+        objects_folder_has_no_access_folder,
+        metadata_folder_is_flat,
+        metadata_file_has_valid_filename,
+        objects_folder_has_file,
+        package_has_no_bag,
+        package_has_no_hidden_file,
+        package_has_no_zero_bytes_file,
+    ]
+
+    for test in strict_tests:
+        if not test(package):
+            result = 'invalid'
+
+    less_strict_tests = [
+        metadata_folder_has_one_or_less_file
+    ]
+
+    for test in less_strict_tests:
+        if not test(package):
+            result = 'needs review'
+
+    return result
 
 def main():
     args = parse_args()
