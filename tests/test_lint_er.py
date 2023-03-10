@@ -351,7 +351,15 @@ def test_valid_package(good_package):
 
 def test_invalid_package(good_package):
     """Test that package returns 'invalid' when all tests are passed"""
-    result = lint_er.lint_package(good_package)
+    bad_package = good_package
+
+    objects = bad_package.joinpath('objects')
+    bag_folder = objects.joinpath('bagfolder')
+    bag_folder.mkdir()
+    bag_file = bag_folder.joinpath('bagit.txt')
+    bag_file.touch()
+
+    result = lint_er.lint_package(bad_package)
 
     assert result == 'invalid'
 
