@@ -373,29 +373,42 @@ def test_unclear_package(good_package):
     assert result == 'needs review'
 
 # Functional tests
-def test_lint_valid_package(monkeypatch, tmp_path: Path):
+def test_lint_valid_package(monkeypatch, good_package, capsys):
     """Run entire script with valid ER"""
 
     monkeypatch.setattr(
         'sys.argv', [
             '../bin/lint_er.py',
-            '--package', str(tmp_path)
+            '--package', str(good_package)
         ]
     )
 
     lint_er.main()
-    assert False
 
-def test_lint_invalid_package(monkeypatch, tmp_path: Path):
+    stdout = capsys.readouterr().out
+
+    assert f'The following packages are valid: {str(good_package)}' in stdout
+
+def test_lint_invalid_package(monkeypatch, good_package, capsys):
     """Run entire script with valid ER"""
+
+    bad_package = good_package
+
+    objects = bad_package.joinpath('objects')
+    bag_folder = objects.joinpath('bagfolder')
+    bag_folder.mkdir()
+    bag_file = bag_folder.joinpath('bagit.txt')
+    bag_file.touch()
 
     monkeypatch.setattr(
         'sys.argv', [
             '../bin/lint_er.py',
-            '--package', str(tmp_path)
+            '--package', str(good_package)
         ]
     )
 
     lint_er.main()
-    assert False
 
+    stdout = capsys.readouterr().out
+
+    assert f'The following packages are invalid: {str(good_package)}' in stdout
