@@ -213,8 +213,26 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
 def main():
     args = parse_args()
 
-    if not lint_package():
-        print('package did not lint')
+    valid = []
+    invalid = []
+    needs_review = []
+
+    for package in args.packages:
+        result = lint_package(package)
+        if result == 'valid':
+            valid.append(package)
+        elif result == 'invalid':
+            invalid.append(package)
+        else:
+            needs_review.append(package)
+
+    if valid:
+        print(f'The following packages are valid: {", ".join(str(x) for x in valid)}')
+    if invalid:
+        print(f'The following packages are invalid: {invalid}')
+    if needs_review:
+        print(f'The following packages need review. They may be passed without change after review: {needs_review}')
+
 
     return False
 
