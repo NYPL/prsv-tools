@@ -3,8 +3,21 @@ import argparse
 import re
 import logging
 from typing import Literal
+from datetime import datetime
 
 LOGGER = logging.getLogger(__name__)
+
+def _configure_logging(args):
+    log_fn = datetime.now().strftime('lint_%Y_%m_%d_%H_%M.log')
+    log_fpath = Path(args.log_folder + '/' + log_fn)
+    if not log_fpath.is_file():
+        log_fpath.touch()
+
+    logging.basicConfig(level=logging.WARNING,
+                        format = "%(asctime)s - %(levelname)s - %(message)s",
+                        datefmt='%Y-%m-%d %H:%M:%S',
+                        filename=log_fpath,
+                        encoding='utf-8')
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -39,6 +52,10 @@ def parse_args() -> argparse.Namespace:
         type=list_of_paths,
         dest='packages',
         action='extend'
+    )
+    parser.add_argument(
+        '--log_folder',
+        required=True
     )
 
     return parser.parse_args()
@@ -212,6 +229,7 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
 
 def main():
     args = parse_args()
+    _configure_logging(args)
 
     valid = []
     invalid = []
