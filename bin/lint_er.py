@@ -139,7 +139,7 @@ def metadata_file_has_valid_filename(package: Path) -> bool:
             return True
 
     else:
-        LOGGER.warning("There are no files in the metadata folder")
+        LOGGER.warning(f"{package.name} has no files in the metadata folder")
         return True
 
 def objects_folder_has_file(package: Path) -> bool:
