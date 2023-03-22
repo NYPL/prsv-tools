@@ -251,8 +251,5 @@ def main():
     if needs_review:
         print(f'The following {len(needs_review)} packages need review. They may be passed without change after review: {needs_review}')
 
-
-    return False
-
 if __name__=='__main__':
     main()
