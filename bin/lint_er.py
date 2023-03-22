@@ -189,10 +189,8 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
         package_has_valid_subfolder_names,
         objects_folder_has_no_access_folder,
         metadata_folder_is_flat,
-        metadata_file_has_valid_filename,
         objects_folder_has_file,
         package_has_no_bag,
-        package_has_no_hidden_file,
         package_has_no_zero_bytes_file,
     ]
 
@@ -201,7 +199,9 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
             result = 'invalid'
 
     less_strict_tests = [
-        metadata_folder_has_one_or_less_file
+        metadata_folder_has_one_or_less_file,
+        metadata_file_has_valid_filename,
+        package_has_no_hidden_file
     ]
 
     for test in less_strict_tests:
