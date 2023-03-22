@@ -97,14 +97,11 @@ def metadata_folder_is_flat(package: Path) -> bool:
     """The metadata folder should not have folder structure"""
     for metadata_path in package.glob('metadata'):
         md_dir_ls = [x for x in metadata_path.iterdir() if x.is_dir()]
-    if not md_dir_ls:
+    if md_dir_ls:
+        LOGGER.error(f'{package.name} has unexpected directory: {md_dir_ls}')
+        return False
+    else:
         return True
-    elif len(md_dir_ls) == 1 and md_dir_ls[0].name == 'submissionDocumentation':
-        LOGGER.error(f'The metadata folder has submissionDocumentation folder')
-        return False
-    elif len(md_dir_ls) != 0:
-        LOGGER.error(f'The metadata folder has unexpected directory: {md_dir_ls}')
-        return False
 
 def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     """The metadata folder should have zero to one file"""
