@@ -198,20 +198,6 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
     """Run all linting tests against a package"""
     result = 'valid'
 
-    strict_tests = [
-        package_has_valid_name,
-        package_has_valid_subfolder_names,
-        objects_folder_has_no_access_folder,
-        metadata_folder_is_flat,
-        objects_folder_has_file,
-        package_has_no_bag,
-        package_has_no_zero_bytes_file,
-    ]
-
-    for test in strict_tests:
-        if not test(package):
-            result = 'invalid'
-
     less_strict_tests = [
         metadata_folder_has_one_or_less_file,
         metadata_file_has_valid_filename,
@@ -221,6 +207,20 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
     for test in less_strict_tests:
         if not test(package):
             result = 'needs review'
+
+    strict_tests = [
+        package_has_valid_name,
+        package_has_valid_subfolder_names,
+        objects_folder_has_no_access_folder,
+        metadata_folder_is_flat,
+        objects_folder_has_file,
+        package_has_no_bag,
+        package_has_no_zero_bytes_file
+    ]
+
+    for test in strict_tests:
+        if not test(package):
+            result = 'invalid'
 
     return result
 
@@ -232,7 +232,10 @@ def main():
     invalid = []
     needs_review = []
 
+    counter = 0
+
     for package in args.packages:
+        counter += 1
         result = lint_package(package)
         if result == 'valid':
             valid.append(package)
@@ -240,13 +243,13 @@ def main():
             invalid.append(package)
         else:
             needs_review.append(package)
-
+    print(f'Total packages ran: {counter}')
     if valid:
-        print(f'The following packages are valid: {", ".join(str(x) for x in valid)}')
+        print(f'The following {len(valid)} packages are valid: {", ".join(str(x) for x in valid)}')
     if invalid:
-        print(f'The following packages are invalid: {invalid}')
+        print(f'The following {len(invalid)} packages are invalid: {invalid}')
     if needs_review:
-        print(f'The following packages need review. They may be passed without change after review: {needs_review}')
+        print(f'The following {len(needs_review)} packages need review. They may be passed without change after review: {needs_review}')
 
 
     return False
