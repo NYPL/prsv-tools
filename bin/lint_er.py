@@ -79,7 +79,7 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
     if expected == found:
         return True
     else:
-        LOGGER.error(f'Subfolders should have objects and metadata, found {found}')
+        LOGGER.error(f'{package.name} subfolders should have objects and metadata, found {found}')
         return False
 
 def objects_folder_has_no_access_folder(package: Path) -> bool:
@@ -88,7 +88,7 @@ def objects_folder_has_no_access_folder(package: Path) -> bool:
     access_dir = list(package.rglob('access'))
 
     if access_dir:
-        LOGGER.error(f'There is an access folder in this package: {access_dir}')
+        LOGGER.error(f'{package.name} has an access folder in this package: {access_dir}')
         return False
     else:
         return True
@@ -108,7 +108,7 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
-        LOGGER.warning(f'There are more than one file in the metadata folder: {md_file_ls}')
+        LOGGER.warning(f'{package.name} has more than one file in the metadata folder: {md_file_ls}')
         return False
     else:
         return True
@@ -124,10 +124,10 @@ def metadata_file_has_valid_filename(package: Path) -> bool:
                 return True
             else:
                 if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
-                    LOGGER.warning(f"The metadata file, {file.name}, is a TSV file.")
+                    LOGGER.warning(f"{package.name}: The metadata file, {file.name}, is a TSV file.")
                     return False
                 else:
-                    LOGGER.warning(f"Unknown metadata file, {file.name}")
+                    LOGGER.warning(f"{package.name} has unknown metadata file, {file.name}")
                     return False
     elif len(md_file_ls) > 1:
         good_csv = []
@@ -143,13 +143,13 @@ def metadata_file_has_valid_filename(package: Path) -> bool:
 
         if good_tsv or unknown_files:
             if good_tsv:
-                LOGGER.warning("The metadata folder has FTK TSV files")
+                LOGGER.warning(f"{package.name} metadata folder has FTK TSV files")
             if unknown_files:
-                LOGGER.warning("The metadata folder has non-FTK exported files")
+                LOGGER.warning(f"{package.name} metadata folder has non-FTK exported files")
             return False
 
         if any(good_csv):
-            LOGGER.warning("There are more than one FTK-exported CSV files")
+            LOGGER.warning(f"{package.name}has more than one FTK-exported CSV files")
             return True
 
     else:
@@ -162,14 +162,14 @@ def objects_folder_has_file(package: Path) -> bool:
         obj_filepaths = [x for x in objects_path.rglob('*') if x.is_file()]
 
     if not any(obj_filepaths):
-        LOGGER.error("The objects folder does not have any file")
+        LOGGER.error(f"{package.name} objects folder does not have any file")
         return False
     return True
 
 def package_has_no_bag(package: Path) -> bool:
     """The whole package should not contain any bag"""
     if list(package.rglob('bagit.txt')):
-        LOGGER.error("The package has bag structure")
+        LOGGER.error(f"{package.name} has bag structure")
         return False
     else:
         return True
@@ -179,7 +179,7 @@ def package_has_no_hidden_file(package: Path) -> bool:
     hidden_ls = [h for h in package.rglob('*') if h.name.startswith('.') or
                  h.name.startswith('Thumbs')]
     if hidden_ls:
-        LOGGER.warning(f"The package has hidden files {hidden_ls}")
+        LOGGER.warning(f"{package.name} has hidden files {hidden_ls}")
         return False
     else:
         return True
@@ -189,7 +189,7 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
     all_file = [f for f in package.rglob('*') if f.is_file()]
     zero_bytes_ls = [f for f in all_file if f.stat().st_size == 0]
     if zero_bytes_ls:
-        LOGGER.error(f"The package has zero bytes file {zero_bytes_ls}")
+        LOGGER.error(f"{package.name} has zero bytes file {zero_bytes_ls}")
         return False
     else:
         return True
