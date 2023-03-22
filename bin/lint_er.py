@@ -14,7 +14,7 @@ def _configure_logging(args):
         log_fpath.touch()
 
     logging.basicConfig(level=logging.WARNING,
-                        format = "%(asctime)s - %(levelname)s - %(message)s",
+                        format = "%(asctime)s - %(levelname)8s - %(message)s",
                         datefmt='%Y-%m-%d %H:%M:%S',
                         filename=log_fpath,
                         encoding='utf-8')
