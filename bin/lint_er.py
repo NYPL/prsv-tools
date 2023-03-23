@@ -239,11 +239,11 @@ def main():
         counter += 1
         result = lint_package(package)
         if result == 'valid':
-            valid.append(package)
+            valid.append(package.name)
         elif result == 'invalid':
-            invalid.append(package)
+            invalid.append(package.name)
         else:
-            needs_review.append(package)
+            needs_review.append(package.name)
     print(f'Total packages ran: {counter}')
     if valid:
         print(f'The following {len(valid)} packages are valid: {", ".join(str(x) for x in valid)}')
