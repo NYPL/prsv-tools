@@ -151,11 +151,11 @@ def metadata_file_has_valid_filename(package: Path) -> bool:
 
         if any(good_csv):
             LOGGER.warning(f"{package.name}has more than one FTK-exported CSV files")
-            return True
+            return False
 
     else:
         LOGGER.warning(f"{package.name} has no files in the metadata folder")
-        return True
+        return False
 
 def objects_folder_has_file(package: Path) -> bool:
     """The objects folder must have one or more files, which can be in folder(s)"""
