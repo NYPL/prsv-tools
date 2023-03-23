@@ -244,13 +244,18 @@ def main():
             invalid.append(package.name)
         else:
             needs_review.append(package.name)
-    print(f'Total packages ran: {counter}')
+    print(f'\nTotal packages ran: {counter}')
     if valid:
-        print(f'The following {len(valid)} packages are valid: {", ".join(str(x) for x in valid)}')
+        print(f'''
+        The following {len(valid)} packages are valid:
+        {", ".join(str(x) for x in valid)}''')
     if invalid:
-        print(f'The following {len(invalid)} packages are invalid: {invalid}')
+        print(f'''
+        The following {len(invalid)} packages are invalid: {invalid}''')
     if needs_review:
-        print(f'The following {len(needs_review)} packages need review. They may be passed without change after review: {needs_review}')
+        print(f'''
+        The following {len(needs_review)} packages need review.
+        They may be passed without change after review: {needs_review}''')
 
 if __name__=='__main__':
     main()
