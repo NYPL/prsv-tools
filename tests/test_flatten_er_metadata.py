@@ -101,5 +101,19 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
     assert f'{child} does not exist' in stderr
 
 @pytest.fixture
+def common_package(tmp_path: Path):
+    pkg = tmp_path.joinpath('M12345_ER_0001')
+    f_object = pkg.joinpath('objects')
+    f_object.mkdir(parents=True)
+    f_metadata = pkg.joinpath('metadata')
+    f_metadata.mkdir()
+
+    f_submission = f_metadata.joinpath('submissionDocumentation')
+    f_submission.mkdir()
+    metadata_filepath = f_submission.joinpath('M12345_ER_0001.csv')
+    metadata_filepath.touch()
+    metadata_filepath.write_bytes(b'some bytes for metadata')
+
+    return pkg
 
 # Functional tests
