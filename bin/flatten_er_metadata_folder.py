@@ -64,6 +64,9 @@ def main():
         (b) if not, delete the folder (this function should be reusable)
     '''
     args = parse_args()
+    for package in args.packages:
+        if package_has_submissionDocumentation_folder(package):
+
 
 
 if __name__ == "__main__":
