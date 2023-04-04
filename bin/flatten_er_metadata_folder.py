@@ -45,6 +45,16 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+def package_has_submissionDocumentation_folder(package: Path) -> bool:
+    """Check if the package has the submisionDocumentation folder under metadata"""
+    expected = package / 'metadata' / 'submissionDocumentation'
+    if expected.is_dir():
+        return True
+    else:
+        return False
+
+
+
 def main():
     '''
     1. Go through every package (e.g. M1234_ER_0001)
