@@ -46,12 +46,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def get_submissionDocumentation_path(package: Path):
-    """Check if the package has the submisionDocumentation folder under metadata"""
+    """Get submisionDocumentation folder path under metadata."""
     expected_path = package / 'metadata' / 'submissionDocumentation'
     if expected_path.is_dir():
         return expected_path
     else:
         return None
+
+
 
 
 
