@@ -46,16 +46,20 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def get_submissionDocumentation_path(package: Path):
-    """Get submisionDocumentation folder path under metadata."""
+    """Get submisionDocumentation folder path under metadata"""
     expected_path = package / 'metadata' / 'submissionDocumentation'
     if expected_path.is_dir():
         return expected_path
     else:
         return None
 
-
-
-
+def subdoc_has_file(subdoc: Path) -> bool:
+    '''Check whether the submissionDocumentation folder has any files'''
+    subdoc_file_ls = [x for x in subdoc.iterdir() if x.is_file()]
+    if subdoc_file_ls:
+        return True
+    else:
+        return False
 
 
 def main():
