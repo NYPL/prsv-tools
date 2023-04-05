@@ -4,7 +4,6 @@ import argparse
 import bagit
 import logging
 from pathlib import Path
-import re
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def get_submissionDocumentation_path(package: Path):
-    '''Get submissionDocumentation folder path under metadata'''
+    """Get submissionDocumentation folder path under metadata"""
     expected_path = package / 'metadata' / 'submissionDocumentation'
     if expected_path.is_dir():
         return expected_path
@@ -54,7 +53,7 @@ def get_submissionDocumentation_path(package: Path):
         return None
 
 def get_subdoc_file(subdoc: Path):
-    '''Check whether the submissionDocumentation folder has any files'''
+    """Check whether the submissionDocumentation folder has any files"""
     subdoc_file_ls = [x for x in subdoc.iterdir() if x.is_file()]
     if subdoc_file_ls:
         return subdoc_file_ls
@@ -62,10 +61,11 @@ def get_subdoc_file(subdoc: Path):
         return None
 
 def move_subdoc_files_to_mdfolder(subdoc_file_ls: list):
-    '''Move file(s) from the submissionDocumentation folder to the metadata folder'''
+    """Move file(s) from the submissionDocumentation folder to the metadata folder"""
     for file in subdoc_file_ls:
         dest = file.parent.parent / file.name
         file.rename(dest)
+        logging.info(f'Moving {file} to {dest}')
 
 def main():
     '''
@@ -82,9 +82,11 @@ def main():
         if subdoc_path:
             if subdoc_file_ls:
                 move_subdoc_files_to_mdfolder(subdoc_file_ls)
-
-
-
+            try:
+                subdoc_path.rmdir()
+                # Path.rmdir() only removes empty directory
+            except OSError as e:
+                logging.error(f'Directory probably not empty' + str(e))
 
 
 if __name__ == "__main__":
