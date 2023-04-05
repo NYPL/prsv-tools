@@ -62,7 +62,10 @@ def get_subdoc_file(subdoc: Path):
         return None
 
 def move_subdoc_files_to_mdfolder(subdoc_file_ls: list):
-
+    '''Move file(s) from the submissionDocumentation folder to the metadata folder'''
+    for file in subdoc_file_ls:
+        dest = file.parent.parent / file.name
+        file.rename(dest)
 
 def main():
     '''
@@ -75,8 +78,11 @@ def main():
     args = parse_args()
     for package in args.packages:
         subdoc_path = get_submissionDocumentation_path(package)
+        subdoc_file_ls = get_subdoc_file(subdoc_path)
         if subdoc_path:
-            if get_subdoc_file(subdoc_path):
+            if subdoc_file_ls:
+                move_subdoc_files_to_mdfolder(subdoc_file_ls)
+
 
 
 
