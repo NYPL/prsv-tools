@@ -53,7 +53,7 @@ def get_submissionDocumentation_path(package: Path):
     else:
         return None
 
-def subdoc_has_file(subdoc: Path):
+def get_subdoc_file(subdoc: Path):
     '''Check whether the submissionDocumentation folder has any files'''
     subdoc_file_ls = [x for x in subdoc.iterdir() if x.is_file()]
     if subdoc_file_ls:
@@ -76,7 +76,7 @@ def main():
     for package in args.packages:
         subdoc_path = get_submissionDocumentation_path(package)
         if subdoc_path:
-            if subdoc_has_file(subdoc_path):
+            if get_subdoc_file(subdoc_path):
 
 
 
