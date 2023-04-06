@@ -198,3 +198,23 @@ def test_flatten_package(monkeypatch, common_package, capsys):
     stdout = capsys.readouterr().out
 
     assert f'Looking into {common_package.name} submissionDocumentation folder' in stdout
+
+def test_flatten_atypical_package(monkeypatch, common_package, capsys):
+    """Run entire script with a package without submissionDocumentation folder"""
+    atypical_package = common_package
+
+    for subdoc in atypical_package.rglob('submissionDocumentation'):
+        shutil.rmtree(subdoc)
+
+    monkeypatch.setattr(
+        'sys.argv', [
+        '../bin/flatten_er_metadata_folder.py',
+        '--package', str(atypical_package)
+        ]
+    )
+
+    flatten_md.main()
+
+    stdout = capsys.readouterr().out
+
+    assert f'{atypical_package.name} does not have submissionDocumentation folder' in stdout
