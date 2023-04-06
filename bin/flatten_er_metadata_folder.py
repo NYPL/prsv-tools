@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def get_submissionDocumentation_path(package: Path):
+def get_submissionDocumentation_path(package: Path) -> Path | None:
     """Get submissionDocumentation folder path under metadata"""
     expected_path = package / 'metadata' / 'submissionDocumentation'
     if expected_path.is_dir():
@@ -53,7 +53,7 @@ def get_submissionDocumentation_path(package: Path):
     else:
         return None
 
-def get_subdoc_file(subdoc: Path):
+def get_subdoc_file(subdoc: Path) -> list | None:
     """Check whether the submissionDocumentation folder has any files"""
     subdoc_file_ls = [x for x in subdoc.iterdir() if x.is_file()]
     if subdoc_file_ls:
@@ -61,7 +61,7 @@ def get_subdoc_file(subdoc: Path):
     else:
         return None
 
-def move_subdoc_files_to_mdfolder(subdoc_file_ls: list):
+def move_subdoc_files_to_mdfolder(subdoc_file_ls: list) -> None:
     """Move file(s) from the submissionDocumentation folder to the metadata folder"""
     for file in subdoc_file_ls:
         dest = file.parent.parent / file.name
