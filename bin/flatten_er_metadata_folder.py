@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.INFO)
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -65,7 +66,7 @@ def move_subdoc_files_to_mdfolder(subdoc_file_ls: list):
     for file in subdoc_file_ls:
         dest = file.parent.parent / file.name
         file.rename(dest)
-        logging.info(f'Moving {file} to {dest}')
+        LOGGER.info(f'Moving {file} to {dest}')
 
 def main():
     '''
@@ -76,6 +77,7 @@ def main():
         (b) if not, delete the folder (this function should be reusable)
     '''
     args = parse_args()
+
     for package in args.packages:
         subdoc_path = get_submissionDocumentation_path(package)
         if subdoc_path:
@@ -86,7 +88,7 @@ def main():
                 subdoc_path.rmdir()
                 # Path.rmdir() only removes empty directory
             except OSError as e:
-                logging.error(f'Directory probably not empty' + str(e))
+                LOGGER.error(f'Directory probably not empty' + str(e))
 
 
 if __name__ == "__main__":
