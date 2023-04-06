@@ -390,7 +390,7 @@ def test_lint_valid_package(monkeypatch, good_package, capsys):
     assert f'The following packages are valid: {str(good_package)}' in stdout
 
 def test_lint_invalid_package(monkeypatch, good_package, capsys):
-    """Run entire script with valid ER"""
+    """Run entire script with invalid ER"""
 
     bad_package = good_package
 
