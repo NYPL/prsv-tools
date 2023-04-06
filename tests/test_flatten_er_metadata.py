@@ -150,4 +150,15 @@ def test_get_subdoc_file(common_package):
 
     assert result == True
 
+def test_empty_subdoc_folder(common_package):
+    """Test that get_subdoc_file returns None when submissionDocumentation folder is empty"""
+    atypical_pkg = common_package
+    for subdoc in atypical_pkg.rglob('submissionDocumentation'):
+        for file in subdoc.iterdir():
+            file.unlink()
+
+    result = flatten_md.get_subdoc_file(subdoc)
+
+    assert result == None
+
 # Functional tests
