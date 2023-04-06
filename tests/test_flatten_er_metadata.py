@@ -2,6 +2,7 @@ import bin.flatten_er_metadata_folder as flatten_md
 
 import pytest
 from pathlib import Path
+import shutil
 
 # Unit tests
 ## Argument tests
@@ -124,4 +125,15 @@ def test_get_submissionDocumentation_path(common_package):
     # The isinstance() function returns whether the specified object is of the specified type.
 
     assert result == True
+
+def test_nonexistent_subdoc_path(common_package):
+    """Test that get_submissionDocumentation_path returns None when the submissionDocumentation
+    folder does not exist"""
+    bad_package = common_package
+
+    for subdoc in bad_package.rglob('submissionDocumentation'):
+        shutil.rmtree(subdoc)
+
+    subdoc_path = flatten_md.get_submissionDocumentation_path(common_package)
+    assert subdoc_path == None
 # Functional tests
