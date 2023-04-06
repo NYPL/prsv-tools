@@ -91,7 +91,7 @@ def main():
             except OSError as e:
                 LOGGER.error(f'Directory probably not empty' + str(e))
         else:
-            LOGGER.info(f'{package.name} does not have submissionDocumentation folder')
+            print(f'{package.name} does not have submissionDocumentation folder')
 
 
 if __name__ == "__main__":
