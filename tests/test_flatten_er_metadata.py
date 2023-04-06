@@ -116,4 +116,12 @@ def common_package(tmp_path: Path):
 
     return pkg
 
+def test_get_submissionDocumentation_path(common_package):
+    """Test that get_submissionDocumentation_path function returns a Path object
+    when submissionDocumentation folder exists in the metadata folder"""
+    subdoc_path = flatten_md.get_submissionDocumentation_path(common_package)
+    result = isinstance(subdoc_path, Path)
+    # The isinstance() function returns whether the specified object is of the specified type.
+
+    assert result == True
 # Functional tests
