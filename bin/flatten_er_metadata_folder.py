@@ -5,8 +5,8 @@ import bagit
 import logging
 from pathlib import Path
 
+logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.INFO)
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -89,6 +89,8 @@ def main():
                 # Path.rmdir() only removes empty directory
             except OSError as e:
                 LOGGER.error(f'Directory probably not empty' + str(e))
+        else:
+            LOGGER.info(f'{package.name} does not have submissionDocumentation folder')
 
 
 if __name__ == "__main__":
