@@ -129,9 +129,9 @@ def test_get_submissionDocumentation_path(common_package):
 def test_nonexistent_subdoc_path(common_package):
     """Test that get_submissionDocumentation_path returns None when the submissionDocumentation
     folder does not exist"""
-    bad_package = common_package
+    uncommon_package = common_package
 
-    for subdoc in bad_package.rglob('submissionDocumentation'):
+    for subdoc in uncommon_package.rglob('submissionDocumentation'):
         shutil.rmtree(subdoc)
 
     subdoc_path = flatten_md.get_submissionDocumentation_path(common_package)
@@ -152,8 +152,8 @@ def test_get_subdoc_file(common_package):
 
 def test_empty_subdoc_folder(common_package):
     """Test that get_subdoc_file returns None when submissionDocumentation folder is empty"""
-    atypical_pkg = common_package
-    for subdoc in atypical_pkg.rglob('submissionDocumentation'):
+    uncommon_pkg = common_package
+    for subdoc in uncommon_pkg.rglob('submissionDocumentation'):
         for file in subdoc.iterdir():
             file.unlink()
 
@@ -199,17 +199,17 @@ def test_flatten_package(monkeypatch, common_package, capsys):
 
     assert f'Looking into {common_package.name} submissionDocumentation folder' in stdout
 
-def test_flatten_atypical_package(monkeypatch, common_package, capsys):
+def test_flatten_uncommon_package(monkeypatch, common_package, capsys):
     """Run entire script with a package without submissionDocumentation folder"""
-    atypical_package = common_package
+    uncommon_package = common_package
 
-    for subdoc in atypical_package.rglob('submissionDocumentation'):
+    for subdoc in uncommon_package.rglob('submissionDocumentation'):
         shutil.rmtree(subdoc)
 
     monkeypatch.setattr(
         'sys.argv', [
         '../bin/flatten_er_metadata_folder.py',
-        '--package', str(atypical_package)
+        '--package', str(uncommon_package)
         ]
     )
 
@@ -217,4 +217,4 @@ def test_flatten_atypical_package(monkeypatch, common_package, capsys):
 
     stdout = capsys.readouterr().out
 
-    assert f'{atypical_package.name} does not have submissionDocumentation folder' in stdout
+    assert f'{uncommon_package.name} does not have submissionDocumentation folder' in stdout
