@@ -136,4 +136,18 @@ def test_nonexistent_subdoc_path(common_package):
 
     subdoc_path = flatten_md.get_submissionDocumentation_path(common_package)
     assert subdoc_path == None
+
+def test_get_subdoc_file(common_package):
+    """Test that get_subdoc_file returns a list of file(s) when submissionDocumentation folder
+    has files in it"""
+    for subdoc in common_package.rglob('submissionDocumentation'):
+        file_ls = flatten_md.get_subdoc_file(subdoc)
+
+    if len(file_ls) > 0 and isinstance(file_ls, list):
+        result = True
+    else:
+        result = False
+
+    assert result == True
+
 # Functional tests
