@@ -183,3 +183,18 @@ def test_move_subdoc_files_to_mdfolder(common_package):
     assert result == True
 
 # Functional tests
+def test_flatten_package(monkeypatch, common_package, capsys):
+    """Run entire script with a common package"""
+
+    monkeypatch.setattr(
+        'sys.argv', [
+        '../bin/flatten_er_metadata_folder.py',
+        '--package', str(common_package)
+        ]
+    )
+
+    flatten_md.main()
+
+    stdout = capsys.readouterr().out
+
+    assert f'Looking into {common_package.name} submissionDocumentation folder' in stdout
