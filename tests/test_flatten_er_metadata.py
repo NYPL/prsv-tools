@@ -161,4 +161,25 @@ def test_empty_subdoc_folder(common_package):
 
     assert result == None
 
+def test_move_subdoc_files_to_mdfolder(common_package):
+    """Test that move_subdoc_files_to_mdfolder moves file(s) from submissionDocumentation
+    up to directly under metadata folder: (1) there's file under metadata;
+    (2) there's no file in submissionDocumentation"""
+    for subdoc in common_package.rglob('submissionDocumentation'):
+        subdoc_file_ls = [x for x in subdoc.iterdir() if x.is_file()]
+
+    flatten_md.move_subdoc_files_to_mdfolder(subdoc_file_ls)
+
+    for md_path in common_package.rglob('metadata'):
+        md_file_ls = [x for x in md_path.iterdir() if x.is_file()]
+        for subdoc in md_path.glob('submissionDocumentation'):
+            subdoc_ls = [x for x in subdoc.iterdir()]
+
+    if len(md_file_ls) > 0 and len(subdoc_ls) == 0:
+        result = True
+    else:
+        result = False
+
+    assert result == True
+
 # Functional tests
