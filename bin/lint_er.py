@@ -56,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--log_folder',
-        required=True
+        default='.'
     )
 
     return parser.parse_args()
