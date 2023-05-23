@@ -44,6 +44,13 @@ def parse_schemas_id(response) -> set:
 
     return schemas_ids
 
+def save_schema_xsd(response):
+    root = ET.fromstring(response.text)
+
+    try:
+        print(root[0].attrib['name'])
+    except KeyError:
+        print('KeyError')
 
 def main():
     '''
@@ -68,6 +75,7 @@ def main():
         for id in schemas_ids:
             schema_content_url = f'{schemas_url}/{id}/content'
             schema_res = get_api_results(token, schema_content_url)
+            # save_schema_xsd(schema_res) -> need this function
 
 
 
