@@ -15,7 +15,7 @@ def parse_args():
         type=str,
         required=True,
         help='Please type "test" or "prod"'
-
+    )
     return parser.parse_args()
 
 def generate_access_token(config_input: str):
