@@ -75,7 +75,7 @@ def main():
         for id in schemas_ids:
             schema_content_url = f'{schemas_url}/{id}/content'
             schema_res = get_api_results(token, schema_content_url)
-            # save_schema_xsd(schema_res) -> need this function
+            save_schema_xsd(schema_res)
 
 
 
