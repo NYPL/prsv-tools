@@ -17,6 +17,10 @@ def main():
     4. Get XML data. May need to get the ID first and then the actual XML file
     5. Write to the machine
     '''
+    # config filenames need to be in the same directory and are hard-coded here
+    test_config = 'DA_Dev_SMTP.ini'
+    prod_config = 'DA_Production_SMTP.ini'
+    schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
 
 
 
