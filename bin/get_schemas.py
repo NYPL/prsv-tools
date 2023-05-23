@@ -6,7 +6,17 @@ import xml.etree.ElementTree as ET
 # preservicatoken.py needs to be in the same directory for this to work
 from preservicatoken import securitytoken
 
+def parse_args():
+    parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        '--instance',
+        '-i',
+        type=str,
+        required=True,
+        help='Please type "test" or "prod"'
+
+    return parser.parse_args()
 
 
 def main():
@@ -21,6 +31,8 @@ def main():
     test_config = 'DA_Dev_SMTP.ini'
     prod_config = 'DA_Production_SMTP.ini'
     schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
+
+    args = parse_args()
 
 
 
