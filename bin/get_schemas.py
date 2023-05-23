@@ -26,6 +26,24 @@ def generate_access_token(config_input: str):
 
     return accesstoken
 
+def get_api_results(accesstoken, url):
+    headers = {
+                'Preservica-Access-Token': accesstoken,
+                'Content-Type': "application/xml"
+              }
+    response = requests.request('GET', url, headers=headers)
+    return response # response object
+
+def parse_schemas_id(response) -> set:
+    schemas_ids = set()
+    root = ET.fromstring(response.text)
+    ns = '{http://preservica.com/AdminAPI/v6.7}'
+
+    for id in root.iter(f'{ns}ApiId'):
+        schemas_ids.add(id.text)
+
+    return schemas_ids
+
 
 def main():
     '''
@@ -45,6 +63,8 @@ def main():
     if args.instance == 'test':
         config = test_config
         token = generate_access_token(config)
+        schemas_res = get_api_results(token, schemas_url)
+        schemas_ids = parse_schemas_id(schemas_res)
 
 
 
