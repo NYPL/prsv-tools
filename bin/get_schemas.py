@@ -18,6 +18,14 @@ def parse_args():
 
     return parser.parse_args()
 
+def generate_access_token(config_input: str):
+    config = configparser.ConfigParser()
+    config.sections()
+    config.read(config_input)
+    accesstoken = securitytoken(config_input)
+
+    return accesstoken
+
 
 def main():
     '''
@@ -33,6 +41,10 @@ def main():
     schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
 
     args = parse_args()
+
+    if args.instance == 'test':
+        config = test_config
+        token = generate_access_token(config)
 
 
 
