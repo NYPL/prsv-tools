@@ -4,7 +4,7 @@ import configparser
 import requests
 
 
-def get_token(config_input: str) -> str:
+def get_token(credential_file_name: str) -> str:
 
     """
     return token string
@@ -12,30 +12,16 @@ def get_token(config_input: str) -> str:
     if the file does not exist or the token is out of date, create token
     """
 
-    tokenfilepath = config_input + ".token.file"
+    token_file = Path(f'{credential_file_name}.token.file')
 
-    my_file = Path(tokenfilepath)
-    if my_file.is_file():
+    if token_file.is_file():
+        time_issued, sessiontoken = token_file.read_text().split("\n")
+        # tokens are valid for 500 seconds
+        if time.time() - float(time_issued) < 500:
+            return sessiontoken
 
-        f = open(tokenfilepath) # Open file on read mode
-        lines = f.read().split("\n") # Create a list containing all lines
-        print(time.time())
-        print(float(lines[0]))
-        if time.time() - float(lines[0]) > 500:
-            sessiontoken = create_token(config_input,tokenfilepath)
-            print(sessiontoken)
-        else:
-            sessiontoken = lines[1]
-            print(sessiontoken)
-        f.close() # Close file
-
-
-    if not my_file.is_file():
-
-        sessiontoken = create_token(config_input,tokenfilepath)
-        print(sessiontoken)
-
-    return(sessiontoken)
+    create_token(credential_file_name, token_file)
+    return get_token(token_file)
 
 
 
