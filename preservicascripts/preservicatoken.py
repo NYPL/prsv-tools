@@ -4,9 +4,13 @@ import configparser
 import requests
 
 
-def securitytoken(config_input):
+def get_token(config_input: str) -> str:
 
-    #check for existing valid token in token.file and if eithe the file does not exist or the token is out of date call the 'newtoken' function
+    """
+    return token string
+    check for existing valid token in token file
+    if the file does not exist or the token is out of date, create token
+    """
 
     tokenfilepath = config_input + ".token.file"
 
@@ -18,7 +22,7 @@ def securitytoken(config_input):
         print(time.time())
         print(float(lines[0]))
         if time.time() - float(lines[0]) > 500:
-            sessiontoken = newtoken(config_input,tokenfilepath)
+            sessiontoken = create_token(config_input,tokenfilepath)
             print(sessiontoken)
         else:
             sessiontoken = lines[1]
@@ -28,7 +32,7 @@ def securitytoken(config_input):
 
     if not my_file.is_file():
 
-        sessiontoken = newtoken(config_input,tokenfilepath)
+        sessiontoken = create_token(config_input,tokenfilepath)
         print(sessiontoken)
 
     return(sessiontoken)
@@ -39,7 +43,10 @@ def securitytoken(config_input):
 
 #get new token function
 
-def newtoken(config_input,tokenfilepath):
+def create_token(
+        config_input: str,
+        tokenfilepath: Path
+    ) -> None:
 
     print(config_input)
 
