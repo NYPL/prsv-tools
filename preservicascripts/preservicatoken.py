@@ -1,21 +1,12 @@
-
-import sys
-
 import time
+from pathlib import Path
+import configparser
+import requests
 
-#########################################################################################
-
-# sys.tracebacklimit = 0
-
-
-#########################################################################################
 
 def securitytoken(config_input):
 
     #check for existing valid token in token.file and if eithe the file does not exist or the token is out of date call the 'newtoken' function
-
-    import time
-    from pathlib import Path
 
     tokenfilepath = config_input + ".token.file"
 
@@ -37,11 +28,11 @@ def securitytoken(config_input):
 
     if not my_file.is_file():
 
-        sessiontoken = newtoken(config_input,tokenfilepath) 
+        sessiontoken = newtoken(config_input,tokenfilepath)
         print(sessiontoken)
 
     return(sessiontoken)
-        
+
 
 
 #########################################################################################
@@ -50,12 +41,8 @@ def securitytoken(config_input):
 
 def newtoken(config_input,tokenfilepath):
 
-    import configparser
-    import requests
-    
-    
     print(config_input)
-    
+
     print(tokenfilepath)
 
     #read from config file to get the correct parameters for the token request
@@ -74,29 +61,29 @@ def newtoken(config_input,tokenfilepath):
     #build the query string and get a new token
 
     payload = 'username=' + usernameval + '&password=' + passwordval + '&tenant=' + tenantval
-    
+
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 
     response = requests.request("POST", url, headers=headers, data=payload)
-    
+
     print(response.raise_for_status())
 
 
     data = response.json()
 
     tokenval = (data["token"])
-    
+
     timenow = str(time.time())
-    
+
     #write token to token.file for later reuse
-    
+
     tokenfile = open(tokenfilepath, "w")
     tokenfile.write(timenow)
     tokenfile.write("\n")
     tokenfile.write(tokenval)
     tokenfile.close()
-    
+
     return(tokenval)
 
 #########################################################################################
