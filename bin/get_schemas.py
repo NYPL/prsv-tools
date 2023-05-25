@@ -54,6 +54,16 @@ def parse_res_to_dict(response, ns) -> dict:
 
     return name_id_dict
 
+def fetch_and_write_content(token, url, ns, folder, file_extension):
+    content_res = get_api_results(token, url)
+    content_dict = parse_res_to_dict(content_res, ns)
+    for item_name in content_dict:
+        item_content_url = f'{url}/{content_dict[item_name]}/content'
+        item_res = get_api_results(token, item_content_url)
+        filepath = folder.joinpath(folder, f'{item_name}.{file_extension}')
+        with open(filepath, 'w') as f:
+            f.write(item_res.text)
+
 def main():
     '''
     1. Decide which instance. This points to corresponding .ini
@@ -85,23 +95,11 @@ def main():
 
     token = generate_access_token(config)
 
-    schemas_res = get_api_results(token, schemas_url)
-    schemas_dict = parse_res_to_dict(schemas_res, ns)
-    for name in schemas_dict:
-        schema_content_url = f'{schemas_url}/{schemas_dict[name]}/content'
-        schema_res = get_api_results(token, schema_content_url)
-        filepath = folder.joinpath(folder, f'{name}.xsd')
-        with open(filepath, 'w') as f:
-            f.write(schema_res.text)
+    # Fetch and write schemas
+    fetch_and_write_content(token, schemas_url, ns, folder, 'xsd')
 
-    transform_res = get_api_results(token, transforms_url)
-    transforms_dict = parse_res_to_dict(transform_res, ns)
-    for name in transforms_dict:
-        transform_content_url = f'{transforms_url}/{transforms_dict[name]}/content'
-        transform_res = get_api_results(token, transform_content_url)
-        filepath = folder.joinpath(folder, f'{name}.xslt')
-        with open(filepath, 'w') as f:
-            f.write(transform_res.text)
+    # Fetch and write transforms
+    fetch_and_write_content(token, transforms_url, ns, folder, 'xslt')
 
 if __name__=='__main__':
     main()
