@@ -2,6 +2,7 @@ import argparse
 import requests
 import configparser
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 # preservicatoken.py needs to be in the same directory for this to work
 from preservicatoken import securitytoken
@@ -15,6 +16,15 @@ def parse_args():
         type=str,
         required=True,
         help='Please type "test" or "prod"'
+    )
+
+    parser.add_argument(
+        '--destination_folder',
+        '-dest',
+        type=str,
+        required=False,
+        help='''Optional. If a folder path is included, the files will be
+        saved in the folder'''
     )
     return parser.parse_args()
 
@@ -65,14 +75,20 @@ def main():
     else:
         config = prod_config
 
+    if args.destination_folder:
+        folder = Path(args.destination_folder)
+    else:
+        folder = Path(__file__).parent.absolute()
+
     token = generate_access_token(config)
     schemas_res = get_api_results(token, schemas_url)
     schemas_dict = parse_schemas_id(schemas_res)
     for name in schemas_dict:
         schema_content_url = f'{schemas_url}/{schemas_dict[name]}/content'
         schema_res = get_api_results(token, schema_content_url)
-        with open(f'{name}.xsd', 'w') as f:
-            f.write(schema_res.text)
+        filepath = folder.joinpath(folder, f'{name}.xsd')
+        with open(filepath, 'w') as f:
+                f.write(schema_res.text)
 
 
 if __name__=='__main__':
