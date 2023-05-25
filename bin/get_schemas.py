@@ -62,14 +62,18 @@ def main():
 
     if args.instance == 'test':
         config = test_config
-        token = generate_access_token(config)
-        schemas_res = get_api_results(token, schemas_url)
-        schemas_dict = parse_schemas_id(schemas_res)
-        for name in schemas_dict:
-            schema_content_url = f'{schemas_url}/{schemas_dict[name]}/content'
-            schema_res = get_api_results(token, schema_content_url)
-            with open(f'{name}.xsd', 'w') as f:
-                f.write(schema_res.text)
+    else:
+        config = prod_config
+
+    token = generate_access_token(config)
+    schemas_res = get_api_results(token, schemas_url)
+    schemas_dict = parse_schemas_id(schemas_res)
+    for name in schemas_dict:
+        schema_content_url = f'{schemas_url}/{schemas_dict[name]}/content'
+        schema_res = get_api_results(token, schema_content_url)
+        with open(f'{name}.xsd', 'w') as f:
+            f.write(schema_res.text)
+
 
 if __name__=='__main__':
     main()
