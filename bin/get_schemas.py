@@ -45,14 +45,6 @@ def parse_schemas_id(response) -> dict:
 
     return schemas_dict
 
-def save_schema_xsd(response):
-    root = ET.fromstring(response.text)
-
-    try:
-        print(root[0].attrib['name'])
-    except KeyError:
-        print('KeyError')
-
 def main():
     '''
     1. Decide which instance. This points to corresponding .ini
@@ -73,13 +65,11 @@ def main():
         token = generate_access_token(config)
         schemas_res = get_api_results(token, schemas_url)
         schemas_dict = parse_schemas_id(schemas_res)
-        # for id in schemas_ids:
-        #      schema_content_url = f'{schemas_url}/{id}/content'
-        #      schema_res = get_api_results(token, schema_content_url)
-        #      save_schema_xsd(schema_res)
-
-
-
+        for name in schemas_dict:
+            schema_content_url = f'{schemas_url}/{schemas_dict[name]}/content'
+            schema_res = get_api_results(token, schema_content_url)
+            with open(f'{name}.xsd', 'w') as f:
+                f.write(schema_res.text)
 
 if __name__=='__main__':
     main()
