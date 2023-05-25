@@ -34,15 +34,16 @@ def get_api_results(accesstoken, url):
     response = requests.request('GET', url, headers=headers)
     return response # response object
 
-def parse_schemas_id(response) -> set:
-    schemas_ids = set()
+def parse_schemas_id(response) -> dict:
     root = ET.fromstring(response.text)
-    ns = '{http://preservica.com/AdminAPI/v6.7}'
+    ns = '{http://preservica.com/AdminAPI/v6.8}'
 
-    for id in root.iter(f'{ns}ApiId'):
-        schemas_ids.add(id.text)
+    schema_names = [ name.text.replace(" ", "_") for name in root.iter(f'{ns}Name') ]
+    ids = [ id.text for id in root.iter(f'{ns}ApiId')]
 
-    return schemas_ids
+    schemas_dict = { s:i for (s,i) in zip(schema_names, ids)}
+
+    return schemas_dict
 
 def save_schema_xsd(response):
     root = ET.fromstring(response.text)
@@ -71,11 +72,11 @@ def main():
         config = test_config
         token = generate_access_token(config)
         schemas_res = get_api_results(token, schemas_url)
-        schemas_ids = parse_schemas_id(schemas_res)
-        for id in schemas_ids:
-            schema_content_url = f'{schemas_url}/{id}/content'
-            schema_res = get_api_results(token, schema_content_url)
-            save_schema_xsd(schema_res)
+        schemas_dict = parse_schemas_id(schemas_res)
+        # for id in schemas_ids:
+        #      schema_content_url = f'{schemas_url}/{id}/content'
+        #      schema_res = get_api_results(token, schema_content_url)
+        #      save_schema_xsd(schema_res)
 
 
 
