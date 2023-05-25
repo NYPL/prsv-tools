@@ -44,16 +44,15 @@ def get_api_results(accesstoken, url):
     response = requests.request('GET', url, headers=headers)
     return response # response object
 
-def parse_schemas_id(response) -> dict:
+def parse_res_to_dict(response, ns) -> dict:
     root = ET.fromstring(response.text)
-    ns = '{http://preservica.com/AdminAPI/v6.8}'
 
-    schema_names = [ name.text.replace(" ", "_") for name in root.iter(f'{ns}Name') ]
+    names = [ name.text.replace(" ", "_") for name in root.iter(f'{ns}Name') ]
     ids = [ id.text for id in root.iter(f'{ns}ApiId')]
 
-    schemas_dict = { s:i for (s,i) in zip(schema_names, ids)}
+    name_id_dict = { n:i for (n,i) in zip(names, ids)}
 
-    return schemas_dict
+    return name_id_dict
 
 def main():
     '''
@@ -64,9 +63,13 @@ def main():
     5. Write to the machine
     '''
     # config filenames need to be in the same directory and are hard-coded here
+    # namespace (ns) gets updated when Preservica has a version update
+    # schemas_url and transforms_url are relatively stable
     test_config = 'DA_Dev_SMTP.ini'
     prod_config = 'DA_Production_SMTP.ini'
+    ns = '{http://preservica.com/AdminAPI/v6.8}'
     schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
+    transforms_url = 'https://nypl.preservica.com/api/admin/transforms'
 
     args = parse_args()
 
@@ -81,15 +84,24 @@ def main():
         folder = Path(__file__).parent.absolute()
 
     token = generate_access_token(config)
+
     schemas_res = get_api_results(token, schemas_url)
-    schemas_dict = parse_schemas_id(schemas_res)
+    schemas_dict = parse_res_to_dict(schemas_res, ns)
     for name in schemas_dict:
         schema_content_url = f'{schemas_url}/{schemas_dict[name]}/content'
         schema_res = get_api_results(token, schema_content_url)
         filepath = folder.joinpath(folder, f'{name}.xsd')
         with open(filepath, 'w') as f:
-                f.write(schema_res.text)
+            f.write(schema_res.text)
 
+    transform_res = get_api_results(token, transforms_url)
+    transforms_dict = parse_res_to_dict(transform_res, ns)
+    for name in transforms_dict:
+        transform_content_url = f'{transforms_url}/{transforms_dict[name]}/content'
+        transform_res = get_api_results(token, transform_content_url)
+        filepath = folder.joinpath(folder, f'{name}.xslt')
+        with open(filepath, 'w') as f:
+            f.write(transform_res.text)
 
 if __name__=='__main__':
     main()
