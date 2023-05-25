@@ -48,9 +48,9 @@ def parse_res_to_dict(response, ns) -> dict:
     root = ET.fromstring(response.text)
 
     names = [ name.text.replace(" ", "_") for name in root.iter(f'{ns}Name') ]
-    ids = [ id.text for id in root.iter(f'{ns}ApiId')]
+    ids = [ id.text for id in root.iter(f'{ns}ApiId') ]
 
-    name_id_dict = { n:i for (n,i) in zip(names, ids)}
+    name_id_dict = { n:i for (n,i) in zip(names, ids) }
 
     return name_id_dict
 
