@@ -46,7 +46,7 @@ def package_has_valid_name(package: Path):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
     folder_name = package.name
     match = re.fullmatch(r'M\d+_(ER|DI|EM)_\d+', folder_name)
-    
+
     if match:
         return True
     else:
@@ -99,6 +99,7 @@ def metadata_folder_has_one_or_less_file(package: Path):
         return True
 
 def metadata_file_has_valid_filename(package: Path):
+    "To add image and tsv as valid files in metadata folder"
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
@@ -135,12 +136,12 @@ def metadata_file_has_valid_filename(package: Path):
     else:
         LOGGER.warning("There are no files in the metadata folder")
         return True
-        
+
 def objects_folder_has_file(package: Path):
     """The objects folder must have one or more files, which can be in folder(s)"""
     for objects_path in package.glob('objects'):
         obj_filepaths = [x for x in objects_path.rglob('*') if x.is_file()]
-    
+
     if not any(obj_filepaths):
         LOGGER.error("The objects folder does not have any file")
         return False
