@@ -51,8 +51,9 @@ def main():
     1. Decide which instance. This points to corresponding .ini
     2. Generate access token for the specified instance
     3. Decide which endpoint to use
-    4. Get XML data. May need to get the ID first and then the actual XML file
-    5. Write to the machine
+    4. Get XML data.
+    5. Parse XML data to Excel spreadsheets
+    6. Write to the machine
     '''
     # config filenames need to be in the same directory and are hard-coded here
     # namespace (ns) gets updated when Preservica has a version update
