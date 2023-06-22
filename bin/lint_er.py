@@ -116,6 +116,18 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     else:
         return True
 
+def metadata_file_expected_types(package: Path) -> bool:
+    """The metadata folder can only have FTK report and/or carrier photograph(s)"""
+    for metadata_path in package.glob('metadata'):
+        md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
+
+    expected_types = ['.csv', '.tsv', '.jpg']
+    for file in md_file_ls:
+        if file.suffix.lower() in expected_types:
+            return True
+        else:
+            return False
+
 def metadata_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
     for metadata_path in package.glob('metadata'):
