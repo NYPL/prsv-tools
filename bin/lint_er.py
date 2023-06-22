@@ -126,6 +126,7 @@ def metadata_file_is_expected_types(package: Path) -> bool:
         if file.suffix.lower() in expected_types:
             return True
         else:
+            LOGGER.error(f"{package.name} has unexpected file {file.name}")
             return False
 
 def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
@@ -135,8 +136,8 @@ def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
                         x.is_file() and x.suffix.lower() in ['.csv', '.tsv']]
 
     for ctsv in ctsv_file_ls:
-        if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.[ct]sv', ctsv.name.lower()):
-                return True
+        if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+', ctsv.stem):
+            return True
         else:
             LOGGER.error(f"{package.name} has nonconforming FTK file, {ctsv.name}.")
             return False
@@ -185,7 +186,6 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
 
     less_strict_tests = [
         metadata_folder_has_one_or_less_file,
-        metadata_file_has_valid_filename,
         package_has_no_hidden_file
     ]
 
@@ -198,6 +198,8 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
         package_has_valid_subfolder_names,
         objects_folder_has_no_access_folder,
         metadata_folder_is_flat,
+        metadata_file_is_expected_types,
+        metadata_FTK_file_has_valid_filename,
         objects_folder_has_file,
         package_has_no_bag,
         package_has_no_zero_bytes_file
