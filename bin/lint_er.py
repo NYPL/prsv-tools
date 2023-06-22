@@ -116,7 +116,7 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     else:
         return True
 
-def metadata_file_expected_types(package: Path) -> bool:
+def metadata_file_is_expected_types(package: Path) -> bool:
     """The metadata folder can only have FTK report and/or carrier photograph(s)"""
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
