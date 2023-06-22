@@ -387,7 +387,7 @@ def test_lint_valid_package(monkeypatch, good_package, capsys):
 
     stdout = capsys.readouterr().out
 
-    assert f'The following packages are valid: {str(good_package)}' in stdout
+    assert f'packages are valid: {[str(good_package.name)]}' in stdout
 
 def test_lint_invalid_package(monkeypatch, good_package, capsys):
     """Run entire script with invalid ER"""
@@ -411,4 +411,4 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
 
     stdout = capsys.readouterr().out
 
-    assert f'The following packages are invalid: {str(bad_package)}' in stdout
+    assert f'packages are invalid: {[str(bad_package.name)]}' in stdout
