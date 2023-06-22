@@ -403,7 +403,7 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
     monkeypatch.setattr(
         'sys.argv', [
             '../bin/lint_er.py',
-            '--package', str(good_package)
+            '--package', str(bad_package)
         ]
     )
 
@@ -411,4 +411,4 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
 
     stdout = capsys.readouterr().out
 
-    assert f'The following packages are invalid: {str(good_package)}' in stdout
+    assert f'The following packages are invalid: {str(bad_package)}' in stdout
