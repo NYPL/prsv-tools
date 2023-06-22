@@ -226,6 +226,18 @@ def test_metadata_file_is_expected_types(good_package):
 
     assert result == True
 
+def test_metadata_file_is_unexpected_types(good_package):
+    """Test that package fails function if the file in the metadata folder
+    are not expected types"""
+    bad_package = good_package
+    for metadata_path in bad_package.glob('metadata'):
+        for file in [x for x in metadata_path.iterdir() if x.is_file()]:
+            file.rename(metadata_path / 'random.txt')
+
+    result = lint_er.metadata_file_is_expected_types(good_package)
+
+    assert result == False
+
 def test_FTK_metadata_file_valid_name(good_package):
     """FTK metadata CSV/TSV name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
     result = lint_er.metadata_FTK_file_has_valid_filename(good_package)
