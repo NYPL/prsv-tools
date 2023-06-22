@@ -56,6 +56,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--log_folder',
+        help='''Optional. Designate where to save the log file,
+        or it will be saved in current directory''',
         default='.'
     )
 
