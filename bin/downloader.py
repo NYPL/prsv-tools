@@ -63,6 +63,9 @@ def parse_args():
         required='--object' in sys.argv and 'all' in sys.argv,
         help='acquisition ID, unknown'
     )
+    all_ids = [item.dest for item in ids._actions]
+    if not any(f'--{id}' in sys.argv for id in all_ids):
+       parser.error('at least one ID argument is required')
 
     return parser.parse_args()
 
