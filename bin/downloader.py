@@ -67,6 +67,12 @@ def parse_args():
     if not any(f'--{id}' in sys.argv for id in all_ids):
        parser.error('at least one ID argument is required')
 
+    parser.add_argument(
+        '--search',
+        action='store_true',
+        default=True
+    )
+
     return parser.parse_args()
 
 def main():
