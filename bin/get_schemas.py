@@ -79,6 +79,7 @@ def main():
     prod_config = 'DA_Production_SMTP.ini'
     ns = '{http://preservica.com/AdminAPI/v6.8}'
     schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
+    documents_url = 'https://nypl.preservica.com/api/admin/documents'
     transforms_url = 'https://nypl.preservica.com/api/admin/transforms'
 
     args = parse_args()
@@ -97,6 +98,9 @@ def main():
 
     # Fetch and write schemas
     fetch_and_write_content(token, schemas_url, ns, folder, 'xsd')
+
+    # Fetch and write schemas
+    fetch_and_write_content(token, documents_url, ns, folder, 'xml')
 
     # Fetch and write transforms
     fetch_and_write_content(token, transforms_url, ns, folder, 'xslt')
