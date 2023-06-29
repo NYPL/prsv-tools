@@ -4,8 +4,8 @@ import configparser
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# preservicatoken.py needs to be in the same directory for this to work
-from preservicatoken import securitytoken
+# prsvtoken.py needs to be in the same directory for this to work
+import prsvtoken
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ def generate_access_token(config_input: str):
     config = configparser.ConfigParser()
     config.sections()
     config.read(config_input)
-    accesstoken = securitytoken(config_input)
+    accesstoken = prsvtoken.get_token(config_input)
 
     return accesstoken
 
@@ -89,8 +89,8 @@ def main():
     else:
         config = prod_config
 
-    if args.destination_folder:
-        folder = Path(args.destination_folder)
+    if args.destination_folder_path:
+        folder = Path(args.destination_folder_path)
     else:
         folder = Path(__file__).parent.absolute()
 
