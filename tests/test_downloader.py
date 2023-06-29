@@ -124,3 +124,11 @@ def test_require_at_least_one_id(monkeypatch, capsys):
     stderr = capsys.readouterr().err
 
     assert f'at least one ID argument is required' in stderr
+
+def test_accept_search_argument(monkeypatch):
+    cmd = ['../bin/downloader.py', '--ami', '123456', '--search']
+
+    monkeypatch.setattr('sys.argv', cmd)
+    args = dldr.parse_args()
+
+    assert getattr(args, 'search') == True
