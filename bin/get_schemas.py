@@ -19,12 +19,12 @@ def parse_args():
     )
 
     parser.add_argument(
-        '--destination_folder',
+        '--destination_folder_path',
         '-dest',
         type=str,
         required=False,
-        help='''Optional. If a folder path is included, the files will be
-        saved in the folder'''
+        help='''Optional. Provide an absolute folder path to save the files
+        in the specified folder'''
     )
     return parser.parse_args()
 
