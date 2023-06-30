@@ -130,7 +130,7 @@ def test_top_folder_invalid_name(good_package):
     does not conform to the naming convention, M###_(ER|DI|EM)_####"""
     bad_package = good_package
     bad_package = bad_package.rename(bad_package.parent / 'M12345')
-    
+
     result = lint_er.package_has_valid_name(bad_package)
 
     assert result == False
@@ -155,7 +155,7 @@ def test_sec_level_folder_invalid_names(good_package):
     assert result == False
 
 def test_objects_folder_has_no_access_folder(good_package):
-    """The package should not have an 'access' folder that was created by the Library. 
+    """The package should not have an 'access' folder that was created by the Library.
     As the access folder and files in it were created by the Library, they should not be ingested"""
     result = lint_er.objects_folder_has_no_access_folder(good_package)
 
@@ -234,7 +234,7 @@ def test_metadata_file_invalid_name_tsv(good_package):
     for metadata_path in bad_package.glob('metadata'):
         for file in [x for x in metadata_path.iterdir() if x.is_file()]:
             file.rename(metadata_path / 'M12345_ER_0001.tsv')
-    
+
     result = lint_er.metadata_file_has_valid_filename(bad_package)
 
     assert result == False
@@ -250,7 +250,7 @@ def test_metadata_file_invalid_name_more_files(good_package):
         new_tsv.touch()
         random_file = metadata_path.joinpath('M1234.txt')
         random_file.touch()
-    
+
     result = lint_er.metadata_file_has_valid_filename(bad_package)
 
     assert result == False
@@ -282,7 +282,7 @@ def test_objects_folder_has_empty_folder(good_package):
     for objects_path in bad_package.glob('objects'):
         empty_folder = objects_path.joinpath('empty_folder')
         empty_folder.mkdir()
-    
+
     result = lint_er.objects_folder_has_file(bad_package)
 
     assert result == False
@@ -294,7 +294,7 @@ def test_package_has_no_bag(good_package):
     assert result == True
 
 def test_package_has_bag(good_package):
-    """Test that package fails function when there is any bagit.txt file, 
+    """Test that package fails function when there is any bagit.txt file,
     indicating bag structure exists in the package"""
     bad_package = good_package
     for obj_path in bad_package.glob('objects'):
@@ -302,7 +302,7 @@ def test_package_has_bag(good_package):
         bag_folder.mkdir()
         bag_file = bag_folder.joinpath('bagit.txt')
         bag_file.touch()
-    
+
     result = lint_er.package_has_no_bag(bad_package)
 
     assert result == False
@@ -343,30 +343,72 @@ def test_package_has_zero_bytes_file(good_package):
 
     assert result == False
 
+def test_valid_package(good_package):
+    """Test that package returns 'valid' when all tests are passed"""
+    result = lint_er.lint_package(good_package)
+
+    assert result == 'valid'
+
+def test_invalid_package(good_package):
+    """Test that package returns 'invalid' when all tests are passed"""
+    bad_package = good_package
+
+    objects = bad_package.joinpath('objects')
+    bag_folder = objects.joinpath('bagfolder')
+    bag_folder.mkdir()
+    bag_file = bag_folder.joinpath('bagit.txt')
+    bag_file.touch()
+
+    result = lint_er.lint_package(bad_package)
+
+    assert result == 'invalid'
+
+def test_unclear_package(good_package):
+    """Test that package returns 'needs review' when all tests are passed"""
+    bad_package = good_package
+    bad_package.joinpath('metadata').joinpath('M12345_ER_0002.csv').write_text('a')
+
+    result = lint_er.lint_package(bad_package)
+
+    assert result == 'needs review'
+
 # Functional tests
-def test_lint_valid_package(monkeypatch, tmp_path: Path):
+def test_lint_valid_package(monkeypatch, good_package, capsys):
     """Run entire script with valid ER"""
 
     monkeypatch.setattr(
         'sys.argv', [
             '../bin/lint_er.py',
-            '--package', str(tmp_path)
+            '--package', str(good_package)
         ]
     )
 
     lint_er.main()
-    assert False
 
-def test_lint_invalid_package(monkeypatch, tmp_path: Path):
-    """Run entire script with valid ER"""
+    stdout = capsys.readouterr().out
+
+    assert f'The following packages are valid: {str(good_package)}' in stdout
+
+def test_lint_invalid_package(monkeypatch, good_package, capsys):
+    """Run entire script with invalid ER"""
+
+    bad_package = good_package
+
+    objects = bad_package.joinpath('objects')
+    bag_folder = objects.joinpath('bagfolder')
+    bag_folder.mkdir()
+    bag_file = bag_folder.joinpath('bagit.txt')
+    bag_file.touch()
 
     monkeypatch.setattr(
         'sys.argv', [
             '../bin/lint_er.py',
-            '--package', str(tmp_path)
+            '--package', str(good_package)
         ]
     )
 
     lint_er.main()
-    assert False
 
+    stdout = capsys.readouterr().out
+
+    assert f'The following packages are invalid: {str(good_package)}' in stdout
