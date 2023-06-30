@@ -234,7 +234,7 @@ def test_metadata_file_is_unexpected_types(good_package):
         for file in [x for x in metadata_path.iterdir() if x.is_file()]:
             file.rename(metadata_path / 'random.txt')
 
-    result = lint_er.metadata_file_has_valid_filename(bad_package)
+    result = lint_er.metadata_file_is_expected_types(bad_package)
 
     assert result == False
 
