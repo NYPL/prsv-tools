@@ -15,7 +15,8 @@ def parse_args():
         '-i',
         type=str,
         required=True,
-        help='Please type "test" or "prod"'
+        choices=['test', 'prod']
+        help='Which Preservica instance to access'
     )
 
     parser.add_argument(
