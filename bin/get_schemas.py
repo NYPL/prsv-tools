@@ -66,9 +66,9 @@ def fetch_and_write_content(token, url, ns, folder, file_extension):
 
 def main():
     '''
-    config filenames need to be in the same directory and are hard-coded here
-    namespace (ns) gets updated when Preservica has a version update
-    schemas_url and transforms_url are relatively stable
+    config filenames need to be in the same directory and are hard-coded here:
+        1. namespace (ns) gets updated when Preservica has a version update
+        2. schemas_url documents_url and transforms_url are relatively stable
     '''
 
     test_config = 'DA_Dev_SMTP.ini'
