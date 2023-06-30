@@ -29,14 +29,6 @@ def parse_args():
     )
     return parser.parse_args()
 
-def generate_access_token(config_input: str):
-    config = configparser.ConfigParser()
-    config.sections()
-    config.read(config_input)
-    accesstoken = prsvtoken.get_token(config_input)
-
-    return accesstoken
-
 def get_api_results(accesstoken, url):
     headers = {
                 'Preservica-Access-Token': accesstoken,
@@ -91,7 +83,7 @@ def main():
     else:
         folder = Path(__file__).parent.absolute()
 
-    token = generate_access_token(config)
+    token = prsvtoken.get_token(config)
 
     # Fetch and write schemas
     fetch_and_write_content(token, schemas_url, ns, folder, 'xsd')
