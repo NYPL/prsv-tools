@@ -56,6 +56,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--log_folder',
+        help='''Optional. Designate where to save the log file,
+        or it will be saved in current directory''',
         default='.'
     )
 
@@ -114,48 +116,31 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     else:
         return True
 
-def metadata_file_has_valid_filename(package: Path) -> bool:
-    """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
+def metadata_file_is_expected_types(package: Path) -> bool:
+    """The metadata folder can only have FTK report and/or carrier photograph(s)"""
     for metadata_path in package.glob('metadata'):
         md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
 
-    if len(md_file_ls) == 1:
-        for file in md_file_ls:
-            if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
-                return True
-            else:
-                if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
-                    LOGGER.warning(f"{package.name}: The metadata file, {file.name}, is a TSV file.")
-                    return False
-                else:
-                    LOGGER.warning(f"{package.name} has unknown metadata file, {file.name}")
-                    return False
-    elif len(md_file_ls) > 1:
-        good_csv = []
-        good_tsv = []
-        unknown_files = []
-        for file in md_file_ls:
-            if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(csv|CSV)', file.name):
-                good_csv.append(file)
-            elif re.fullmatch(r'M\d+_(ER|DI|EM)_\d+.(tsv|TSV)', file.name):
-                good_tsv.append(file)
-            else:
-                unknown_files.append(file)
-
-        if good_tsv or unknown_files:
-            if good_tsv:
-                LOGGER.warning(f"{package.name} metadata folder has FTK TSV files")
-            if unknown_files:
-                LOGGER.warning(f"{package.name} metadata folder has non-FTK exported files")
+    expected_types = ['.csv', '.tsv', '.jpg']
+    for file in md_file_ls:
+        if file.suffix.lower() in expected_types:
+            return True
+        else:
+            LOGGER.error(f"{package.name} has unexpected file {file.name}")
             return False
 
-        if any(good_csv):
-            LOGGER.warning(f"{package.name}has more than one FTK-exported CSV files")
-            return False
+def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
+    """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
+    for metadata_path in package.glob('metadata'):
+        ctsv_file_ls = [x for x in metadata_path.iterdir() if
+                        x.is_file() and x.suffix.lower() in ['.csv', '.tsv']]
 
-    else:
-        LOGGER.warning(f"{package.name} has no files in the metadata folder")
-        return False
+    for ctsv in ctsv_file_ls:
+        if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+', ctsv.stem):
+            return True
+        else:
+            LOGGER.error(f"{package.name} has nonconforming FTK file, {ctsv.name}.")
+            return False
 
 def objects_folder_has_file(package: Path) -> bool:
     """The objects folder must have one or more files, which can be in folder(s)"""
@@ -201,7 +186,6 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
 
     less_strict_tests = [
         metadata_folder_has_one_or_less_file,
-        metadata_file_has_valid_filename,
         package_has_no_hidden_file
     ]
 
@@ -214,6 +198,8 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
         package_has_valid_subfolder_names,
         objects_folder_has_no_access_folder,
         metadata_folder_is_flat,
+        metadata_file_is_expected_types,
+        metadata_FTK_file_has_valid_filename,
         objects_folder_has_file,
         package_has_no_bag,
         package_has_no_zero_bytes_file

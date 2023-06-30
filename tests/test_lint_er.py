@@ -220,38 +220,39 @@ def test_metadata_folder_has_more_than_one_file(good_package):
 
     assert result == False
 
-def test_metadata_file_valid_name(good_package):
-    """FTK metadata CSV name should conform to M###_(ER|DI|EM)_####.(csv|CSV)"""
-    result = lint_er.metadata_file_has_valid_filename(good_package)
+def test_metadata_file_is_expected_types(good_package):
+    """Test that file(s) in the metadata folder are expected types"""
+    result = lint_er.metadata_file_is_expected_types(good_package)
 
     assert result == True
 
-def test_metadata_file_invalid_name_tsv(good_package):
-    """Test that package fails function and gives out correct warning
-    when the metadata file name does not conform to the naming convention,
-    M###_(ER|DI|EM)_####.(csv|CSV), but M###_(ER|DI|EM)_####.(tsv|TSV)"""
+def test_metadata_file_is_unexpected_types(good_package):
+    """Test that package fails function if the file in the metadata folder
+    are not expected types"""
     bad_package = good_package
     for metadata_path in bad_package.glob('metadata'):
         for file in [x for x in metadata_path.iterdir() if x.is_file()]:
-            file.rename(metadata_path / 'M12345_ER_0001.tsv')
+            file.rename(metadata_path / 'random.txt')
 
     result = lint_er.metadata_file_has_valid_filename(bad_package)
 
     assert result == False
 
-def test_metadata_file_invalid_name_more_files(good_package):
-    """Test that package fails function and gives out correct warning when
-    there are more than one file in the second-level metadata folder"""
+def test_FTK_metadata_file_valid_name(good_package):
+    """FTK metadata CSV/TSV name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
+    result = lint_er.metadata_FTK_file_has_valid_filename(good_package)
+
+    assert result == True
+
+def test_FTK_metadata_file_invalid_name(good_package):
+    """Test that package fails function when the FTK metadata file name
+    does not conform to the naming convention, M###_(ER|DI|EM)_####.[ct]sv"""
     bad_package = good_package
     for metadata_path in bad_package.glob('metadata'):
-        new_csv = metadata_path.joinpath('M12345_ER_0003.csv')
-        new_csv.touch()
-        new_tsv = metadata_path.joinpath('M12345_ER_0004.tsv')
-        new_tsv.touch()
-        random_file = metadata_path.joinpath('M1234.txt')
-        random_file.touch()
+        for file in [x for x in metadata_path.iterdir() if x.is_file()]:
+            file.rename(metadata_path / 'M12345-0001.csv')
 
-    result = lint_er.metadata_file_has_valid_filename(bad_package)
+    result = lint_er.metadata_FTK_file_has_valid_filename(bad_package)
 
     assert result == False
 
@@ -403,7 +404,7 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
     monkeypatch.setattr(
         'sys.argv', [
             '../bin/lint_er.py',
-            '--package', str(good_package)
+            '--package', str(bad_package)
         ]
     )
 
@@ -411,4 +412,4 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
 
     stdout = capsys.readouterr().out
 
-    assert f'The following packages are invalid: {str(good_package)}' in stdout
+    assert f'The following packages are invalid: {str(bad_package)}' in stdout
