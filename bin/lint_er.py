@@ -233,7 +233,8 @@ def main():
     print(f'\nTotal packages ran: {counter}')
     if valid:
         print(f'''
-        The following {len(valid)} packages are valid: {valid}''')
+        The following {len(valid)} packages are valid:
+        {", ".join(str(x) for x in valid)}''')
     if invalid:
         print(f'''
         The following {len(invalid)} packages are invalid: {invalid}''')
