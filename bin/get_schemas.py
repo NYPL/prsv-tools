@@ -66,15 +66,11 @@ def fetch_and_write_content(token, url, ns, folder, file_extension):
 
 def main():
     '''
-    1. Decide which instance. This points to corresponding .ini
-    2. Generate access token for the specified instance
-    3. Decide which endpoint to use
-    4. Get XML data. May need to get the ID first and then the actual XML file
-    5. Write to the machine
+    config filenames need to be in the same directory and are hard-coded here
+    namespace (ns) gets updated when Preservica has a version update
+    schemas_url and transforms_url are relatively stable
     '''
-    # config filenames need to be in the same directory and are hard-coded here
-    # namespace (ns) gets updated when Preservica has a version update
-    # schemas_url and transforms_url are relatively stable
+
     test_config = 'DA_Dev_SMTP.ini'
     prod_config = 'DA_Production_SMTP.ini'
     ns = '{http://preservica.com/AdminAPI/v6.8}'
@@ -99,7 +95,7 @@ def main():
     # Fetch and write schemas
     fetch_and_write_content(token, schemas_url, ns, folder, 'xsd')
 
-    # Fetch and write schemas
+    # Fetch and write documents
     fetch_and_write_content(token, documents_url, ns, folder, 'xml')
 
     # Fetch and write transforms
