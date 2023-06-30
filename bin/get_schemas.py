@@ -15,7 +15,7 @@ def parse_args():
         '-i',
         type=str,
         required=True,
-        choices=['test', 'prod']
+        choices=['test', 'prod'],
         help='Which Preservica instance to access'
     )
 
