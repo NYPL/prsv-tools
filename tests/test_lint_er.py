@@ -178,6 +178,17 @@ def test_objects_folder_has_no_empty_folder(good_package):
 
     assert result == True
 
+def test_objects_folder_has_empty_folder(good_package):
+    """Test that package fails function when its objects folder have empty folder"""
+    bad_package = good_package
+    for objects_path in bad_package.glob('objects'):
+        empty_dir = objects_path.joinpath('emptydir')
+        empty_dir.mkdir(parents=True, exist_ok=True)
+
+    result = lint_er.objects_folder_has_no_empty_folder(bad_package)
+
+    assert result == True
+
 def test_metadata_folder_is_flat(good_package):
     """The metadata folder should not have folder structure"""
     result = lint_er.metadata_folder_is_flat(good_package)
