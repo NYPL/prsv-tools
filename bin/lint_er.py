@@ -99,7 +99,13 @@ def objects_folder_has_no_access_folder(package: Path) -> bool:
 def objects_folder_has_no_empty_folder(package: Path) -> bool:
     """The objects folder should not have any empty folders, which may indicate
     an incorrect FTK export"""
+    for objects_path in package.glob('objects'):
+        for i in objects_path.rglob('*'):
+            if i.is_dir() and not any(i.iterdir()):
+                    LOGGER.error(f'{package.name} has empty folder in this package: {i.name}')
+                    return False
 
+    return True
 
 def metadata_folder_is_flat(package: Path) -> bool:
     """The metadata folder should not have folder structure"""
