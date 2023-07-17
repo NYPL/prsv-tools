@@ -102,8 +102,8 @@ def objects_folder_has_no_empty_folder(package: Path) -> bool:
     for objects_path in package.glob('objects'):
         for i in objects_path.rglob('*'):
             if i.is_dir() and not any(i.iterdir()):
-                    LOGGER.error(f'{package.name} has empty folder in this package: {i.name}')
-                    return False
+                LOGGER.error(f'{package.name} has empty folder in this package: {i.name}')
+                return False
 
     return True
 
