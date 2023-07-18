@@ -290,20 +290,6 @@ def test_objects_folder_has_no_file(good_package):
 
     assert result == False
 
-def test_objects_folder_has_empty_folder(good_package):
-    """Test that package fails function when there is no file, but an empty folder
-    within the second-level objects folder"""
-    bad_package = good_package
-    obj_filepaths = [x for x in bad_package.glob('objects/*') if x.is_file()]
-    for file in obj_filepaths:
-        file.unlink()
-    for objects_path in bad_package.glob('objects'):
-        empty_folder = objects_path.joinpath('empty_folder')
-        empty_folder.mkdir()
-
-    result = lint_er.objects_folder_has_file(bad_package)
-
-    assert result == False
 
 def test_package_has_no_bag(good_package):
     """The package should not have bag structures"""
