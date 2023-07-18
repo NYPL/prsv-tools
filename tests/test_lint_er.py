@@ -183,7 +183,7 @@ def test_objects_folder_has_empty_folder(good_package):
     bad_package = good_package
     for objects_path in bad_package.glob('objects'):
         empty_dir = objects_path.joinpath('emptydir')
-        empty_dir.mkdir(parents=True, exist_ok=True)
+        empty_dir.mkdir()
 
     result = lint_er.objects_folder_has_no_empty_folder(bad_package)
 
