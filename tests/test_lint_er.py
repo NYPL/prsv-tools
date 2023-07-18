@@ -290,7 +290,6 @@ def test_objects_folder_has_no_file(good_package):
 
     assert result == False
 
-
 def test_package_has_no_bag(good_package):
     """The package should not have bag structures"""
     result = lint_er.package_has_no_bag(good_package)
