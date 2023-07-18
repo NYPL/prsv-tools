@@ -208,6 +208,7 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
         package_has_valid_name,
         package_has_valid_subfolder_names,
         objects_folder_has_no_access_folder,
+        objects_folder_has_no_empty_folder,
         metadata_folder_is_flat,
         metadata_file_is_expected_types,
         metadata_FTK_file_has_valid_filename,
