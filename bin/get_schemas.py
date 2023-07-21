@@ -4,7 +4,7 @@ import configparser
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-# prsvtoken.py needs to be in the same directory for this to work
+# prsvtoken.py needs to be in the specific directory for this to work
 import prsvtoken
 
 def parse_args():
@@ -26,6 +26,14 @@ def parse_args():
         required=False,
         help='''Optional. Provide an absolute folder path to save the files
         in the specified folder'''
+    )
+
+    parser.add_argument(
+        '--version',
+        '-v',
+        type=str,
+        required=False,
+        help='''Required. Provide the current API version, e.g. 6.9'''
     )
     return parser.parse_args()
 
@@ -61,18 +69,17 @@ def main():
     '''
     Hard-coded variables include
         1. config files, which need to be in the same directory
-        2. namespace (ns), which gets updated when Preservica has a version update
-        3. schemas_url, documents_url and transforms_url are relatively stable
+        2. schemas_url, documents_url and transforms_url are relatively stable
     '''
+
+    args = parse_args()
 
     test_config = 'DA_Dev_SMTP.ini'
     prod_config = 'DA_Production_SMTP.ini'
-    ns = '{http://preservica.com/AdminAPI/v6.8}'
+    ns = f'{{http://preservica.com/AdminAPI/v{args.version}}}'
     schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
     documents_url = 'https://nypl.preservica.com/api/admin/documents'
     transforms_url = 'https://nypl.preservica.com/api/admin/transforms'
-
-    args = parse_args()
 
     if args.instance == 'test':
         config = test_config
