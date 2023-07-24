@@ -1,6 +1,5 @@
 import argparse
 import requests
-import configparser
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import re
