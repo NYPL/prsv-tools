@@ -1,4 +1,4 @@
-import bin.lint_er as lint_er
+import src.ingest.lint_er as lint_er
 
 import pytest
 from pathlib import Path
