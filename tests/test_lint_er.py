@@ -147,8 +147,8 @@ def test_sec_level_folder_invalid_names(good_package):
     objects and metadata, OR when there are more folders other than
     the objects and metadata folders."""
     bad_package = good_package
-    for objects_path in bad_package.glob('objects'):
-        objects_path.rename(bad_package / 'obj')
+    objects_path = bad_package / 'objects'
+    objects_path.rename(bad_package / 'obj')
 
     result = lint_er.package_has_valid_subfolder_names(bad_package)
 
@@ -164,11 +164,26 @@ def test_objects_folder_has_no_access_folder(good_package):
 def test_objects_folder_has_access_folder(good_package):
     """Test that package fails function when it includes folder(s) named access"""
     bad_package = good_package
-    for objects_path in bad_package.glob('objects'):
-        access_dir = objects_path.joinpath('access')
-        access_dir.mkdir()
+    access_dir = bad_package / 'objects' / 'access'
+    access_dir.mkdir()
 
     result = lint_er.objects_folder_has_no_access_folder(bad_package)
+
+    assert result == False
+
+def test_objects_folder_has_no_empty_folder(good_package):
+    """The objects folder in the folder should not have any empty folder"""
+    result = lint_er.objects_folder_has_no_empty_folder(good_package)
+
+    assert result == True
+
+def test_objects_folder_has_empty_folder(good_package):
+    """Test that package fails function when its objects folder have empty folder"""
+    bad_package = good_package
+    empty_dir = bad_package / 'objects' / 'emptydir'
+    empty_dir.mkdir()
+
+    result = lint_er.objects_folder_has_no_empty_folder(bad_package)
 
     assert result == False
 
@@ -182,9 +197,8 @@ def test_metadata_folder_has_random_folder(good_package):
     """Test that package fails function when the second-level metadata folder
     has any folder in it"""
     bad_package = good_package
-    for metadata_path in bad_package.glob('metadata'):
-        random_dir = metadata_path.joinpath('random_dir')
-        random_dir.mkdir()
+    random_dir = bad_package / 'metadata' / 'random_dir'
+    random_dir.mkdir()
 
     result = lint_er.metadata_folder_is_flat(bad_package)
 
@@ -194,9 +208,8 @@ def test_metadata_folder_has_submissionDocumentation_folder(good_package):
     """Test that package fails function and gives out correct error message
     when the second-level metadata folder has the submissionDocumentation folder"""
     bad_package = good_package
-    for metadata_path in bad_package.glob('metadata'):
-        random_dir = metadata_path.joinpath('submissionDocumentation')
-        random_dir.mkdir()
+    random_dir = bad_package / 'metadata' / 'submissionDocumentation'
+    random_dir.mkdir()
 
     result = lint_er.metadata_folder_is_flat(bad_package)
 
@@ -212,9 +225,8 @@ def test_metadata_folder_has_more_than_one_file(good_package):
     """Test that package fails when there are more then one file
     in the second-level metadata folder"""
     bad_package = good_package
-    for metadata_path in bad_package.glob('metadata'):
-        new_md_file = metadata_path.joinpath('M12345_ER_0002.csv')
-        new_md_file.touch()
+    new_md_file = bad_package / 'metadata' / 'M12345_ER_0002.csv'
+    new_md_file.touch()
 
     result = lint_er.metadata_folder_has_one_or_less_file(bad_package)
 
@@ -230,9 +242,9 @@ def test_metadata_file_is_unexpected_types(good_package):
     """Test that package fails function if the file in the metadata folder
     are not expected types"""
     bad_package = good_package
-    for metadata_path in bad_package.glob('metadata'):
-        for file in [x for x in metadata_path.iterdir() if x.is_file()]:
-            file.rename(metadata_path / 'random.txt')
+    metadata_path = bad_package / 'metadata'
+    for file in [x for x in metadata_path.iterdir() if x.is_file()]:
+        file.rename(metadata_path / 'random.txt')
 
     result = lint_er.metadata_file_is_expected_types(bad_package)
 
@@ -248,9 +260,9 @@ def test_FTK_metadata_file_invalid_name(good_package):
     """Test that package fails function when the FTK metadata file name
     does not conform to the naming convention, M###_(ER|DI|EM)_####.[ct]sv"""
     bad_package = good_package
-    for metadata_path in bad_package.glob('metadata'):
-        for file in [x for x in metadata_path.iterdir() if x.is_file()]:
-            file.rename(metadata_path / 'M12345-0001.csv')
+    metadata_path = bad_package / 'metadata'
+    for file in [x for x in metadata_path.iterdir() if x.is_file()]:
+        file.rename(metadata_path / 'M12345-0001.csv')
 
     result = lint_er.metadata_FTK_file_has_valid_filename(bad_package)
 
@@ -273,21 +285,6 @@ def test_objects_folder_has_no_file(good_package):
 
     assert result == False
 
-def test_objects_folder_has_empty_folder(good_package):
-    """Test that package fails function when there is no file, but an empty folder
-    within the second-level objects folder"""
-    bad_package = good_package
-    obj_filepaths = [x for x in bad_package.glob('objects/*') if x.is_file()]
-    for file in obj_filepaths:
-        file.unlink()
-    for objects_path in bad_package.glob('objects'):
-        empty_folder = objects_path.joinpath('empty_folder')
-        empty_folder.mkdir()
-
-    result = lint_er.objects_folder_has_file(bad_package)
-
-    assert result == False
-
 def test_package_has_no_bag(good_package):
     """The package should not have bag structures"""
     result = lint_er.package_has_no_bag(good_package)
@@ -298,11 +295,10 @@ def test_package_has_bag(good_package):
     """Test that package fails function when there is any bagit.txt file,
     indicating bag structure exists in the package"""
     bad_package = good_package
-    for obj_path in bad_package.glob('objects'):
-        bag_folder = obj_path.joinpath('bagfolder')
-        bag_folder.mkdir()
-        bag_file = bag_folder.joinpath('bagit.txt')
-        bag_file.touch()
+    bag_folder = bad_package / 'objects' / 'bagfolder'
+    bag_folder.mkdir()
+    bag_file = bag_folder.joinpath('bagit.txt')
+    bag_file.touch()
 
     result = lint_er.package_has_no_bag(bad_package)
 
@@ -317,11 +313,10 @@ def test_package_has_no_hidden_file(good_package):
 def test_package_has_hidden_file(good_package):
     """Test that package fails function when there is any hidden file"""
     bad_package = good_package
-    for objects_path in bad_package.glob('objects'):
-        folder = objects_path.joinpath('folder')
-        folder.mkdir()
-        hidden_file = folder.joinpath('.DS_Store')
-        hidden_file.touch()
+    folder = bad_package / 'objects' / 'folder'
+    folder.mkdir()
+    hidden_file = folder.joinpath('.DS_Store')
+    hidden_file.touch()
 
     result = lint_er.package_has_no_hidden_file(bad_package)
 
@@ -336,9 +331,8 @@ def test_package_has_no_zero_bytes_file(good_package):
 def test_package_has_zero_bytes_file(good_package):
     """Test that package fails function when there is any zero bytes file"""
     bad_package = good_package
-    for objects_path in bad_package.glob('objects'):
-        zero_bytes = objects_path.joinpath('zerobytes.txt')
-        zero_bytes.touch()
+    zero_bytes = bad_package / 'objects' / 'zerobytes.txt'
+    zero_bytes.touch()
 
     result = lint_er.package_has_no_zero_bytes_file(bad_package)
 
@@ -354,8 +348,7 @@ def test_invalid_package(good_package):
     """Test that package returns 'invalid' when all tests are passed"""
     bad_package = good_package
 
-    objects = bad_package.joinpath('objects')
-    bag_folder = objects.joinpath('bagfolder')
+    bag_folder = bad_package / 'objects' / 'bagfolder'
     bag_folder.mkdir()
     bag_file = bag_folder.joinpath('bagit.txt')
     bag_file.touch()
@@ -367,7 +360,7 @@ def test_invalid_package(good_package):
 def test_unclear_package(good_package):
     """Test that package returns 'needs review' when all tests are passed"""
     bad_package = good_package
-    bad_package.joinpath('metadata').joinpath('M12345_ER_0002.csv').write_text('a')
+    bad_package.joinpath('metadata/M12345_ER_0002.csv').write_text('a')
 
     result = lint_er.lint_package(bad_package)
 
@@ -395,8 +388,7 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
 
     bad_package = good_package
 
-    objects = bad_package.joinpath('objects')
-    bag_folder = objects.joinpath('bagfolder')
+    bag_folder = bad_package / 'objects' / 'bagfolder'
     bag_folder.mkdir()
     bag_file = bag_folder.joinpath('bagit.txt')
     bag_file.touch()

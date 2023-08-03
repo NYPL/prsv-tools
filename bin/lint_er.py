@@ -88,18 +88,29 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
 def objects_folder_has_no_access_folder(package: Path) -> bool:
     """An access folder within the objects folder indicates it is an older package,
     and the files within the access folder was created by the Library, and should not be ingested"""
-    access_dir = list(package.rglob('access'))
+    access_dir = package / 'objects' / 'access'
 
-    if access_dir:
+    if access_dir.is_dir():
         LOGGER.error(f'{package.name} has an access folder in this package: {access_dir}')
         return False
     else:
         return True
 
+def objects_folder_has_no_empty_folder(package: Path) -> bool:
+    """The objects folder should not have any empty folders, which may indicate
+    an incorrect FTK export"""
+    objects_path = package / 'objects'
+    for i in objects_path.rglob('*'):
+        if i.is_dir() and not any(i.iterdir()):
+            LOGGER.error(f'{package.name} has empty folder in this package: {i.name}')
+            return False
+
+    return True
+
 def metadata_folder_is_flat(package: Path) -> bool:
     """The metadata folder should not have folder structure"""
-    for metadata_path in package.glob('metadata'):
-        md_dir_ls = [x for x in metadata_path.iterdir() if x.is_dir()]
+    metadata_path = package / 'metadata'
+    md_dir_ls = [x for x in metadata_path.iterdir() if x.is_dir()]
     if md_dir_ls:
         LOGGER.error(f'{package.name} has unexpected directory: {md_dir_ls}')
         return False
@@ -108,8 +119,8 @@ def metadata_folder_is_flat(package: Path) -> bool:
 
 def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     """The metadata folder should have zero to one file"""
-    for metadata_path in package.glob('metadata'):
-        md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
+    metadata_path = package / 'metadata'
+    md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
         LOGGER.warning(f'{package.name} has more than one file in the metadata folder: {md_file_ls}')
         return False
@@ -118,8 +129,8 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
 
 def metadata_file_is_expected_types(package: Path) -> bool:
     """The metadata folder can only have FTK report and/or carrier photograph(s)"""
-    for metadata_path in package.glob('metadata'):
-        md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
+    metadata_path = package / 'metadata'
+    md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
 
     expected_types = ['.csv', '.tsv', '.jpg']
     for file in md_file_ls:
@@ -131,8 +142,8 @@ def metadata_file_is_expected_types(package: Path) -> bool:
 
 def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
-    for metadata_path in package.glob('metadata'):
-        ctsv_file_ls = [x for x in metadata_path.iterdir() if
+    metadata_path = package / 'metadata'
+    ctsv_file_ls = [x for x in metadata_path.iterdir() if
                         x.is_file() and x.suffix.lower() in ['.csv', '.tsv']]
 
     for ctsv in ctsv_file_ls:
@@ -144,8 +155,8 @@ def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
 
 def objects_folder_has_file(package: Path) -> bool:
     """The objects folder must have one or more files, which can be in folder(s)"""
-    for objects_path in package.glob('objects'):
-        obj_filepaths = [x for x in objects_path.rglob('*') if x.is_file()]
+    objects_path = package / 'objects'
+    obj_filepaths = [x for x in objects_path.rglob('*') if x.is_file()]
 
     if not any(obj_filepaths):
         LOGGER.error(f"{package.name} objects folder does not have any file")
@@ -197,6 +208,7 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
         package_has_valid_name,
         package_has_valid_subfolder_names,
         objects_folder_has_no_access_folder,
+        objects_folder_has_no_empty_folder,
         metadata_folder_is_flat,
         metadata_file_is_expected_types,
         metadata_FTK_file_has_valid_filename,
