@@ -1,10 +1,10 @@
 import argparse
 import requests
-import configparser
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import re
 
-# prsvtoken.py needs to be in the same directory for this to work
+# prsvtoken.py needs to be in the specific directory for this to work
 import prsvtoken
 
 def parse_args():
@@ -27,6 +27,7 @@ def parse_args():
         help='''Optional. Provide an absolute folder path to save the files
         in the specified folder'''
     )
+
     return parser.parse_args()
 
 def get_api_results(accesstoken, url):
@@ -36,6 +37,14 @@ def get_api_results(accesstoken, url):
               }
     response = requests.request('GET', url, headers=headers)
     return response # response object
+
+def find_namespace(response) -> str:
+    root = ET.fromstring(response.text)
+    version_search = re.search('v(\d+\.\d+)\}', root.tag)
+    version = version_search.group(1)
+    namespace = f'{{http://preservica.com/AdminAPI/v{version}}}'
+
+    return namespace
 
 def parse_res_to_dict(response, ns) -> dict:
     root = ET.fromstring(response.text)
@@ -47,8 +56,9 @@ def parse_res_to_dict(response, ns) -> dict:
 
     return name_id_dict
 
-def fetch_and_write_content(token, url, ns, folder, file_extension):
+def fetch_and_write_content(token, url, folder, file_extension):
     content_res = get_api_results(token, url)
+    ns = find_namespace(content_res)
     content_dict = parse_res_to_dict(content_res, ns)
     for item_name in content_dict:
         item_content_url = f'{url}/{content_dict[item_name]}/content'
@@ -61,18 +71,16 @@ def main():
     '''
     Hard-coded variables include
         1. config files, which need to be in the same directory
-        2. namespace (ns), which gets updated when Preservica has a version update
-        3. schemas_url, documents_url and transforms_url are relatively stable
+        2. schemas_url, documents_url and transforms_url are relatively stable
     '''
+
+    args = parse_args()
 
     test_config = 'DA_Dev_SMTP.ini'
     prod_config = 'DA_Production_SMTP.ini'
-    ns = '{http://preservica.com/AdminAPI/v6.8}'
     schemas_url = 'https://nypl.preservica.com/api/admin/schemas'
     documents_url = 'https://nypl.preservica.com/api/admin/documents'
     transforms_url = 'https://nypl.preservica.com/api/admin/transforms'
-
-    args = parse_args()
 
     if args.instance == 'test':
         config = test_config
@@ -87,13 +95,13 @@ def main():
     token = prsvtoken.get_token(config)
 
     # Fetch and write schemas
-    fetch_and_write_content(token, schemas_url, ns, folder, 'xsd')
+    fetch_and_write_content(token, schemas_url, folder, 'xsd')
 
     # Fetch and write documents
-    fetch_and_write_content(token, documents_url, ns, folder, 'xml')
+    fetch_and_write_content(token, documents_url, folder, 'xml')
 
     # Fetch and write transforms
-    fetch_and_write_content(token, transforms_url, ns, folder, 'xslt')
+    fetch_and_write_content(token, transforms_url, folder, 'xslt')
 
 if __name__=='__main__':
     main()
