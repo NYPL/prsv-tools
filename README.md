@@ -9,7 +9,14 @@ Where necessary, preference is given to NYPL use cases.
 pip install --user git+https://github.com/NYPL/prsv-tools.git
 ```
 
+An example `.ini` is provided.
+There must be at least one `.ini` file for every Preservica instance.
+
 ## Usage
 
-If installed via `pip`, all scripts within `/bin` are installed as system-wide command-line tools and all modules are available for import.
-All scripts include help documentation accessible via `-h`, e.g. `ingest_package.py -h`
+Most modules within `src` are intended to be used as command-line scripts.
+They can be called using their filename without the `.py`.
+Check `[tool.poetry.scripts]` in the `pyproject.toml` file for installable scripts.
+
+Modules within `utility` are intended to be used as imports to other scripts.
+For example, import the Preservica token like this, `import prsv_tools.utility.prsvtoken as prsvtoken`.
