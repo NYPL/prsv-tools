@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "prsv-tools"
+version = "0.1.0"
+description = "Does things"
+authors = [
+    "Hilary Shiue <hilaryszuyinshiue@nypl.org>",
+    "Nick Krabbenhoeft <nickkrabbenhoeft@nypl.org>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "prsv_tools", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+boto3 = "^1.28.17"
+lxml = "^4.9.3"
+requests = "^2.31.0"
+bagit = "^1.8.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+
+[tool.poetry.scripts]
+flatten_er_metadata = 'prsv_tools.ingest.flatten_er_metadata:main'
+lint_er = 'prsv_tools.ingest.lint_er:main'
+get_schemas = 'prsv_tools.manage.get_schemas:main'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
