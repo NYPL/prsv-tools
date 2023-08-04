@@ -1,4 +1,4 @@
-import src.ingest.flatten_er_metadata_folder as flatten_md
+import prsv_tools.ingest.flatten_er_metadata_folder as flatten_md
 
 import pytest
 from pathlib import Path

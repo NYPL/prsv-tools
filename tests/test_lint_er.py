@@ -1,4 +1,4 @@
-import src.ingest.lint_er as lint_er
+import prsv_tools.ingest.lint_er as lint_er
 
 import pytest
 from pathlib import Path

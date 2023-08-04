@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 
 # prsvtoken.py needs to be in the specific directory for this to work
-import prsvtoken
+import prsv_tools.utility.prsvtoken as prsvtoken
 
 def parse_args():
     parser = argparse.ArgumentParser()
