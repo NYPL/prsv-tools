@@ -1,7 +1,10 @@
 [tool.poetry]
 name = "prsv-tools"
 version = "0.1.0"
-description = "Does things"
+description = """
+Utilities to ingest to and manage a Preservica \
+instance at the New York Public Library\
+"""
 authors = [
     "Hilary Shiue <hilaryszuyinshiue@nypl.org>",
     "Nick Krabbenhoeft <nickkrabbenhoeft@nypl.org>",
@@ -21,8 +24,8 @@ bagit = "^1.8.1"
 pytest = "^7.4.0"
 
 [tool.poetry.scripts]
-flatten_er_metadata = 'prsv_tools.ingest.flatten_er_metadata:main'
 lint_er = 'prsv_tools.ingest.lint_er:main'
+flatten_er_metadata = 'prsv_tools.ingest.flatten_er_metadata:main'
 get_schemas = 'prsv_tools.manage.get_schemas:main'
 
 [build-system]
