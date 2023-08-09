@@ -7,6 +7,7 @@ from datetime import datetime
 
 LOGGER = logging.getLogger(__name__)
 
+
 def _configure_logging(args):
     log_fn = datetime.now().strftime('lint_%Y_%m_%d_%H_%M.log')
     log_fpath = Path(args.log_folder + '/' + log_fn)
@@ -14,11 +15,12 @@ def _configure_logging(args):
         log_fpath.touch()
 
     logging.basicConfig(level=logging.WARNING,
-                        format = "%(asctime)s - %(levelname)8s - %(message)s",
+                        format="%(asctime)s - %(levelname)8s - %(message)s",
                         datefmt='%Y-%m-%d %H:%M:%S',
                         filename=log_fpath,
                         encoding='utf-8'
                         )
+
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -63,6 +65,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def package_has_valid_name(package: Path) -> bool:
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
     folder_name = package.name
@@ -74,6 +77,7 @@ def package_has_valid_name(package: Path) -> bool:
         LOGGER.error(f'{folder_name} does not conform to M###_(ER|DI|EM)_####')
         return False
 
+
 def package_has_valid_subfolder_names(package: Path) -> bool:
     """Second level folders must have objects and metadata folder"""
     expected = set(['objects', 'metadata'])
@@ -82,19 +86,26 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
     if expected == found:
         return True
     else:
-        LOGGER.error(f'{package.name} subfolders should have objects and metadata, found {found}')
+        LOGGER.error(
+            f'{package.name} subfolders should have objects and metadata, found {found}'
+        )
         return False
+
 
 def objects_folder_has_no_access_folder(package: Path) -> bool:
     """An access folder within the objects folder indicates it is an older package,
-    and the files within the access folder was created by the Library, and should not be ingested"""
+    and the files within the access folder was created by the Library,
+    and should not be ingested"""
     access_dir = package / 'objects' / 'access'
 
     if access_dir.is_dir():
-        LOGGER.error(f'{package.name} has an access folder in this package: {access_dir}')
+        LOGGER.error(
+            f'{package.name} has an access folder in this package: {access_dir}'
+        )
         return False
     else:
         return True
+
 
 def objects_folder_has_no_empty_folder(package: Path) -> bool:
     """The objects folder should not have any empty folders, which may indicate
@@ -107,6 +118,7 @@ def objects_folder_has_no_empty_folder(package: Path) -> bool:
 
     return True
 
+
 def metadata_folder_is_flat(package: Path) -> bool:
     """The metadata folder should not have folder structure"""
     metadata_path = package / 'metadata'
@@ -117,15 +129,19 @@ def metadata_folder_is_flat(package: Path) -> bool:
     else:
         return True
 
+
 def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     """The metadata folder should have zero to one file"""
     metadata_path = package / 'metadata'
     md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
-        LOGGER.warning(f'{package.name} has more than one file in the metadata folder: {md_file_ls}')
+        LOGGER.warning(
+            f'{package.name} has more than one file in the metadata folder: {md_file_ls}'
+        )
         return False
     else:
         return True
+
 
 def metadata_file_is_expected_types(package: Path) -> bool:
     """The metadata folder can only have FTK report and/or carrier photograph(s)"""
@@ -140,11 +156,14 @@ def metadata_file_is_expected_types(package: Path) -> bool:
             LOGGER.error(f"{package.name} has unexpected file {file.name}")
             return False
 
+
 def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
     metadata_path = package / 'metadata'
-    ctsv_file_ls = [x for x in metadata_path.iterdir() if
-                        x.is_file() and x.suffix.lower() in ['.csv', '.tsv']]
+    ctsv_file_ls = [
+        x for x in metadata_path.iterdir() if
+        x.is_file() and x.suffix.lower() in ['.csv', '.tsv']
+    ]
 
     for ctsv in ctsv_file_ls:
         if re.fullmatch(r'M\d+_(ER|DI|EM)_\d+', ctsv.stem):
@@ -152,6 +171,7 @@ def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
         else:
             LOGGER.error(f"{package.name} has nonconforming FTK file, {ctsv.name}.")
             return False
+
 
 def objects_folder_has_file(package: Path) -> bool:
     """The objects folder must have one or more files, which can be in folder(s)"""
@@ -163,6 +183,7 @@ def objects_folder_has_file(package: Path) -> bool:
         return False
     return True
 
+
 def package_has_no_bag(package: Path) -> bool:
     """The whole package should not contain any bag"""
     if list(package.rglob('bagit.txt')):
@@ -171,15 +192,18 @@ def package_has_no_bag(package: Path) -> bool:
     else:
         return True
 
+
 def package_has_no_hidden_file(package: Path) -> bool:
     """The package should not have any hidden file"""
-    hidden_ls = [h for h in package.rglob('*') if h.name.startswith('.') or
-                 h.name.startswith('Thumbs')]
+    hidden_ls = [
+        h for h in package.rglob('*') if h.name.startswith('.')
+        or h.name.startswith('Thumbs')]
     if hidden_ls:
         LOGGER.warning(f"{package.name} has hidden files {hidden_ls}")
         return False
     else:
         return True
+
 
 def package_has_no_zero_bytes_file(package: Path) -> bool:
     """The package should not have any zero bytes file"""
@@ -190,6 +214,7 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
         return False
     else:
         return True
+
 
 def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
     """Run all linting tests against a package"""
@@ -223,6 +248,7 @@ def lint_package(package: Path) -> Literal['valid', 'invalid', 'needs review']:
 
     return result
 
+
 def main():
     args = parse_args()
     _configure_logging(args)
@@ -254,5 +280,6 @@ def main():
         The following {len(needs_review)} packages need review.
         They may be passed without change after review: {needs_review}''')
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
-import bagit
 import logging
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
+
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def get_submissionDocumentation_path(package: Path) -> Path | None:
     """Get submissionDocumentation folder path under metadata"""
     expected_path = package / 'metadata' / 'submissionDocumentation'
@@ -52,6 +53,7 @@ def get_submissionDocumentation_path(package: Path) -> Path | None:
         return expected_path
     else:
         return None
+
 
 def get_subdoc_file(subdoc: Path) -> list | None:
     """Check whether the submissionDocumentation folder has any files"""
@@ -61,6 +63,7 @@ def get_subdoc_file(subdoc: Path) -> list | None:
     else:
         return None
 
+
 def move_subdoc_files_to_mdfolder(subdoc_file_ls: list) -> None:
     """Move file(s) from the submissionDocumentation folder to the metadata folder"""
     for file in subdoc_file_ls:
@@ -68,12 +71,13 @@ def move_subdoc_files_to_mdfolder(subdoc_file_ls: list) -> None:
         file.rename(dest)
         LOGGER.info(f'Moving {file} to {dest}')
 
+
 def main():
     '''
     1. Go through every package (e.g. M1234_ER_0001)
     2. Get the path for submissionDocumentation
     3. Check if the subissionDocumentation folder has any files
-        (a) if yes, move it / them up one level (naming convention will be checked with the linter)
+        (a) if yes, move it / them up one level
         (b) if not, delete the folder (this function should be reusable)
     '''
     args = parse_args()
@@ -89,7 +93,7 @@ def main():
                 subdoc_path.rmdir()
                 # Path.rmdir() only removes empty directory
             except OSError as e:
-                LOGGER.error(f'Directory probably not empty' + str(e))
+                LOGGER.error(f'Directory probably not empty {str(e)}')
         else:
             print(f'{package.name} does not have submissionDocumentation folder')
 
