@@ -14,11 +14,12 @@ readme = "README.md"
 packages = [{include = "prsv_tools", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 boto3 = "^1.28.17"
 lxml = "^4.9.3"
 requests = "^2.31.0"
 bagit = "^1.8.1"
+nox = "^2023.4.22"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
