@@ -4,8 +4,9 @@ import pytest
 from pathlib import Path
 import shutil
 
+
 # Unit tests
-## Argument tests
+# Argument tests
 def test_accepts_paths(monkeypatch, tmp_path: Path):
     """Test that packages are returned as a list of pathlib paths"""
     child1 = tmp_path.joinpath('one')
@@ -25,6 +26,7 @@ def test_accepts_paths(monkeypatch, tmp_path: Path):
     assert child1 in args.packages
     assert child2 in args.packages
 
+
 def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
     """Test that a directory returns a list of child paths"""
     child1 = tmp_path.joinpath('one')
@@ -43,6 +45,7 @@ def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
 
     assert child1 in args.packages
     assert child2 in args.packages
+
 
 def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
     child1 = tmp_path.joinpath('one')
@@ -65,6 +68,7 @@ def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
     assert child1 in args.packages
     assert grandchild in args.packages
 
+
 def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
     """Test that error is thrown if package doesn't exist"""
     child = tmp_path.joinpath('one')
@@ -82,6 +86,7 @@ def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
     stderr = capsys.readouterr().err
 
     assert f'{child} does not exist' in stderr
+
 
 def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
     """Test that error is thrown if directory doesn't exist"""
@@ -101,6 +106,7 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
 
     assert f'{child} does not exist' in stderr
 
+
 @pytest.fixture
 def common_package(tmp_path: Path):
     pkg = tmp_path.joinpath('M12345_ER_0001')
@@ -117,29 +123,31 @@ def common_package(tmp_path: Path):
 
     return pkg
 
+
 def test_get_submissionDocumentation_path(common_package):
     """Test that get_submissionDocumentation_path function returns a Path object
     when submissionDocumentation folder exists in the metadata folder"""
     subdoc_path = flatten_md.get_submissionDocumentation_path(common_package)
     result = isinstance(subdoc_path, Path)
-    # The isinstance() function returns whether the specified object is of the specified type.
+    # The isinstance() function returns whether the object is of the specified type.
 
-    assert result == True
+    assert result
+
 
 def test_nonexistent_subdoc_path(common_package):
-    """Test that get_submissionDocumentation_path returns None when the submissionDocumentation
-    folder does not exist"""
+    """Test that get_submissionDocumentation_path returns None when
+    the submissionDocumentation folder does not exist"""
     uncommon_package = common_package
 
     for subdoc in uncommon_package.rglob('submissionDocumentation'):
         shutil.rmtree(subdoc)
 
     subdoc_path = flatten_md.get_submissionDocumentation_path(common_package)
-    assert subdoc_path == None
+    assert not subdoc_path
+
 
 def test_get_subdoc_file(common_package):
-    """Test that get_subdoc_file returns a list of file(s) when submissionDocumentation folder
-    has files in it"""
+    """Test that get_subdoc_file returns a list of file(s)"""
     for subdoc in common_package.rglob('submissionDocumentation'):
         file_ls = flatten_md.get_subdoc_file(subdoc)
 
@@ -148,10 +156,11 @@ def test_get_subdoc_file(common_package):
     else:
         result = False
 
-    assert result == True
+    assert result
+
 
 def test_empty_subdoc_folder(common_package):
-    """Test that get_subdoc_file returns None when submissionDocumentation folder is empty"""
+    """Test that get_subdoc_file returns None when folder is empty"""
     uncommon_pkg = common_package
     for subdoc in uncommon_pkg.rglob('submissionDocumentation'):
         for file in subdoc.iterdir():
@@ -159,10 +168,11 @@ def test_empty_subdoc_folder(common_package):
 
     result = flatten_md.get_subdoc_file(subdoc)
 
-    assert result == None
+    assert not result
+
 
 def test_move_subdoc_files_to_mdfolder(common_package):
-    """Test that move_subdoc_files_to_mdfolder moves file(s) from submissionDocumentation
+    """Test that file(s) are moved from submissionDocumentation
     up to directly under metadata folder: (1) there's file under metadata;
     (2) there's no file in submissionDocumentation"""
     for subdoc in common_package.rglob('submissionDocumentation'):
@@ -180,7 +190,8 @@ def test_move_subdoc_files_to_mdfolder(common_package):
     else:
         result = False
 
-    assert result == True
+    assert result
+
 
 # Functional tests
 def test_flatten_package(monkeypatch, common_package, capsys):
@@ -188,16 +199,18 @@ def test_flatten_package(monkeypatch, common_package, capsys):
 
     monkeypatch.setattr(
         'sys.argv', [
-        '../bin/flatten_er_metadata_folder.py',
-        '--package', str(common_package)
+            '../bin/flatten_er_metadata_folder.py',
+            '--package', str(common_package)
         ]
     )
 
     flatten_md.main()
 
     stdout = capsys.readouterr().out
+    msg = f'Looking into {common_package.name} submissionDocumentation folder'
 
-    assert f'Looking into {common_package.name} submissionDocumentation folder' in stdout
+    assert msg in stdout
+
 
 def test_flatten_uncommon_package(monkeypatch, common_package, capsys):
     """Run entire script with a package without submissionDocumentation folder"""
@@ -208,13 +221,14 @@ def test_flatten_uncommon_package(monkeypatch, common_package, capsys):
 
     monkeypatch.setattr(
         'sys.argv', [
-        '../bin/flatten_er_metadata_folder.py',
-        '--package', str(uncommon_package)
+            '../bin/flatten_er_metadata_folder.py',
+            '--package', str(uncommon_package)
         ]
     )
 
     flatten_md.main()
 
     stdout = capsys.readouterr().out
+    msg = f'{uncommon_package.name} does not have submissionDocumentation folder'
 
-    assert f'{uncommon_package.name} does not have submissionDocumentation folder' in stdout
+    assert msg in stdout

@@ -21,10 +21,10 @@ def get_token(credential_file_name: str) -> str:
 
     return create_token(credential_file_name, token_file)
 
+
 def create_token(
         credential_file_name: str,
-        token_file: Path
-    ) -> str:
+        token_file: Path) -> str:
 
     """
     request token string based on credentials
@@ -40,7 +40,7 @@ def create_token(
     else:
         raise FileNotFoundError
 
-    #build the query string and get a new token
+    # build the query string and get a new token
     url = config['DEFAULT']['URL']
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     payload = (
@@ -51,7 +51,7 @@ def create_token(
     response = requests.request("POST", url, headers=headers, data=payload)
     data = response.json()
 
-    #write token to token.file for later reuse
+    # write token to token.file for later reuse
     token_file.write_text(f'{str(time.time())}\n{data["token"]}')
 
     return data["token"]

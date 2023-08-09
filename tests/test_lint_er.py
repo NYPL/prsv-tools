@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 # Unit tests
-## Argument tests
+# Argument tests
 def test_accepts_paths(monkeypatch, tmp_path: Path):
     """Test that packages are returned as a list of pathlib paths"""
     child1 = tmp_path.joinpath('one')
@@ -25,6 +25,7 @@ def test_accepts_paths(monkeypatch, tmp_path: Path):
     assert child1 in args.packages
     assert child2 in args.packages
 
+
 def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
     """Test that a directory returns a list of child paths"""
     child1 = tmp_path.joinpath('one')
@@ -43,6 +44,7 @@ def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
 
     assert child1 in args.packages
     assert child2 in args.packages
+
 
 def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
     child1 = tmp_path.joinpath('one')
@@ -65,6 +67,7 @@ def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
     assert child1 in args.packages
     assert grandchild in args.packages
 
+
 def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
     """Test that error is thrown if package doesn't exist"""
     child = tmp_path.joinpath('one')
@@ -82,6 +85,7 @@ def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
     stderr = capsys.readouterr().err
 
     assert f'{child} does not exist' in stderr
+
 
 def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
     """Test that error is thrown if directory doesn't exist"""
@@ -101,6 +105,7 @@ def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
 
     assert f'{child} does not exist' in stderr
 
+
 @pytest.fixture
 def good_package(tmp_path: Path):
     pkg = tmp_path.joinpath('M12345_ER_0001')
@@ -119,11 +124,13 @@ def good_package(tmp_path: Path):
 
     return pkg
 
+
 def test_top_folder_valid_name(good_package):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
     result = lint_er.package_has_valid_name(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_top_folder_invalid_name(good_package):
     """Test that package fails function when the top level folder name
@@ -133,14 +140,15 @@ def test_top_folder_invalid_name(good_package):
 
     result = lint_er.package_has_valid_name(bad_package)
 
-    assert result == False
+    assert not result
 
 
 def test_sec_level_folder_valid_names(good_package):
     """Second level folders must only have objects and metadata folder"""
     result = lint_er.package_has_valid_subfolder_names(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_sec_level_folder_invalid_names(good_package):
     """Test that package fails function when second level folders are not named
@@ -152,14 +160,16 @@ def test_sec_level_folder_invalid_names(good_package):
 
     result = lint_er.package_has_valid_subfolder_names(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_objects_folder_has_no_access_folder(good_package):
     """The package should not have an 'access' folder that was created by the Library.
-    As the access folder and files in it were created by the Library, they should not be ingested"""
+    If these files should be kept, they need to be packaged differently"""
     result = lint_er.objects_folder_has_no_access_folder(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_objects_folder_has_access_folder(good_package):
     """Test that package fails function when it includes folder(s) named access"""
@@ -169,13 +179,15 @@ def test_objects_folder_has_access_folder(good_package):
 
     result = lint_er.objects_folder_has_no_access_folder(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_objects_folder_has_no_empty_folder(good_package):
     """The objects folder in the folder should not have any empty folder"""
     result = lint_er.objects_folder_has_no_empty_folder(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_objects_folder_has_empty_folder(good_package):
     """Test that package fails function when its objects folder have empty folder"""
@@ -185,13 +197,15 @@ def test_objects_folder_has_empty_folder(good_package):
 
     result = lint_er.objects_folder_has_no_empty_folder(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_metadata_folder_is_flat(good_package):
     """The metadata folder should not have folder structure"""
     result = lint_er.metadata_folder_is_flat(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_metadata_folder_has_random_folder(good_package):
     """Test that package fails function when the second-level metadata folder
@@ -202,7 +216,8 @@ def test_metadata_folder_has_random_folder(good_package):
 
     result = lint_er.metadata_folder_is_flat(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_metadata_folder_has_submissionDocumentation_folder(good_package):
     """Test that package fails function and gives out correct error message
@@ -213,13 +228,15 @@ def test_metadata_folder_has_submissionDocumentation_folder(good_package):
 
     result = lint_er.metadata_folder_is_flat(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_metadata_folder_has_one_or_less_file(good_package):
     """metadata folder should have zero to one file"""
     result = lint_er.metadata_folder_has_one_or_less_file(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_metadata_folder_has_more_than_one_file(good_package):
     """Test that package fails when there are more then one file
@@ -230,13 +247,15 @@ def test_metadata_folder_has_more_than_one_file(good_package):
 
     result = lint_er.metadata_folder_has_one_or_less_file(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_metadata_file_is_expected_types(good_package):
     """Test that file(s) in the metadata folder are expected types"""
     result = lint_er.metadata_file_is_expected_types(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_metadata_file_is_unexpected_types(good_package):
     """Test that package fails function if the file in the metadata folder
@@ -248,13 +267,15 @@ def test_metadata_file_is_unexpected_types(good_package):
 
     result = lint_er.metadata_file_is_expected_types(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_FTK_metadata_file_valid_name(good_package):
     """FTK metadata CSV/TSV name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
     result = lint_er.metadata_FTK_file_has_valid_filename(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_FTK_metadata_file_invalid_name(good_package):
     """Test that package fails function when the FTK metadata file name
@@ -266,13 +287,15 @@ def test_FTK_metadata_file_invalid_name(good_package):
 
     result = lint_er.metadata_FTK_file_has_valid_filename(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_objects_folder_has_file(good_package):
     """The objects folder must have one or more files, which can be in folder(s)"""
     result = lint_er.objects_folder_has_file(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_objects_folder_has_no_file(good_package):
     """Test that package fails function when there is no file at all
@@ -283,13 +306,15 @@ def test_objects_folder_has_no_file(good_package):
         file.unlink()
     result = lint_er.objects_folder_has_file(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_package_has_no_bag(good_package):
     """The package should not have bag structures"""
     result = lint_er.package_has_no_bag(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_package_has_bag(good_package):
     """Test that package fails function when there is any bagit.txt file,
@@ -302,13 +327,15 @@ def test_package_has_bag(good_package):
 
     result = lint_er.package_has_no_bag(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_package_has_no_hidden_file(good_package):
     """The package should not have any hidden file"""
     result = lint_er.package_has_no_hidden_file(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_package_has_hidden_file(good_package):
     """Test that package fails function when there is any hidden file"""
@@ -320,13 +347,15 @@ def test_package_has_hidden_file(good_package):
 
     result = lint_er.package_has_no_hidden_file(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_package_has_no_zero_bytes_file(good_package):
     """The package should not have any zero bytes file"""
     result = lint_er.package_has_no_zero_bytes_file(good_package)
 
-    assert result == True
+    assert result
+
 
 def test_package_has_zero_bytes_file(good_package):
     """Test that package fails function when there is any zero bytes file"""
@@ -336,13 +365,15 @@ def test_package_has_zero_bytes_file(good_package):
 
     result = lint_er.package_has_no_zero_bytes_file(bad_package)
 
-    assert result == False
+    assert not result
+
 
 def test_valid_package(good_package):
     """Test that package returns 'valid' when all tests are passed"""
     result = lint_er.lint_package(good_package)
 
     assert result == 'valid'
+
 
 def test_invalid_package(good_package):
     """Test that package returns 'invalid' when all tests are passed"""
@@ -357,6 +388,7 @@ def test_invalid_package(good_package):
 
     assert result == 'invalid'
 
+
 def test_unclear_package(good_package):
     """Test that package returns 'needs review' when all tests are passed"""
     bad_package = good_package
@@ -365,6 +397,7 @@ def test_unclear_package(good_package):
     result = lint_er.lint_package(bad_package)
 
     assert result == 'needs review'
+
 
 # Functional tests
 def test_lint_valid_package(monkeypatch, good_package, capsys):
@@ -382,6 +415,7 @@ def test_lint_valid_package(monkeypatch, good_package, capsys):
     stdout = capsys.readouterr().out
 
     assert f'packages are valid: {[str(good_package.name)]}' in stdout
+
 
 def test_lint_invalid_package(monkeypatch, good_package, capsys):
     """Run entire script with invalid ER"""

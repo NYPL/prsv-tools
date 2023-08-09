@@ -7,6 +7,7 @@ import re
 # prsvtoken.py needs to be in the specific directory for this to work
 import prsv_tools.utility.prsvtoken as prsvtoken
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -30,31 +31,35 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def get_api_results(accesstoken, url):
     headers = {
-                'Preservica-Access-Token': accesstoken,
-                'Content-Type': "application/xml"
-              }
+        'Preservica-Access-Token': accesstoken,
+        'Content-Type': "application/xml"
+    }
     response = requests.request('GET', url, headers=headers)
-    return response # response object
+    return response     # response object
+
 
 def find_namespace(response) -> str:
     root = ET.fromstring(response.text)
-    version_search = re.search('v(\d+\.\d+)\}', root.tag)
+    version_search = re.search(r'v(\d+\.\d+)\}', root.tag)
     version = version_search.group(1)
     namespace = f'{{http://preservica.com/AdminAPI/v{version}}}'
 
     return namespace
 
+
 def parse_res_to_dict(response, ns) -> dict:
     root = ET.fromstring(response.text)
 
-    names = [ name.text.replace(" ", "_") for name in root.iter(f'{ns}Name') ]
-    ids = [ id.text for id in root.iter(f'{ns}ApiId') ]
+    names = [name.text.replace(" ", "_") for name in root.iter(f'{ns}Name')]
+    ids = [id.text for id in root.iter(f'{ns}ApiId')]
 
-    name_id_dict = { n:i for (n,i) in zip(names, ids) }
+    name_id_dict = {n: i for (n, i) in zip(names, ids)}
 
     return name_id_dict
+
 
 def fetch_and_write_content(token, url, folder, file_extension):
     content_res = get_api_results(token, url)
@@ -66,6 +71,7 @@ def fetch_and_write_content(token, url, folder, file_extension):
         filepath = folder.joinpath(folder, f'{item_name}.{file_extension}')
         with open(filepath, 'w') as f:
             f.write(item_res.text)
+
 
 def main():
     '''
@@ -103,5 +109,6 @@ def main():
     # Fetch and write transforms
     fetch_and_write_content(token, transforms_url, folder, 'xslt')
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
