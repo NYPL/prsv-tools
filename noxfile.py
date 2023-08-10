@@ -5,7 +5,7 @@ import nox
 from nox_poetry import Session
 
 python_versions = ["3.11", "3.10"]
-nox.options.sessions = "lint", "tests"
+nox.options.sessions = "format", "lint", "tests"
 
 
 @nox.session(python=python_versions)
@@ -23,7 +23,7 @@ def tests(session: Session) -> None:
 @nox.session(python=python_versions)
 def lint(session):
     args = session.posargs or ["src", "tests", "noxfile.py"]
-    session.install("flake8")
+    session.install("flake8", "flake8-bugbear")
     session.run("flake8", *args)
 
 
@@ -49,3 +49,11 @@ def coverage(session: Session) -> None:
         session.run("coverage", "combine")
 
     session.run("coverage", *args)
+
+
+@nox.session(python=python_versions[0])
+def format(session):
+    args = session.posargs or ["src", "tests"]
+    session.install("black", "isort")
+    session.run("black", *args)
+    session.run("isort", *args)
