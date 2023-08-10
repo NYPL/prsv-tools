@@ -73,6 +73,7 @@ import os
 import re
 import shutil
 import sys
+import tempfile
 import threading
 # import pymsgbox
 import time
@@ -2880,7 +2881,7 @@ list_working_folders = [workingf, workingPAXf]
 # Logging
 ##########################################################################################################
 if not os.path.exists(log_folder):
-    log_folder = '.'
+    log_folder = tempfile.mkdtemp()
 LogFile = os.path.join(log_folder, "Log_" + str(fTime()) + ".log")
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
