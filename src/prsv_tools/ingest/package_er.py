@@ -91,7 +91,8 @@ import botocore
 import lxml.etree
 import requests
 from boto3.s3.transfer import S3Transfer
-from preservicatoken import securitytoken
+
+from prsv_tools.ingest.preservicatoken import securitytoken
 
 
 ##########################################################################################################
@@ -2878,6 +2879,8 @@ list_working_folders = [workingf, workingPAXf]
 ##########################################################################################################
 # Logging
 ##########################################################################################################
+if not os.path.exists(log_folder):
+    log_folder = '.'
 LogFile = os.path.join(log_folder, "Log_" + str(fTime()) + ".log")
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
