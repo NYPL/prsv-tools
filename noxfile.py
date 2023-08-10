@@ -23,7 +23,7 @@ def lint(session):
     session.run("flake8", *args)
 
 
-nox.session(python=python_versions)
+@nox.session(python=python_versions)
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
