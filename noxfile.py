@@ -35,12 +35,12 @@ def tests(session: Session) -> None:
             session.notify("coverage", posargs=[])
 
 
-@nox.session(python=python_versions)
+@nox.session(python=python_versions[0])
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["src", "tests"]
     session.install(".")
-    session.install("mypy", "pytest")
+    session.install("mypy", "pytest", "types-requests")
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
