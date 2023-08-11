@@ -58,6 +58,6 @@ def list_of_paths(p: str) -> list[Path]:
 def extant_dir(p: str) -> Path:
     path = Path(p)
     if not path.is_dir():
-        raise argparse.ArgumentTypeError(f"{path} does not exist")
+        raise argparse.ArgumentTypeError(f"{path} is not a directory")
 
     return path
