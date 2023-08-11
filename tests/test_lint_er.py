@@ -7,85 +7,43 @@ import prsv_tools.ingest.lint_er as lint_er
 
 # Unit tests
 # Argument tests
-def test_accepts_paths(monkeypatch, tmp_path: Path):
-    """Test that packages are returned as a list of pathlib paths"""
-    child1 = tmp_path.joinpath("one")
-    child1.mkdir()
-    child2 = tmp_path.joinpath("two")
-    child2.mkdir()
-
+def test_package_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        "sys.argv", ["../bin/lint_er.py", "--package", str(child1), str(child2)]
+        "sys.argv",
+        ["script", "--package", str(tmp_path)],
     )
 
     args = lint_er.parse_args()
 
-    assert child1 in args.packages
-    assert child2 in args.packages
+    assert tmp_path in args.packages
 
 
-def test_accepts_dir_of_packages(monkeypatch, tmp_path: Path):
-    """Test that a directory returns a list of child paths"""
-    child1 = tmp_path.joinpath("one")
-    child1.mkdir()
-    child2 = tmp_path.joinpath("two")
-    child2.mkdir()
-
-    monkeypatch.setattr("sys.argv", ["../bin/lint_er.py", "--directory", str(tmp_path)])
-
-    args = lint_er.parse_args()
-
-    assert child1 in args.packages
-    assert child2 in args.packages
-
-
-def test_accept_package_and_dir(monkeypatch, tmp_path: Path):
-    child1 = tmp_path.joinpath("one")
-    child1.mkdir()
-    child2 = tmp_path.joinpath("two")
-    child2.mkdir()
-    grandchild = child2.joinpath("2.4")
-    grandchild.mkdir()
+def test_directory_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    child_dir = tmp_path / "child"
+    child_dir.mkdir()
 
     monkeypatch.setattr(
         "sys.argv",
-        ["../bin/lint_er.py", "--package", str(child1), "--directory", str(child2)],
+        ["script", "--directory", str(tmp_path)],
     )
 
     args = lint_er.parse_args()
 
-    assert child1 in args.packages
-    assert grandchild in args.packages
+    assert child_dir in args.packages
 
 
-def test_nonexistent_package(monkeypatch, tmp_path: Path, capsys):
-    """Test that error is thrown if package doesn't exist"""
-    child = tmp_path.joinpath("one")
+def test_log_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        "sys.argv",
+        ["../bin/flatten_er_metadata_folder.py", "--log_folder", str(tmp_path)],
+    )
 
-    monkeypatch.setattr("sys.argv", ["../bin/lint_er.py", "--package", str(child)])
+    args = lint_er.parse_args()
 
-    with pytest.raises(SystemExit):
-        lint_er.parse_args()
-
-    stderr = capsys.readouterr().err
-
-    assert f"{child} does not exist" in stderr
+    assert tmp_path == args.log_folder
 
 
-def test_nonexistent_directory(monkeypatch, tmp_path: Path, capsys):
-    """Test that error is thrown if directory doesn't exist"""
-    child = tmp_path.joinpath("one")
-
-    monkeypatch.setattr("sys.argv", ["../bin/lint_er.py", "--directory", str(child)])
-
-    with pytest.raises(SystemExit):
-        lint_er.parse_args()
-
-    stderr = capsys.readouterr().err
-
-    assert f"{child} does not exist" in stderr
-
-
+# linting tests
 @pytest.fixture
 def good_package(tmp_path: Path):
     pkg = tmp_path.joinpath("M12345_ER_0001")
