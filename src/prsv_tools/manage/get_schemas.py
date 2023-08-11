@@ -49,7 +49,7 @@ def parse_res_to_dict(response: requests.Response) -> dict:
 
 def fetch_and_write_content(token, url, folder, file_extension) -> None:
     content_res = get_api_results(token, url)
-    content_dict = parse_res_to_dict(content_res, ns)
+    content_dict = parse_res_to_dict(content_res)
     for item_name in content_dict:
         item_content_url = f"{url}/{content_dict[item_name]}/content"
         item_res = get_api_results(token, item_content_url)
