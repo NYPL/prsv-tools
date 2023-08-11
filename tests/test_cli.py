@@ -21,14 +21,18 @@ def nonexistant_dir(tmp_path: Path):
     return tmp_path / "nonexistant"
 
 
-def test_extant_dir_rejects_nonexistant_dir(nonexistant_dir: Path, capsys: pytest.CaptureFixture):
+def test_extant_dir_rejects_nonexistant_dir(
+    nonexistant_dir: Path, capsys: pytest.CaptureFixture
+):
     with pytest.raises(argparse.ArgumentTypeError) as exc_info:
         prsvcli.extant_dir(nonexistant_dir)
 
     assert f"{str(nonexistant_dir)} is not a directory" in exc_info.value.args[0]
 
 
-def test_extant_dir_rejects_file(directory_of_packages: Path, capsys: pytest.CaptureFixture):
+def test_extant_dir_rejects_file(
+    directory_of_packages: Path, capsys: pytest.CaptureFixture
+):
     emptyfile = directory_of_packages / "file"
     emptyfile.touch()
 
@@ -38,20 +42,27 @@ def test_extant_dir_rejects_file(directory_of_packages: Path, capsys: pytest.Cap
     assert f"{str(emptyfile)} is not a directory" in exc_info.value.args[0]
 
 
-def test_list_of_paths_rejects_nonexistant_dir(nonexistant_dir: Path, capsys: pytest.CaptureFixture):
+def test_list_of_paths_rejects_nonexistant_dir(
+    nonexistant_dir: Path, capsys: pytest.CaptureFixture
+):
     with pytest.raises(argparse.ArgumentTypeError) as exc_info:
         prsvcli.list_of_paths(nonexistant_dir)
 
     assert f"{str(nonexistant_dir)} is not a directory" in exc_info.value.args[0]
 
 
-def test_list_of_paths_rejects_childless_dir(directory_of_packages: Path, capsys: pytest.CaptureFixture):
+def test_list_of_paths_rejects_childless_dir(
+    directory_of_packages: Path, capsys: pytest.CaptureFixture
+):
     empty_directory = directory_of_packages / "one"
 
     with pytest.raises(argparse.ArgumentTypeError) as exc_info:
         prsvcli.list_of_paths(empty_directory)
 
-    assert f"{str(empty_directory)} does not contain child directories" in exc_info.value.args[0]
+    assert (
+        f"{str(empty_directory)} does not contain child directories"
+        in exc_info.value.args[0]
+    )
 
 
 def test_accept_valid_package(
@@ -69,7 +80,6 @@ def test_accept_valid_package(
 
     args = fake_cli.parse_args()
 
-    assert isinstance(args.packages, list)
     for package in packages:
         assert package in args.packages
 
@@ -107,7 +117,6 @@ def test_accept_valid_dirofpackages(
 
     args = fake_cli.parse_args()
 
-    assert isinstance(args.packages, list)
     for package in packages:
         assert package in args.packages
 
@@ -120,9 +129,7 @@ def test_reject_nonexistant_dirofpackages(
     fake_cli = prsvcli.Parser()
     fake_cli.add_packagedirectory()
 
-    monkeypatch.setattr(
-        "sys.argv", ["script", "--directory", str(nonexistant_dir)]
-    )
+    monkeypatch.setattr("sys.argv", ["script", "--directory", str(nonexistant_dir)])
 
     with pytest.raises(SystemExit):
         fake_cli.parse_args()
@@ -164,14 +171,43 @@ def test_accept_package_and_directory_of_packages(
 
     monkeypatch.setattr(
         "sys.argv",
-        ["script", "--package", str(tmp_path), "--directory", str(directory_of_packages)],
+        [
+            "script",
+            "--package",
+            str(tmp_path),
+            "--directory",
+            str(directory_of_packages),
+        ],
     )
 
     args = fake_cli.parse_args()
 
-    assert isinstance(args.packages, list)
     for package in packages:
         assert package in args.packages
+
+
+def test_remove_repeated_directory_paths(
+    directory_of_packages: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_package()
+    fake_cli.add_packagedirectory()
+
+    packages = [path for path in directory_of_packages.iterdir()]
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "script",
+            "--directory",
+            str(directory_of_packages),
+            "--directory",
+            str(directory_of_packages),
+        ],
+    )
+
+    args = fake_cli.parse_args()
+    assert len(args.packages) == 2
 
 
 @pytest.mark.parametrize("instance", ["test", "prod"])
