@@ -48,12 +48,15 @@ def list_of_paths(p: str) -> list[Path]:
     for child in path.iterdir():
         if child.is_dir():
             child_dirs.append(child)
+
+    if not child_dirs:
+        raise argparse.ArgumentTypeError(f"{path} does not contain child directories")
+
     return child_dirs
 
 
 def extant_dir(p: str) -> Path:
     path = Path(p)
-    print(path)
     if not path.is_dir():
         raise argparse.ArgumentTypeError(f"{path} does not exist")
 
