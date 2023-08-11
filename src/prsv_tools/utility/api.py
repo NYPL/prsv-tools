@@ -1,5 +1,7 @@
 import configparser
+import re
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
@@ -52,3 +54,8 @@ def create_token(credential_file_name: str, token_file: Path) -> str:
     token_file.write_text(f'{str(time.time())}\n{data["token"]}')
 
     return data["token"]
+
+
+def find_apiversion(parsed_xml: ET) -> str:
+    version_search = re.search(r"v(\d+\.\d+)\}", parsed_xml.tag)
+    return version_search.group(1)

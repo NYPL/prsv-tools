@@ -7,7 +7,7 @@ import requests
 
 # prsvtoken.py needs to be in the specific directory for this to work
 import prsv_tools.utility.cli as prsvcli
-import prsv_tools.utility.api as prsvtoken
+import prsv_tools.utility.api as prsvapi
 
 
 def parse_args():
@@ -26,27 +26,19 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_api_results(accesstoken, url):
+def get_api_results(accesstoken: str, url: str) -> requests.Response:
     headers = {
         "Preservica-Access-Token": accesstoken,
         "Content-Type": "application/xml",
     }
     response = requests.request("GET", url, headers=headers)
-    return response  # response object
+    return response
 
 
-def find_namespace(response) -> str:
+def parse_res_to_dict(response: requests.Response) -> dict:
     root = ET.fromstring(response.text)
-    version_search = re.search(r"v(\d+\.\d+)\}", root.tag)
-    version = version_search.group(1)
-    namespace = f"{{http://preservica.com/AdminAPI/v{version}}}"
-
-    return namespace
-
-
-def parse_res_to_dict(response, ns) -> dict:
-    root = ET.fromstring(response.text)
-
+    version = prsvapi.find_apiversion(response.text)
+    ns = f"{{http://preservica.com/AdminAPI/v{version}}}"
     names = [name.text.replace(" ", "_") for name in root.iter(f"{ns}Name")]
     ids = [id.text for id in root.iter(f"{ns}ApiId")]
 
@@ -55,9 +47,8 @@ def parse_res_to_dict(response, ns) -> dict:
     return name_id_dict
 
 
-def fetch_and_write_content(token, url, folder, file_extension):
+def fetch_and_write_content(token, url, folder, file_extension) -> None:
     content_res = get_api_results(token, url)
-    ns = find_namespace(content_res)
     content_dict = parse_res_to_dict(content_res, ns)
     for item_name in content_dict:
         item_content_url = f"{url}/{content_dict[item_name]}/content"
@@ -92,7 +83,7 @@ def main():
     else:
         folder = Path(__file__).parent.absolute()
 
-    token = api.get_token(config)
+    token = prsvapi.get_token(config)
 
     # Fetch and write schemas
     fetch_and_write_content(token, schemas_url, folder, "xsd")
