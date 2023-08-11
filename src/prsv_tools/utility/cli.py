@@ -43,7 +43,6 @@ class Parser(argparse.ArgumentParser):
 
 
 class ExtendUnique(argparse.Action):
-
     def __call__(self, parser, namespace, values, option_string=None):
         items = getattr(namespace, self.dest, None)
 
