@@ -54,6 +54,67 @@ def test_reject_invalid_package(
     assert f"{str(invalid_package)} does not exist" in stderr
 
 
+def test_accept_valid_dirofpackages(
+    directory_of_packages: Path, monkeypatch: pytest.MonkeyPatch
+):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_packagedirectory()
+
+    packages = [path for path in directory_of_packages.iterdir()]
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["script", "--directory", str(directory_of_packages)],
+    )
+
+    args = fake_cli.parse_args()
+
+    for package in packages:
+        assert package in args.packages
+
+
+def test_reject_nonexistant_dirofpackages(
+    directory_of_packages: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_packagedirectory()
+
+    nonexistant_directory = directory_of_packages / "nonexistant"
+
+    monkeypatch.setattr(
+        "sys.argv", ["script", "--directory", str(nonexistant_directory)]
+    )
+
+    with pytest.raises(SystemExit):
+        fake_cli.parse_args()
+
+    stderr = capsys.readouterr().err
+
+    assert f"{str(nonexistant_directory)} does not exist" in stderr
+
+
+def test_reject_empty_dirofpackages(
+    directory_of_packages: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_packagedirectory()
+
+    subdir = next(directory_of_packages.iterdir())
+
+    monkeypatch.setattr("sys.argv", ["script", "--directory", str(subdir)])
+
+    with pytest.raises(SystemExit):
+        fake_cli.parse_args()
+
+    stderr = capsys.readouterr().err
+
+    assert f"{str(subdir)} does not contain child directories" in stderr
+
+
 @pytest.mark.parametrize("instance", ["test", "prod"])
 def test_accept_valid_instance(monkeypatch: pytest.MonkeyPatch, instance: str):
     fake_cli = prsvcli.Parser()
