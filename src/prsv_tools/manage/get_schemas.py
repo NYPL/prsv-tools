@@ -7,7 +7,7 @@ import requests
 
 # prsvtoken.py needs to be in the specific directory for this to work
 import prsv_tools.utility.cli as prsvcli
-import prsv_tools.utility.prsvtoken as prsvtoken
+import prsv_tools.utility.api as prsvtoken
 
 
 def parse_args():
@@ -92,7 +92,7 @@ def main():
     else:
         folder = Path(__file__).parent.absolute()
 
-    token = prsvtoken.get_token(config)
+    token = api.get_token(config)
 
     # Fetch and write schemas
     fetch_and_write_content(token, schemas_url, folder, "xsd")
