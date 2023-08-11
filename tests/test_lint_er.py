@@ -338,11 +338,18 @@ def test_unclear_package(good_package):
 
 
 # Functional tests
-def test_lint_valid_package(monkeypatch, good_package, capsys):
+def test_lint_valid_package(monkeypatch, good_package, capsys, tmp_path):
     """Run entire script with valid ER"""
 
     monkeypatch.setattr(
-        "sys.argv", ["../bin/lint_er.py", "--package", str(good_package)]
+        "sys.argv",
+        [
+            "../bin/lint_er.py",
+            "--package",
+            str(good_package),
+            "--log_folder",
+            str(tmp_path),
+        ],
     )
 
     lint_er.main()
@@ -352,7 +359,7 @@ def test_lint_valid_package(monkeypatch, good_package, capsys):
     assert f"packages are valid: {[str(good_package.name)]}" in stdout
 
 
-def test_lint_invalid_package(monkeypatch, good_package, capsys):
+def test_lint_invalid_package(monkeypatch, good_package, capsys, tmp_path):
     """Run entire script with invalid ER"""
 
     bad_package = good_package
@@ -363,7 +370,14 @@ def test_lint_invalid_package(monkeypatch, good_package, capsys):
     bag_file.touch()
 
     monkeypatch.setattr(
-        "sys.argv", ["../bin/lint_er.py", "--package", str(bad_package)]
+        "sys.argv",
+        [
+            "../bin/lint_er.py",
+            "--package",
+            str(bad_package),
+            "--log_folder",
+            str(tmp_path),
+        ],
     )
 
     lint_er.main()
