@@ -111,8 +111,7 @@ def test_accept_valid_dirofpackages(
     packages = [path for path in directory_of_packages.iterdir()]
 
     monkeypatch.setattr(
-        "sys.argv",
-        ["script", "--directory", str(directory_of_packages)],
+        "sys.argv", ["script", "--directory", str(directory_of_packages)]
     )
 
     args = fake_cli.parse_args()
@@ -237,3 +236,43 @@ def test_reject_invalid_instance(
     stderr = capsys.readouterr().err
 
     assert f"invalid choice: '{instance}'" in stderr
+
+
+def test_default_loglocation(monkeypatch: pytest.MonkeyPatch):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_logdirectory()
+
+    monkeypatch.setattr("sys.argv", ["script"])
+
+    args = fake_cli.parse_args()
+
+    assert args.log_folder == Path(".")
+
+
+def test_accept_valid_loglocation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_logdirectory()
+
+    monkeypatch.setattr("sys.argv", ["script", "--log_folder", str(tmp_path)])
+
+    args = fake_cli.parse_args()
+
+    assert args.log_folder == tmp_path
+
+
+def test_reject_invalid_package(
+    nonexistant_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+):
+    fake_cli = prsvcli.Parser()
+    fake_cli.add_logdirectory()
+
+    monkeypatch.setattr("sys.argv", ["script", "--log_folder", str(nonexistant_dir)])
+
+    with pytest.raises(SystemExit):
+        fake_cli.parse_args()
+
+    stderr = capsys.readouterr().err
+
+    assert f"{str(nonexistant_dir)} is not a directory" in stderr
