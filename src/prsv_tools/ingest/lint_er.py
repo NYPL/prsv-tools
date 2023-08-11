@@ -10,9 +10,9 @@ import prsv_tools.utility.cli as prsvcli
 LOGGER = logging.getLogger(__name__)
 
 
-def _configure_logging(args):
+def _configure_logging(log_folder: Path):
     log_fn = datetime.now().strftime("lint_%Y_%m_%d_%H_%M.log")
-    log_fpath = Path(args.log_folder + "/" + log_fn)
+    log_fpath =log_folder / log_fn
     if not log_fpath.is_file():
         log_fpath.touch()
 
@@ -225,7 +225,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
 
 def main():
     args = parse_args()
-    _configure_logging(args)
+    _configure_logging(args.log_folder)
 
     valid = []
     invalid = []
