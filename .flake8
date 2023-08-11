@@ -1,4 +1,5 @@
 [flake8]
+exclude = package_er.py, preservicatoken.py
 select = B,BLK,C,E,F,W
 ignore = E203,E501,W503
 import-order-style = google
