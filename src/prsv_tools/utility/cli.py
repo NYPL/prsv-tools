@@ -32,7 +32,9 @@ class Parser(argparse.ArgumentParser):
             help="path to a directory of packages",
         )
 
-    def add_logdirectory(self, dir: Path = Path(".")) -> None:
+    CWD = Path(".")
+
+    def add_logdirectory(self, dir: Path = CWD) -> None:
         self.add_argument(
             "--log_folder",
             type=extant_dir,

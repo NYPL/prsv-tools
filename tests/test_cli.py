@@ -189,7 +189,6 @@ def test_remove_repeated_directory_paths(
     directory_of_packages: Path, monkeypatch: pytest.MonkeyPatch
 ):
     fake_cli = prsvcli.Parser()
-    fake_cli.add_package()
     fake_cli.add_packagedirectory()
 
     packages = [path for path in directory_of_packages.iterdir()]
@@ -206,7 +205,7 @@ def test_remove_repeated_directory_paths(
     )
 
     args = fake_cli.parse_args()
-    assert len(args.packages) == 2
+    assert len(args.packages) == len(packages)
 
 
 @pytest.mark.parametrize("instance", ["test", "prod"])

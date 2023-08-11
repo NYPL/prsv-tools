@@ -1,13 +1,10 @@
-import argparse
-import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
 
-# prsvtoken.py needs to be in the specific directory for this to work
-import prsv_tools.utility.cli as prsvcli
 import prsv_tools.utility.api as prsvapi
+import prsv_tools.utility.cli as prsvcli
 
 
 def parse_args():
