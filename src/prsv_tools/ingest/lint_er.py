@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
+import prsv_tools.utility.cli as prsvcli
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -26,34 +28,11 @@ def _configure_logging(args):
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
 
-    def extant_dir(p):
-        path = Path(p)
-        if not path.is_dir():
-            raise argparse.ArgumentTypeError(f"{path} does not exist")
-        return path
+    parser = prsvcli.Parser()
 
-    def list_of_paths(p):
-        path = extant_dir(p)
-        child_dirs = []
-        for child in path.iterdir():
-            if child.is_dir():
-                child_dirs.append(child)
-        return child_dirs
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--package", type=extant_dir, nargs="+", dest="packages", action="extend"
-    )
-    parser.add_argument(
-        "--directory", type=list_of_paths, dest="packages", action="extend"
-    )
-    parser.add_argument(
-        "--log_folder",
-        help="""Optional. Designate where to save the log file,
-        or it will be saved in current directory""",
-        default=".",
-    )
+    parser.add_package()
+    parser.add_packagedirectory()
+    parser.add_logdirectory()
 
     return parser.parse_args()
 

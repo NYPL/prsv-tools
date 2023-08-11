@@ -6,21 +6,14 @@ from pathlib import Path
 import requests
 
 # prsvtoken.py needs to be in the specific directory for this to work
+import prsv_tools.utility.cli as prsvcli
 import prsv_tools.utility.prsvtoken as prsvtoken
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = prsvcli.Parser()
 
-    parser.add_argument(
-        "--instance",
-        "-i",
-        type=str,
-        required=True,
-        choices=["test", "prod"],
-        help="Which Preservica instance to access",
-    )
-
+    parser.add_instance()
     parser.add_argument(
         "--destination_folder_path",
         "-dest",
