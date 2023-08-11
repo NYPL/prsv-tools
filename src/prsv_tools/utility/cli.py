@@ -42,8 +42,8 @@ class Parser(argparse.ArgumentParser):
         )
 
 
-def list_of_paths(self, p: str) -> list[Path]:
-    path = self.extant_dir(p)
+def list_of_paths(p: str) -> list[Path]:
+    path = extant_dir(p)
     child_dirs = []
     for child in path.iterdir():
         if child.is_dir():
@@ -51,8 +51,9 @@ def list_of_paths(self, p: str) -> list[Path]:
     return child_dirs
 
 
-def extant_dir(self, p: str) -> Path:
+def extant_dir(p: str) -> Path:
     path = Path(p)
+    print(path)
     if not path.is_dir():
         raise argparse.ArgumentTypeError(f"{path} does not exist")
 
