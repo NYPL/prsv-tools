@@ -56,6 +56,9 @@ def create_token(credential_file_name: str, token_file: Path) -> str:
     return data["token"]
 
 
-def find_apiversion(parsed_xml: ET) -> str:
+def find_apiversion(parsed_xml: ET.Element) -> str:
     version_search = re.search(r"v(\d+\.\d+)\}", parsed_xml.tag)
-    return version_search.group(1)
+    if version_search:
+        return version_search.group(1)
+    else:
+        return ""

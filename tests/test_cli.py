@@ -260,7 +260,7 @@ def test_accept_valid_loglocation(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     assert args.log_folder == tmp_path
 
 
-def test_reject_invalid_package(
+def test_reject_invalid_logdirectory(
     nonexistant_dir: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture,

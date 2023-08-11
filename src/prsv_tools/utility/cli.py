@@ -32,7 +32,7 @@ class Parser(argparse.ArgumentParser):
             help="path to a directory of packages",
         )
 
-    def add_logdirectory(self, dir: Path = ".") -> None:
+    def add_logdirectory(self, dir: Path = Path(".")) -> None:
         self.add_argument(
             "--log_folder",
             type=extant_dir,
@@ -64,7 +64,7 @@ def list_of_paths(p: str) -> list[Path]:
     if not child_dirs:
         raise argparse.ArgumentTypeError(f"{path} does not contain child directories")
 
-    return set(child_dirs)
+    return child_dirs
 
 
 def extant_dir(p: str) -> Path:
