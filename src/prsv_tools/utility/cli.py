@@ -19,7 +19,7 @@ class Parser(argparse.ArgumentParser):
             type=extant_dir,
             nargs="+",
             dest="packages",
-            action="extend",
+            action=ExtendUnique,
             help="path to a single package",
         )
 
@@ -28,7 +28,7 @@ class Parser(argparse.ArgumentParser):
             "--directory",
             type=list_of_paths,
             dest="packages",
-            action="extend",
+            action=ExtendUnique,
             help="path to a directory of packages",
         )
 
@@ -42,6 +42,19 @@ class Parser(argparse.ArgumentParser):
         )
 
 
+class ExtendUnique(argparse.Action):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = getattr(namespace, self.dest, None)
+
+        if items is None:
+            items = set(values)
+        elif isinstance(items, set):
+            items = items.union(values)
+
+        setattr(namespace, self.dest, items)
+
+
 def list_of_paths(p: str) -> list[Path]:
     path = extant_dir(p)
     child_dirs = []
@@ -52,7 +65,7 @@ def list_of_paths(p: str) -> list[Path]:
     if not child_dirs:
         raise argparse.ArgumentTypeError(f"{path} does not contain child directories")
 
-    return child_dirs
+    return set(child_dirs)
 
 
 def extant_dir(p: str) -> Path:
