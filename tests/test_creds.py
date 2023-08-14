@@ -83,7 +83,7 @@ def test_error_on_missing_field(good_credential_ini, field: str):
     with pytest.raises(prsvcreds.PrsvCredentialException) as exc_info:
         creds.get_credentials(set=cred_set)
 
-    assert f"{cred_set} is missing a key for {field}"
+    assert f"{cred_set} is missing a field for {field}" in exc_info.value.args[0]
 
 
 @pytest.mark.parametrize("field", ["user", "pass", "tenant"])
@@ -95,7 +95,7 @@ def test_error_on_bad_field_value(good_credential_ini, field: str):
     with pytest.raises(prsvcreds.PrsvCredentialException) as exc_info:
         creds.get_credentials(set=cred_set)
 
-    assert f"{cred_set} is missing a value for {field}"
+    assert f"{cred_set} is missing a value for {field}" in exc_info.value.args[0]
 
 
 """

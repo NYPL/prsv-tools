@@ -70,8 +70,6 @@ def main():
 
     args = parse_args()
 
-    test_config = "DA_Dev_SMTP.ini"
-    prod_config = "DA_Production_SMTP.ini"
     schemas_url = "https://nypl.preservica.com/api/admin/schemas"
     documents_url = "https://nypl.preservica.com/api/admin/documents"
     transforms_url = "https://nypl.preservica.com/api/admin/transforms"

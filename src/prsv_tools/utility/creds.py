@@ -28,7 +28,7 @@ class Credentials(configparser.ConfigParser):
         return self.sections()
 
     def get_credentials(self, set: str) -> (str, str):
-        if not set in self.sections():
+        if set not in self.sections():
             raise PrsvCredentialException(f"{set} is not a defined credential set")
 
         return (
@@ -38,7 +38,7 @@ class Credentials(configparser.ConfigParser):
         )
 
     def get_cred_value(self, set, key) -> str:
-        if not key in self[set]:
+        if key not in self[set]:
             raise PrsvCredentialException(
                 f"{set} is missing a field for {key}. Update the file at {str(CREDS_INI)}"
             )
