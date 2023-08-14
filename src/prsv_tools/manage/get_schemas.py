@@ -10,7 +10,13 @@ import prsv_tools.utility.cli as prsvcli
 def parse_args():
     parser = prsvcli.Parser()
 
-    parser.add_instance()
+    parser.add_argument(
+        "--credentials",
+        type=str,
+        required=True,
+        choices=["test-ingest", "prod-ingest", "test-manage"],
+        help="which set of credentials to use",
+    )
     parser.add_argument(
         "--destination_folder_path",
         "-dest",
@@ -34,7 +40,7 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
 
 def parse_res_to_dict(response: requests.Response) -> dict:
     root = ET.fromstring(response.text)
-    version = prsvapi.find_apiversion(response.text)
+    version = prsvapi.find_apiversion(root.tag)
     ns = f"{{http://preservica.com/AdminAPI/v{version}}}"
     names = [name.text.replace(" ", "_") for name in root.iter(f"{ns}Name")]
     ids = [id.text for id in root.iter(f"{ns}ApiId")]
@@ -70,17 +76,12 @@ def main():
     documents_url = "https://nypl.preservica.com/api/admin/documents"
     transforms_url = "https://nypl.preservica.com/api/admin/transforms"
 
-    if args.instance == "test":
-        config = test_config
-    else:
-        config = prod_config
-
     if args.destination_folder_path:
         folder = Path(args.destination_folder_path)
     else:
         folder = Path(__file__).parent.absolute()
 
-    token = prsvapi.get_token(config)
+    token = prsvapi.get_token(args.credentials)
 
     # Fetch and write schemas
     fetch_and_write_content(token, schemas_url, folder, "xsd")

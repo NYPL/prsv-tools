@@ -6,58 +6,52 @@ from pathlib import Path
 
 import requests
 
+import prsv_tools.utility.creds as prsvcreds
 
-def get_token(credential_file_name: str) -> str:
+TOKEN_BASE_URL = "https://nypl.preservica.com/api/accesstoken/login"
+
+
+def get_token(credential_set: str) -> str:
     """
     return token string
     check for existing valid token in token file
     if the file does not exist or the token is out of date, create token
     """
 
-    token_file = Path(f"{credential_file_name}.token.file")
+    token_file = Path(f"{credential_set}.token.file")
     if token_file.is_file():
         time_issued, sessiontoken = token_file.read_text().split("\n")
         # tokens are valid for 500 seconds
         if time.time() - float(time_issued) < 500:
             return sessiontoken
 
-    return create_token(credential_file_name, token_file)
+    return create_token(credential_set, token_file)
 
 
-def create_token(credential_file_name: str, token_file: Path) -> str:
+def create_token(credential_set: str, token_file: Path) -> str:
     """
     request token string based on credentials
     write time and token to a file and return token
     """
 
-    config = configparser.ConfigParser()
-    config.sections()
-    credential_file = Path(credential_file_name)
-
-    if credential_file.is_file():
-        config.read(credential_file)
-    else:
-        raise FileNotFoundError
+    creds = prsvcreds.Credentials()
+    user, pw, tenant = creds.get_credentials(credential_set)
 
     # build the query string and get a new token
-    url = config["DEFAULT"]["URL"]
+    url = TOKEN_BASE_URL
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    payload = (
-        f'username={config["DEFAULT"]["Username"]}'
-        f'&password={config["DEFAULT"]["Password"]}'
-        f'&tenant={config["DEFAULT"]["Tenant"]}'
-    )
+    payload = f"username={user}&password={pw}&tenant={tenant}"
     response = requests.request("POST", url, headers=headers, data=payload)
     data = response.json()
-
+    print(data)
     # write token to token.file for later reuse
     token_file.write_text(f'{str(time.time())}\n{data["token"]}')
 
     return data["token"]
 
 
-def find_apiversion(parsed_xml: ET.Element) -> str:
-    version_search = re.search(r"v(\d+\.\d+)\}", parsed_xml.tag)
+def find_apiversion(xml_root_tag: str) -> str:
+    version_search = re.search(r"v(\d+\.\d+)\}", xml_root_tag)
     if version_search:
         return version_search.group(1)
     else:
