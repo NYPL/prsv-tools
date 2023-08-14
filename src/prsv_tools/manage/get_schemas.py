@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument(
         "--destination_folder_path",
         "-dest",
-        type=str,
+        type=prsvcli.extant_dir,
         required=False,
         help="""Optional. Provide an absolute folder path to save the files
         in the specified folder""",
@@ -79,7 +79,7 @@ def main():
     if args.destination_folder_path:
         folder = Path(args.destination_folder_path)
     else:
-        folder = Path(__file__).parent.absolute()
+        folder = Path.cwd()
 
     token = prsvapi.get_token(args.credentials)
 
