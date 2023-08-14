@@ -1,0 +1,8 @@
+[flake8]
+exclude = package_er.py, preservicatoken.py
+select = B,BLK,C,E,F,W
+ignore = E203,E501,W503
+import-order-style = google
+max-line-length = 80
+max-complexity = 10
+application-import-names = prsv-tools,tests
