@@ -41,9 +41,14 @@ def create_token(credential_set: str, token_file: Path) -> str:
     url = TOKEN_BASE_URL
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     payload = f"username={user}&password={pw}&tenant={tenant}"
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.post(url, headers=headers, data=payload)
     data = response.json()
-    print(data)
+
+    if not data["success"]:
+        raise prsvcreds.PrsvCredentialException(
+            f"Invalid credentials. Update the file at {str(prsvcreds.CREDS_INI)}"
+        )
+
     # write token to token.file for later reuse
     token_file.write_text(f'{str(time.time())}\n{data["token"]}')
 
