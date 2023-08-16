@@ -16,6 +16,13 @@ def parse_args():
         help="which set of credentials to use",
     )
 
+    parser.add_argument(
+        "--collectionID",
+        type=str,
+        required=True,
+        help="the collection you'd like to check for, M\d+",
+    )
+
     return parser.parse_args()
 
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
@@ -26,7 +33,14 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     response = requests.request("GET", url, headers=headers)
     return response
 
+def search_within_DigArch(accesstoken):
+    url = 'https://nypl.preservica.com/api/content/search-within?q={"q":"","fields":[{"name":"spec.specCollectionID","values":["M1126"]}]}&parenthierarchy=e80315bc-42f5-44da-807f-446f78621c08&start=0&max=-1&metadata=""' # noqa
+    res = get_api_results(accesstoken, url)
+
+    return res
+
 def ingest_has_correct_ER_number(collection_id) -> bool:
+    url = "https://nypl.preservica.com/api/content/search-within"
 
 def main():
     """
@@ -42,6 +56,8 @@ def main():
     args = parse_args()
 
     token = prsvapi.get_token(args.credentials)
+    response = search_within_DigArch(token)
+    print(response.text)
 
 if __name__ == "__main__":
     main()
