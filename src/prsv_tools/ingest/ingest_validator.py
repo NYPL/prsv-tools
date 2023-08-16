@@ -42,6 +42,15 @@ def search_within_DigArch(accesstoken, collectionid, parentuuid):
 
     return res
 
+def parse_structural_object_uuid(res):
+    uuid_ls = list()
+    json_obj = json.loads(res.text)
+    obj_ids = json_obj["value"]["objectIds"]
+    for sdbso in obj_ids:
+        uuid_ls.append(sdbso[-36:])
+
+    return uuid_ls
+
 def ingest_has_correct_ER_number(collection_id) -> bool:
     url = "https://nypl.preservica.com/api/content/search-within"
 
@@ -68,7 +77,7 @@ def main():
         parentuuid = prod_digarch_uuid
 
     response = search_within_DigArch(token, args.collectionID, parentuuid)
-    print(response.text)
+    parse_structural_object_uuid(response)
 
 if __name__ == "__main__":
     main()
