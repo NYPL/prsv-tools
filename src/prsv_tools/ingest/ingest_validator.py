@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import requests
+import json
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
@@ -33,8 +34,10 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     response = requests.request("GET", url, headers=headers)
     return response
 
-def search_within_DigArch(accesstoken):
-    url = 'https://nypl.preservica.com/api/content/search-within?q={"q":"","fields":[{"name":"spec.specCollectionID","values":["M1126"]}]}&parenthierarchy=e80315bc-42f5-44da-807f-446f78621c08&start=0&max=-1&metadata=""' # noqa
+def search_within_DigArch(accesstoken, collectionid, parentuuid):
+    query = {"q":"","fields":[{"name":"spec.specCollectionID","values":[collectionid]}]}
+    q = json.dumps(query)
+    url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''" # noqa
     res = get_api_results(accesstoken, url)
 
     return res
@@ -55,8 +58,16 @@ def main():
     """
     args = parse_args()
 
+    test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
+    prod_digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
+
     token = prsvapi.get_token(args.credentials)
-    response = search_within_DigArch(token)
+    if "test" in args.credentials:
+        parentuuid = test_digarch_uuid
+    else:
+        parentuuid = prod_digarch_uuid
+
+    response = search_within_DigArch(token, args.collectionID, parentuuid)
     print(response.text)
 
 if __name__ == "__main__":
