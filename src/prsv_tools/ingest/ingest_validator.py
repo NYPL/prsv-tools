@@ -51,8 +51,15 @@ def parse_structural_object_uuid(res):
 
     return uuid_ls
 
-def ingest_has_correct_ER_number(collection_id) -> bool:
-    url = "https://nypl.preservica.com/api/content/search-within"
+def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
+    pkgs = [ x for x in da_source.iterdir() if x.is_dir() and x.name.startswith(collection_id)]
+    expected = len(pkgs)
+    found = len(uuid_ls)
+
+    if expected == found:
+        return True
+    else:
+        return False
 
 def main():
     """
@@ -73,11 +80,14 @@ def main():
     token = prsvapi.get_token(args.credentials)
     if "test" in args.credentials:
         parentuuid = test_digarch_uuid
+        da_source = Path("/data/Preservica_DigArch_Test/DA_Source_Test/DigArch")
     else:
         parentuuid = prod_digarch_uuid
+        da_source = Path("/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch")
 
     response = search_within_DigArch(token, args.collectionID, parentuuid)
-    parse_structural_object_uuid(response)
+    uuid_ls = parse_structural_object_uuid(response)
+    print(ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls))
 
 if __name__ == "__main__":
     main()
