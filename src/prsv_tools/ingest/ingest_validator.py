@@ -16,6 +16,8 @@ def parse_args():
         help="which set of credentials to use",
     )
 
+    return parser.parse_args()
+
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
     headers = {
         "Preservica-Access-Token": accesstoken,
@@ -37,6 +39,7 @@ def main():
     2. If it is an IO, distinguish between content file and metadata file
        to check different checkpoints
     """
+    args = parse_args()
 
     token = prsvapi.get_token(args.credentials)
 
