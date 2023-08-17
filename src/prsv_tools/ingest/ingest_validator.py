@@ -74,16 +74,13 @@ def main():
     """
     args = parse_args()
 
-    test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
-    prod_digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
-
     token = prsvapi.get_token(args.credentials)
     if "test" in args.credentials:
-        parentuuid = test_digarch_uuid
+        parentuuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
         da_source = Path("/data/Preservica_DigArch_Test/DA_Source_Test/DigArch")
     else:
-        parentuuid = prod_digarch_uuid
-        da_source = Path("/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch")
+        parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
+        da_source = Path("/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch")
 
     response = search_within_DigArch(token, args.collectionID, parentuuid)
     uuid_ls = parse_structural_object_uuid(response)
