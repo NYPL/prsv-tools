@@ -1,4 +1,5 @@
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 import requests
 import json
@@ -61,6 +62,12 @@ def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
     else:
         return False
 
+def ingest_pkg_level_metadata_is_correct(uuid_ls, token) -> bool:
+    for id in uuid_ls:
+        url = f"https://nypl.preservica.com/api/entity/structural-objects/{id}"
+        res = get_api_results(token, url)
+        print(res.text)
+
 def main():
     """
     First type of check:
@@ -82,9 +89,11 @@ def main():
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
         da_source = Path("/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch")
 
-    response = search_within_DigArch(token, args.collectionID, parentuuid)
-    uuid_ls = parse_structural_object_uuid(response)
-    print(ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls))
+    res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
+    uuid_ls = parse_structural_object_uuid(res_uuid)
+    # print(ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls))
+    ingest_pkg_level_metadata_is_correct(uuid_ls, token)
+
 
 if __name__ == "__main__":
     main()
