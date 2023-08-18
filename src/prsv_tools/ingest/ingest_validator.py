@@ -62,11 +62,48 @@ def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
     else:
         return False
 
-def ingest_pkg_level_metadata_is_correct(uuid_ls, token) -> bool:
+def ingested_pkg_metadata(uuid_ls, token) -> dict:
+    """Check the ingested package top level has the correct Title, Security Tag, SPEC collection ID"""
+
+    dict_found = dict()
+
     for id in uuid_ls:
         url = f"https://nypl.preservica.com/api/entity/structural-objects/{id}"
         res = get_api_results(token, url)
-        print(res.text)
+        root = ET.fromstring(res.text)
+        version = prsvapi.find_apiversion(root.tag)
+        xip_ns = f"{{http://preservica.com/XIP/v{version}}}"
+        entity_ns = f"{{http://preservica.com/EntityAPI/v{version}}}"
+        spec_ns = f"{{http://nypl.org/prsv_schemas/specCollection}}"
+
+        for title in root.findall(f".//{xip_ns}Title"):
+            dict_found["title"] = title.text
+
+        for sectag in root.findall(f".//{xip_ns}SecurityTag"):
+            dict_found["SecurityTag"] = sectag.text
+
+        for ids in root.findall(f".//{entity_ns}Identifiers"):
+            identifiers_url = ids.text
+
+        for metadata in root.findall(f".//{entity_ns}Fragment"):
+            mfrag_url = metadata.text
+
+        identifiers_res = get_api_results(token, identifiers_url)
+        id_root = ET.fromstring(identifiers_res.text)
+
+        for type in id_root.findall(f".//{xip_ns}Type"):
+            dict_found["type"] = type.text
+        for value in id_root.findall(f".//{xip_ns}Value"):
+            dict_found["soCat"] = value.text
+
+        mfrag_res = get_api_results(token, mfrag_url)
+        mfrag_root = ET.fromstring(mfrag_res.text)
+
+        for speccolid in mfrag_root.findall(f".//{spec_ns}specCollectionId"):
+            dict_found['speccolID'] = speccolid.text
+
+        print(dict_found)
+
 
 def main():
     """
@@ -91,8 +128,8 @@ def main():
 
     res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
-    # print(ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls))
-    ingest_pkg_level_metadata_is_correct(uuid_ls, token)
+    print(ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls))
+    ingested_pkg_metadata(uuid_ls, token)
 
 
 if __name__ == "__main__":
