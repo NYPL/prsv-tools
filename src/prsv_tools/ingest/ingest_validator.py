@@ -1,11 +1,12 @@
-from pathlib import Path
+import json
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 import requests
-import json
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
+
 
 def parse_args():
     parser = prsvcli.Parser()
@@ -27,6 +28,7 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
     headers = {
         "Preservica-Access-Token": accesstoken,
@@ -35,13 +37,18 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     response = requests.request("GET", url, headers=headers)
     return response
 
+
 def search_within_DigArch(accesstoken, collectionid, parentuuid):
-    query = {"q":"","fields":[{"name":"spec.specCollectionID","values":[collectionid]}]}
+    query = {
+        "q": "",
+        "fields": [{"name": "spec.specCollectionID", "values": [collectionid]}],
+    }
     q = json.dumps(query)
-    url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''" # noqa
+    url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''"  # noqa
     res = get_api_results(accesstoken, url)
 
     return res
+
 
 def parse_structural_object_uuid(res):
     uuid_ls = list()
@@ -52,8 +59,13 @@ def parse_structural_object_uuid(res):
 
     return uuid_ls
 
+
 def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
-    pkgs = [ x for x in da_source.iterdir() if x.is_dir() and x.name.startswith(collection_id)]
+    pkgs = [
+        x
+        for x in da_source.iterdir()
+        if x.is_dir() and x.name.startswith(collection_id)
+    ]
     expected = len(pkgs)
     found = len(uuid_ls)
 
@@ -61,6 +73,7 @@ def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
         return True
     else:
         return False
+
 
 def ingested_pkg_metadata(uuid_ls, token) -> dict:
     """Check the ingested package top level has the correct Title, Security Tag, SPEC collection ID"""
@@ -100,7 +113,7 @@ def ingested_pkg_metadata(uuid_ls, token) -> dict:
         mfrag_root = ET.fromstring(mfrag_res.text)
 
         for speccolid in mfrag_root.findall(f".//{spec_ns}specCollectionId"):
-            dict_found['speccolID'] = speccolid.text
+            dict_found["speccolID"] = speccolid.text
 
         print(dict_found)
 
@@ -124,7 +137,9 @@ def main():
         da_source = Path("/data/Preservica_DigArch_Test/DA_Source_Test/DigArch")
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
-        da_source = Path("/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch")
+        da_source = Path(
+            "/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
+        )
 
     res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
