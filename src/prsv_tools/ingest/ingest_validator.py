@@ -89,34 +89,38 @@ def ingested_pkg_metadata(uuid_ls, token) -> dict:
         entity_ns = f"{{http://preservica.com/EntityAPI/v{version}}}"
         spec_ns = f"{{http://nypl.org/prsv_schemas/specCollection}}"
 
-        for title in root.findall(f".//{xip_ns}Title"):
-            dict_found["title"] = title.text
+        title_elem = root.find(f".//{xip_ns}Title")
+        dict_found["title"] = title_elem.text
 
-        for sectag in root.findall(f".//{xip_ns}SecurityTag"):
-            dict_found["SecurityTag"] = sectag.text
+        sectag_elem = root.find(f".//{xip_ns}SecurityTag")
+        dict_found["sectag"] = sectag_elem.text
 
-        for ids in root.findall(f".//{entity_ns}Identifiers"):
-            identifiers_url = ids.text
+        identifiers_elem = root.find(f".//{entity_ns}Identifiers")
+        identifiers_url = identifiers_elem.text
 
-        for metadata in root.findall(f".//{entity_ns}Fragment"):
-            mfrag_url = metadata.text
+        metadata_elem = root.find(f".//{entity_ns}Fragment")
+        mfrag_url = metadata_elem.text
 
         identifiers_res = get_api_results(token, identifiers_url)
         id_root = ET.fromstring(identifiers_res.text)
 
-        for type in id_root.findall(f".//{xip_ns}Type"):
-            dict_found["type"] = type.text
-        for value in id_root.findall(f".//{xip_ns}Value"):
-            dict_found["soCat"] = value.text
+        type_elem = id_root.find(f".//{xip_ns}Type")
+        dict_found["type"] = type_elem.text
+
+        value_elem = id_root.find(f".//{xip_ns}Value")
+        dict_found["soCat"] = value_elem.text
 
         mfrag_res = get_api_results(token, mfrag_url)
         mfrag_root = ET.fromstring(mfrag_res.text)
 
-        for speccolid in mfrag_root.findall(f".//{spec_ns}specCollectionId"):
-            dict_found["speccolID"] = speccolid.text
+        speccolid_elem = mfrag_root.find(f".//{spec_ns}specCollectionId")
+        dict_found["speccolID"] = speccolid_elem.text
 
         print(dict_found)
 
+"""need to separate the ingested_pkg_metadata to different functions"""
+
+# def parse_SO_metadata(res):
 
 def main():
     """
