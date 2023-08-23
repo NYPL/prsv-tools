@@ -120,7 +120,6 @@ def ingested_pkg_metadata(uuid_ls, token) -> dict:
 
 """need to separate the ingested_pkg_metadata to different functions"""
 
-# def parse_SO_metadata(res):
 
 def main():
     """
@@ -147,8 +146,18 @@ def main():
 
     res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
-    print(ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls))
-    ingested_pkg_metadata(uuid_ls, token)
+
+    for uuid in uuid_ls:
+        url = f"https://nypl.preservica.com/api/entity/structural-objects/{uuid}"
+        res = get_api_results(token, url)
+        root = ET.fromstring(res.text)
+        version = prsvapi.find_apiversion(root.tag)
+
+        namespaces = {"xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
+                      "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
+                      "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}"}
+
+
 
 
 if __name__ == "__main__":
