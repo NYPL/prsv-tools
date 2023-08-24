@@ -50,7 +50,7 @@ def search_within_DigArch(accesstoken, collectionid, parentuuid):
     return res
 
 
-def parse_structural_object_uuid(res):
+def parse_structural_object_uuid(res) -> list:
     uuid_ls = list()
     json_obj = json.loads(res.text)
     obj_ids = json_obj["value"]["objectIds"]
@@ -102,14 +102,47 @@ def get_so_metadata(uuid, token, namespaces: dict) -> dict:
 
     return so_dict
 
-# def get_so_identifier(so_dict):
+
+def get_so_identifier(token, so_dict, namespaces: dict) -> dict:
+    id_dict = dict()
+
+    identifiers_res = get_api_results(token, so_dict["id_url"])
+    id_root = ET.fromstring(identifiers_res.text)
+
+    type_elem = id_root.find(f".//{namespaces['xip_ns']}Type")
+    id_dict["type"] = type_elem.text
+
+    value_elem = id_root.find(f".//{namespaces['xip_ns']}Value")
+    id_dict["soCat"] = value_elem.text
+
+    return id_dict
 
 
-# def get_so_mdfrag(so_dict):
+def get_spec_mdfrag(token, so_dict, namespaces: dict) -> dict:
+    mdfrag_dict = dict()
+
+    mfrag_res = get_api_results(token, so_dict["metadata_url"])
+    mfrag_root = ET.fromstring(mfrag_res.text)
+
+    speccolid_elem = mfrag_root.find(f".//{namespaces['spec_ns']}specCollectionId")
+    mdfrag_dict["speccolID"] = speccolid_elem.text
+
+    return mdfrag_dict
 
 
-# def get_so_children(so_dict):
+def get_so_children(token, so_dict, namespaces) -> dict:
+    children_dict = dict()
 
+    children_res = get_api_results(token, so_dict["children_url"])
+    children_root = ET.fromstring(children_res.text)
+    children = children_root.findall(f".//{namespaces['entity_ns']}Child")
+
+    for c in children:
+        if not children_dict:
+            children_dict["children"] = []
+        children_dict["children"].append(c.text)
+
+    return children_dict
 
 
 def main():
@@ -141,20 +174,34 @@ def main():
             "/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
         )
 
+    namespaces = {
+        "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
+        "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
+        "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
+    }
+
     res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
-
-    namespaces = {"xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
-                  "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
-                  "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}"}
-
     uuid_ls = parse_structural_object_uuid(res_uuid)
+
+    ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls)
 
     for uuid in uuid_ls:
         so_dict = get_so_metadata(uuid, token, namespaces)
+
+        id_dict = get_so_identifier(token, so_dict, namespaces)
+        so_dict.update(id_dict)
+
+        mdfrag_dict = get_spec_mdfrag(token, so_dict, namespaces)
+        so_dict.update(mdfrag_dict)
+
+        children_dict = get_so_children(token, so_dict, namespaces)
+        so_dict.update(children_dict)
+
+        rm_list = ["id_url", "metadata_url", "children_url"]
+        for key in rm_list:
+            del so_dict[key]
+
         print(so_dict)
-
-
-
 
 
 if __name__ == "__main__":
