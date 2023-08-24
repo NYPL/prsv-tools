@@ -98,7 +98,7 @@ def get_so_metadata(uuid, token, namespaces: dict) -> dict:
     so_dict["metadata_url"] = metadata_elem.text
 
     children_elem = root.find(f".//{namespaces['entity_ns']}Children")
-    so_dict["children_url"] = metadata_elem.text
+    so_dict["children_url"] = children_elem.text
 
     return so_dict
 
