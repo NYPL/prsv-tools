@@ -140,11 +140,22 @@ def main():
         da_source = Path("/data/Preservica_DigArch_Test/DA_Source_Test/DigArch")
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
+
+        url = f"https://nypl.preservica.com/api/entity/structural-objects/{parentuuid}"
+        res = get_api_results(token, url)
+        root = ET.fromstring(res.text)
+        version = prsvapi.find_apiversion(root.tag)
+
         da_source = Path(
             "/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
         )
 
     res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
+
+    namespaces = {"xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
+                  "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
+                  "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}"}
+
     uuid_ls = parse_structural_object_uuid(res_uuid)
 
     for uuid in uuid_ls:
@@ -153,9 +164,6 @@ def main():
         root = ET.fromstring(res.text)
         version = prsvapi.find_apiversion(root.tag)
 
-        namespaces = {"xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
-                      "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
-                      "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}"}
 
 
 
