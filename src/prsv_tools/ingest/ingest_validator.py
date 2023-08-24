@@ -3,10 +3,13 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
+import logging
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
 
+
+logging.basicConfig(level=logging.INFO)
 
 def parse_args():
     parser = prsvcli.Parser()
@@ -70,8 +73,10 @@ def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
     found = len(uuid_ls)
 
     if expected == found:
+        logging.info(f"{collection_id} has correct number of packages in Preservica")
         return True
     else:
+        logging.error(f"{collection_id} has incorrect number of packages in Preservica")
         return False
 
 
