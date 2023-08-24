@@ -75,50 +75,41 @@ def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
         return False
 
 
-def ingested_pkg_metadata(uuid_ls, token) -> dict:
-    """Check the ingested package top level has the correct Title, Security Tag, SPEC collection ID"""
+def get_so_metadata(uuid, token, namespaces: dict) -> dict:
+    """return a dictionary with title, secturity tag (all strings)
+    type, metadata fragments and children urls for other calls"""
 
-    dict_found = dict()
+    so_dict = dict()
 
-    for id in uuid_ls:
-        url = f"https://nypl.preservica.com/api/entity/structural-objects/{id}"
-        res = get_api_results(token, url)
-        root = ET.fromstring(res.text)
-        version = prsvapi.find_apiversion(root.tag)
-        xip_ns = f"{{http://preservica.com/XIP/v{version}}}"
-        entity_ns = f"{{http://preservica.com/EntityAPI/v{version}}}"
-        spec_ns = f"{{http://nypl.org/prsv_schemas/specCollection}}"
+    url = f"https://nypl.preservica.com/api/entity/structural-objects/{uuid}"
+    res = get_api_results(token, url)
+    root = ET.fromstring(res.text)
 
-        title_elem = root.find(f".//{xip_ns}Title")
-        dict_found["title"] = title_elem.text
+    title_elem = root.find(f".//{namespaces['xip_ns']}Title")
+    so_dict["title"] = title_elem.text
 
-        sectag_elem = root.find(f".//{xip_ns}SecurityTag")
-        dict_found["sectag"] = sectag_elem.text
+    sectag_elem = root.find(f".//{namespaces['xip_ns']}SecurityTag")
+    so_dict["sectag"] = sectag_elem.text
 
-        identifiers_elem = root.find(f".//{entity_ns}Identifiers")
-        identifiers_url = identifiers_elem.text
+    identifiers_elem = root.find(f".//{namespaces['entity_ns']}Identifiers")
+    so_dict["id_url"] = identifiers_elem.text
 
-        metadata_elem = root.find(f".//{entity_ns}Fragment")
-        mfrag_url = metadata_elem.text
+    metadata_elem = root.find(f".//{namespaces['entity_ns']}Fragment")
+    so_dict["metadata_url"] = metadata_elem.text
 
-        identifiers_res = get_api_results(token, identifiers_url)
-        id_root = ET.fromstring(identifiers_res.text)
+    children_elem = root.find(f".//{namespaces['entity_ns']}Children")
+    so_dict["children_url"] = metadata_elem.text
 
-        type_elem = id_root.find(f".//{xip_ns}Type")
-        dict_found["type"] = type_elem.text
+    return so_dict
 
-        value_elem = id_root.find(f".//{xip_ns}Value")
-        dict_found["soCat"] = value_elem.text
+# def get_so_identifier(so_dict):
 
-        mfrag_res = get_api_results(token, mfrag_url)
-        mfrag_root = ET.fromstring(mfrag_res.text)
 
-        speccolid_elem = mfrag_root.find(f".//{spec_ns}specCollectionId")
-        dict_found["speccolID"] = speccolid_elem.text
+# def get_so_mdfrag(so_dict):
 
-        print(dict_found)
 
-"""need to separate the ingested_pkg_metadata to different functions"""
+# def get_so_children(so_dict):
+
 
 
 def main():
@@ -159,10 +150,8 @@ def main():
     uuid_ls = parse_structural_object_uuid(res_uuid)
 
     for uuid in uuid_ls:
-        url = f"https://nypl.preservica.com/api/entity/structural-objects/{uuid}"
-        res = get_api_results(token, url)
-        root = ET.fromstring(res.text)
-        version = prsvapi.find_apiversion(root.tag)
+        so_dict = get_so_metadata(uuid, token, namespaces)
+        print(so_dict)
 
 
 
