@@ -10,16 +10,19 @@ import prsv_tools.ingest.ingest_validator as ingest_validator
 
 # set up
 
+content_endpoint = "https://nypl.preservica.com/api/content"
 entity_endpoint = "https://nypl.preservica.com/api/entity"
 test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
 token = prsvapi.get_token("test-ingest")
+collectionid = "M848"
 
 # unit tests
-def test_entity_searchwithin_so_endpoint():
-    url = entity_endpoint + "/structural-objects/" + test_digarch_uuid
-    response = ingest_validator.get_api_results(token, url)
+def test_content_searchwithin_so_endpoint():
+    response = ingest_validator.search_within_DigArch(token, collectionid, test_digarch_uuid)
 
     assert response.status_code == 200
+
+
 
 
 
