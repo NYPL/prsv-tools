@@ -15,6 +15,13 @@ entity_endpoint = "https://nypl.preservica.com/api/entity"
 test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
 token = prsvapi.get_token("test-ingest")
 collectionid = "M1126"
+test_er_uuid = "ae7a1ea1-9a75-4348-807a-9923b1f22ad0"
+version = prsvapi.find_apiversion(token)
+namespaces = {
+        "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
+        "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
+        "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
+    }
 
 # unit tests
 def test_content_searchwithin_so_endpoint():
@@ -28,6 +35,9 @@ def test_content_searchwithin_so_endpoint():
     assert type(uuid_ls) == list
     assert len(uuid_ls) > 0
 
+def test_get_so_metadata():
+    er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
+    pass
 
 
 
