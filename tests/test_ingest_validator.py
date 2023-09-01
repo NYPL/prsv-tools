@@ -10,8 +10,8 @@ import prsv_tools.ingest.ingest_validator as ingest_validator
 
 # set up
 
-content_endpoint = "https://nypl.preservica.com/api/content"
-entity_endpoint = "https://nypl.preservica.com/api/entity"
+# content_endpoint = "https://nypl.preservica.com/api/content"
+# entity_endpoint = "https://nypl.preservica.com/api/entity"
 test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
 token = prsvapi.get_token("test-ingest")
 collectionid = "M1126"
@@ -37,7 +37,12 @@ def test_content_searchwithin_so_endpoint():
 
 def test_get_so_metadata():
     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
+    # get_so_metadata may need to be separate into different sections
+    # currently it is doing many things
+    # first test get_api_result with the structural-objects/uuid response
+    # then test data structure
     pass
+
 
 
 
