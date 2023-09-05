@@ -23,6 +23,24 @@ namespaces = {
         "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
     }
 
+query = {
+        "q": "",
+        "fields": [{"name": "spec.specCollectionID", "values": [collectionid]}],
+    }
+q = json.dumps(query)
+
+testendpoints = [
+    f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={test_digarch_uuid}&start=0&max=-1&metadata=''",
+    f"https://nypl.preservica.com/api/entity/structural-objects/{test_er_uuid}",
+    f"https://nypl.preservica.com/api/entity/structural-objects/{test_er_uuid}/identifiers",
+    f"https://nypl.preservica.com/api/entity/structural-objects/{test_er_uuid}/metadata/4e2b6d26-be94-4188-a968-29a3458166c4",
+    f"https://nypl.preservica.com/api/entity/structural-objects/{test_er_uuid}/children"
+]
+@pytest.mark.parametrize("url", testendpoints)
+def test_used_endpoints_are_valid(url):
+    res = ingest_validator.get_api_results(token, url)
+    assert res.status_code == 200
+
 # unit tests
 def test_content_searchwithin_so_endpoint():
     # first test that the status code is good (200)
