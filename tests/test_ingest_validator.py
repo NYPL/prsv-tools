@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import requests
+from schema import And, Optional, Schema, SchemaError, Use
 
 import prsv_tools.ingest.ingest_validator as ingest_validator
 import prsv_tools.utility.api as prsvapi
@@ -60,12 +61,34 @@ def test_content_searchwithin_so_endpoint():
 
 
 def test_get_so_metadata():
+    """test that get_so_metadata function returns a dictionary with title (str),
+    secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
+    and children (url endpoint)"""
+
+    expected_schema = Schema(
+        [
+            {
+                "title": {"type": "string", "pattern": "M\\d+_(ER|DI|EM)_\\d+"},
+                "sectag": {"const": ["open", "preservation"]},
+                "id_url": {
+                    "type": "string",
+                    "pattern": r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/identifiers$",
+                },
+                "metadata_url": {
+                    "type": "string",
+                    "pattern": r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/metadata\/.{36}$",
+                },
+                "children_url": {
+                    "type": "string",
+                    "pattern": r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/children$",
+                },
+            }
+        ]
+    )
+
     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
-    # get_so_metadata may need to be separate into different sections
-    # currently it is doing many things
-    # first test get_api_result with the structural-objects/uuid response
-    # then test data structure
-    pass
+
+    assert expected_schema.is_valid(er_dict) == True
 
 
 """
