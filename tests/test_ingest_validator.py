@@ -70,13 +70,13 @@ def test_get_so_metadata():
             "title": Regex(r"M\d+_(ER|DI|EM)_\d+"),
             "sectag": Or("open", "preservation"),
             "id_url": Regex(
-                r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/identifiers$"
+                r"^https://nypl.preservica.com/api/entity/structural-objects/.{36}/identifiers$"
             ),
             "metadata_url": Regex(
-                r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/metadata\/.{36}$"
+                r"^https://nypl.preservica.com/api/entity/structural-objects/.{36}/metadata/.{36}$"
             ),
             "children_url": Regex(
-                r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/children$"
+                r"^https://nypl.preservica.com/api/entity/structural-objects/.{36}/children$"
             ),
         }
     )
