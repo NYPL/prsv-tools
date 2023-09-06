@@ -102,6 +102,17 @@ def test_get_so_identifier():
     assert id_schema.is_valid(id_dict) == True
 
 
+def test_get_spec_mdfrag():
+    """test that get_spec_mdfrag returns a dictionary with
+    SPEC collection ID"""
+
+    speccol_schema = Schema({"speccolID": Regex(r"M[0-9]+")})
+
+    spec_dict = ingest_validator.get_spec_mdfrag(token, er_dict, namespaces)
+
+    assert speccol_schema.is_valid(spec_dict) == True
+
+
 """
 1. response code should be good (200)
 2. data structure should be as expected
