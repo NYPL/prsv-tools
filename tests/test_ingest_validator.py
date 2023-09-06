@@ -92,7 +92,7 @@ def test_get_so_metadata():
 
 def test_get_so_identifier():
     """test that get_so_identifier returns a dictionary with type (str)
-    and SO category (soCat) (str) {'type': 'soCategory', 'soCat': 'ERContainer'}"""
+    and SO category (soCat) (str)"""
 
     id_schema = Schema(
         {"type": "soCategory", "soCat": Or("DIContainer", "ERContainer", "EMContainer")}
