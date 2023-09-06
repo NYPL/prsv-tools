@@ -84,9 +84,22 @@ def test_get_so_metadata():
         }
     )
 
+    global er_dict
     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
 
     assert expected_schema.is_valid(er_dict) == True
+
+
+def test_get_so_identifier():
+    """test that get_so_identifier returns a dictionary with type (str)
+    and SO category (soCat) (str) {'type': 'soCategory', 'soCat': 'ERContainer'}"""
+
+    id_schema = Schema(
+        {"type": "soCategory", "soCat": Or("DIContainer", "ERContainer", "EMContainer")}
+    )
+    id_dict = ingest_validator.get_so_identifier(token, er_dict, namespaces)
+
+    assert id_schema.is_valid(id_dict) == True
 
 
 """
