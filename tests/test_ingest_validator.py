@@ -67,6 +67,7 @@ def test_get_so_metadata():
     secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
     and children (url endpoint)"""
 
+    global uuid_pattern
     uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     so_schema = Schema(
         {
@@ -111,6 +112,24 @@ def test_get_spec_mdfrag():
     spec_dict = ingest_validator.get_spec_mdfrag(token, er_dict, namespaces)
 
     assert speccol_schema.is_valid(spec_dict) == True
+
+
+def test_get_so_children():
+    """test that get_so_children returns a dictionary with
+    children as the key and a list of url(s) as its value"""
+
+    children_schema = Schema(
+        {
+            "children": [
+                Regex(
+                    rf"https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}"
+                )
+            ]
+        }
+    )
+    children_dict = ingest_validator.get_so_children(token, er_dict, namespaces)
+
+    assert children_schema.is_valid(children_dict) == True
 
 
 """
