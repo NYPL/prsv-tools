@@ -70,7 +70,7 @@ def test_get_so_metadata():
     uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     so_schema = Schema(
         {
-            "title": Regex(r"M\d+_(ER|DI|EM)_\d+"),
+            "title": Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
             "sectag": Or("open", "preservation"),
             "id_url": Regex(
                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/identifiers$"
