@@ -67,18 +67,19 @@ def test_get_so_metadata():
     secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
     and children (url endpoint)"""
 
+    uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     expected_schema = Schema(
         {
             "title": Regex(r"M\d+_(ER|DI|EM)_\d+"),
             "sectag": Or("open", "preservation"),
             "id_url": Regex(
-                r"^https://nypl.preservica.com/api/entity/structural-objects/.{36}/identifiers$"
+                rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/identifiers$"
             ),
             "metadata_url": Regex(
-                r"^https://nypl.preservica.com/api/entity/structural-objects/.{36}/metadata/.{36}$"
+                rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/metadata/{uuid_pattern}$"
             ),
             "children_url": Regex(
-                r"^https://nypl.preservica.com/api/entity/structural-objects/.{36}/children$"
+                rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/children$"
             ),
         }
     )
