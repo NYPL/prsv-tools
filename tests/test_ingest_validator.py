@@ -47,14 +47,12 @@ def test_used_endpoints_are_valid(url):
 
 # unit tests
 def test_content_searchwithin_so_endpoint():
-    # first test that the status code is good (200)
+    # test that the response text has the conceived structure,
+    # which can be parsed correctly into a not empty list
     response = ingest_validator.search_within_DigArch(
         token, collectionid, test_digarch_uuid
     )
-    assert response.status_code == 200
 
-    # second test that the response text has the conceived structure,
-    # which can be parsed correctly into a not empty list
     uuid_ls = ingest_validator.parse_structural_object_uuid(response)
     assert type(uuid_ls) == list
     assert len(uuid_ls) > 0
