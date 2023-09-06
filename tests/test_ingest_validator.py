@@ -68,7 +68,7 @@ def test_get_so_metadata():
     and children (url endpoint)"""
 
     uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-    expected_schema = Schema(
+    so_schema = Schema(
         {
             "title": Regex(r"M\d+_(ER|DI|EM)_\d+"),
             "sectag": Or("open", "preservation"),
@@ -87,7 +87,7 @@ def test_get_so_metadata():
     global er_dict
     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
 
-    assert expected_schema.is_valid(er_dict) == True
+    assert so_schema.is_valid(er_dict) == True
 
 
 def test_get_so_identifier():
