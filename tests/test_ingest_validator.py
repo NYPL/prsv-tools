@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 import requests
-from schema import And, Optional, Schema, SchemaError, Use
+from schema import And, Optional, Or, Regex, Schema, SchemaError, Use
 
 import prsv_tools.ingest.ingest_validator as ingest_validator
 import prsv_tools.utility.api as prsvapi
@@ -67,11 +67,17 @@ def test_get_so_metadata():
 
     expected_schema = Schema(
         {
-            "title": str,
-            "sectag": str,
-            "id_url": str,
-            "metadata_url": str,
-            "children_url": str,
+            "title": Regex(r"M\d+_(ER|DI|EM)_\d+"),
+            "sectag": Or("open", "preservation"),
+            "id_url": Regex(
+                r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/identifiers$"
+            ),
+            "metadata_url": Regex(
+                r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/metadata\/.{36}$"
+            ),
+            "children_url": Regex(
+                r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/children$"
+            ),
         }
     )
 
