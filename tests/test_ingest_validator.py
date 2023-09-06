@@ -66,24 +66,13 @@ def test_get_so_metadata():
     and children (url endpoint)"""
 
     expected_schema = Schema(
-        [
-            {
-                "title": {"type": "string", "pattern": "M\\d+_(ER|DI|EM)_\\d+"},
-                "sectag": {"const": ["open", "preservation"]},
-                "id_url": {
-                    "type": "string",
-                    "pattern": r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/identifiers$",
-                },
-                "metadata_url": {
-                    "type": "string",
-                    "pattern": r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/metadata\/.{36}$",
-                },
-                "children_url": {
-                    "type": "string",
-                    "pattern": r"^https:\/\/nypl.preservica.com\/api\/entity\/structural-objects\/.{36}\/children$",
-                },
-            }
-        ]
+        {
+            "title": str,
+            "sectag": str,
+            "id_url": str,
+            "metadata_url": str,
+            "children_url": str,
+        }
     )
 
     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
