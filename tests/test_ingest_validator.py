@@ -48,14 +48,18 @@ def test_used_endpoints_are_valid(url):
 # unit tests
 def test_content_searchwithin_so_endpoint():
     # test that the response text has the conceived structure,
-    # which can be parsed correctly into a not empty list
+    # which is a non-empty list consisting of UUID(s)
     response = ingest_validator.search_within_DigArch(
         token, collectionid, test_digarch_uuid
     )
 
     uuid_ls = ingest_validator.parse_structural_object_uuid(response)
-    assert type(uuid_ls) == list
-    assert len(uuid_ls) > 0
+
+    expected_schema = Schema(
+        [Regex(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
+    )
+
+    assert expected_schema.is_valid(uuid_ls) == True
 
 
 def test_get_so_metadata():
