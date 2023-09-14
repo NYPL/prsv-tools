@@ -1,13 +1,12 @@
 import json
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
-import logging
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
-
 
 logging.basicConfig(level=logging.INFO)
 
@@ -170,13 +169,10 @@ def main():
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
 
-        url = f"https://nypl.preservica.com/api/entity/structural-objects/{parentuuid}"
-        res = get_api_results(token, url)
-        root = ET.fromstring(res.text)
-        version = prsvapi.find_apiversion(root.tag)
+        version = prsvapi.find_apiversion(token)
 
         da_source = Path(
-            "/Users/hilaryszuyinshiue/mnt/preservica_da/data/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
+            "/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
         )
 
     namespaces = {
