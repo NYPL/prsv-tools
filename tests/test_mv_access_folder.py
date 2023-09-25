@@ -31,3 +31,30 @@ def test_directory_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     args = mv_access_folder.parse_args()
 
     assert child_dir in args.packages
+
+# moving access folder tests
+@pytest.fixture
+def package_with_access(tmp_path: Path):
+    pkg = tmp_path.joinpath("M12345_ER_0001")
+    access_folder = pkg / "objects" / "access"
+    access_folder.mkdir(parents=True)
+
+    f_metadata = pkg.joinpath("metadata")
+    f_metadata.mkdir()
+
+    access_file = access_folder / "textaccessfile.txt"
+    access_file.touch()
+    access_file.write_bytes(b"some bytes for the access file")
+
+    return pkg
+
+
+def test_get_access_path(package_with_access):
+    """Test that get_access_path function returns a Path object
+    when 'access' folder exists in the 'objects' folder"""
+    access_path = mv_access_folder.get_access_path(package_with_access)
+
+    result = isinstance(access_path, Path)
+    # The isinstance() function returns whether the object is of the specified type.
+
+    assert result
