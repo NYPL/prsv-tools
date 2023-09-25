@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -58,3 +59,15 @@ def test_get_access_path(package_with_access):
     # The isinstance() function returns whether the object is of the specified type.
 
     assert result
+
+def test_no_access_path(package_with_access):
+    """Test that get_access_path returns None when
+    the access folder does not exist"""
+    no_access_package = package_with_access
+
+    access = no_access_package / "objects" / "access"
+    shutil.rmtree(access)
+
+    access_path = mv_access_folder.get_access_path(no_access_package)
+
+    assert not access_path
