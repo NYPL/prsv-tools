@@ -19,6 +19,14 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+def get_access_path(package: Path) -> Path | None:
+    """Get the 'access' folder path under 'objects' folder"""
+    expected_path = package / "objects" / "access"
+
+    if expected_path.is_dir():
+        return expected_path
+    else:
+        return None
 
 def main():
     """
@@ -37,6 +45,9 @@ def main():
 
     """
     args = parse_args()
+
+    for package in args.packages:
+        access_path = get_access_path(package)
 
 
 if __name__ == "__main__":
