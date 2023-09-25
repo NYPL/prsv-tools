@@ -1,5 +1,6 @@
 import re
 import time
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import requests
@@ -53,8 +54,17 @@ def create_token(credential_set: str, token_file: Path) -> str:
     return data["token"]
 
 
-def find_apiversion(xml_root_tag: str) -> str:
-    version_search = re.search(r"v(\d+\.\d+)\}", xml_root_tag)
+def find_apiversion(token: str) -> str:
+    schemas_url = "https://nypl.preservica.com/api/admin/schemas"
+
+    headers = {
+        "Preservica-Access-Token": token,
+        "Content-Type": "application/xml",
+    }
+    response = requests.request("GET", schemas_url, headers=headers)
+    root = ET.fromstring(response.text)
+
+    version_search = re.search(r"v(\d+\.\d+)\}", root.tag)
     if version_search:
         return version_search.group(1)
     else:
