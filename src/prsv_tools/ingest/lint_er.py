@@ -50,15 +50,17 @@ def package_has_valid_name(package: Path) -> bool:
 
 
 def package_has_valid_subfolder_names(package: Path) -> bool:
-    """Second level folders must have objects and metadata folder"""
-    expected = set(["objects", "metadata"])
+    """Second level folders must have objects and metadata folder
+    It could also include an 'access' folder"""
+    expected_a = set(["objects", "metadata"])
+    expected_b = set(["objects", "metadata", "access"])
     found = set([x.name for x in package.iterdir()])
 
-    if expected == found:
+    if found in [expected_a, expected_b]:
         return True
     else:
         LOGGER.error(
-            f"{package.name} subfolders should have objects and metadata, found {found}"
+            f"{package.name} subfolders should have objects and metadata and/or access, found {found}"
         )
         return False
 
