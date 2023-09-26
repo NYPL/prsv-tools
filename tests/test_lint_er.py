@@ -62,6 +62,29 @@ def good_package(tmp_path: Path):
 
     return pkg
 
+@pytest.fixture
+def good_package_access(tmp_path: Path):
+    pkg = tmp_path.joinpath("M12345_ER_0002")
+    f_object = pkg.joinpath("objects")
+    f_object.mkdir(parents=True)
+    object_filepath = f_object.joinpath("randomFile.txt")
+    object_filepath.touch()
+    object_filepath.write_bytes(b"some bytes for object")
+
+    f_access = f_object / "access"
+    f_access.mkdir()
+    access_file = f_access / "accesstextfile.txt"
+    access_file.touch()
+    access_file.write_bytes(b"some bytes for access file")
+
+    f_metadata = pkg.joinpath("metadata")
+    f_metadata.mkdir()
+
+    metadata_filepath = f_metadata.joinpath("M12345_ER_0001.csv")
+    metadata_filepath.touch()
+    metadata_filepath.write_bytes(b"some bytes for metadata")
+
+    return pkg
 
 def test_top_folder_valid_name(good_package):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
@@ -81,11 +104,13 @@ def test_top_folder_invalid_name(good_package):
     assert not result
 
 
-def test_sec_level_folder_valid_names(good_package):
+def test_sec_level_folder_valid_names(good_package, good_package_access):
     """Second level folders must only have objects and metadata folder"""
-    result = lint_er.package_has_valid_subfolder_names(good_package)
+    result_a = lint_er.package_has_valid_subfolder_names(good_package)
+    result_b = lint_er.package_has_valid_subfolder_names(good_package_access)
 
-    assert result
+    assert result_a
+    assert result_b
 
 
 def test_sec_level_folder_invalid_names(good_package):
