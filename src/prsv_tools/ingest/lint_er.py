@@ -66,7 +66,7 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
 def objects_folder_has_no_access_folder(package: Path) -> bool:
     """An access folder within the objects folder indicates it is an older package,
     and the files within the access folder was created by the Library,
-    and should not be ingested"""
+    and should be worked on before being ingested"""
     access_dir = package / "objects" / "access"
 
     if access_dir.is_dir():
