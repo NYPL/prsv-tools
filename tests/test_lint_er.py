@@ -71,7 +71,7 @@ def good_package_access(tmp_path: Path):
     object_filepath.touch()
     object_filepath.write_bytes(b"some bytes for object")
 
-    f_access = f_object / "access"
+    f_access = pkg / "access"
     f_access.mkdir()
     access_file = f_access / "randomFile.wpd.txt"
     access_file.touch()
@@ -330,6 +330,22 @@ def test_package_has_zero_bytes_file(good_package):
 
     assert not result
 
+def test_access_files_match_with_objects(good_package_access):
+    """Matching files in access folder with ones in objects folder"""
+    result = lint_er.access_files_match_with_objects(good_package_access)
+
+    assert result
+
+def test_access_files_not_match_with_objects(good_package_access):
+    """Test that package fails function when there are file not matching with
+    the objects folder"""
+    bad_package_access = good_package_access
+    anotherfile = bad_package_access / "access" / "anotherfile.docx"
+    anotherfile.touch()
+
+    result = lint_er.access_files_match_with_objects(bad_package_access)
+
+    assert not result
 
 def test_valid_package(good_package):
     """Test that package returns 'valid' when all tests are passed"""
