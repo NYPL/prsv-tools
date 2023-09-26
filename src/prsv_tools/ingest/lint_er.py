@@ -229,6 +229,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
     less_strict_tests = [
         metadata_folder_has_one_or_less_file,
         package_has_no_hidden_file,
+        access_files_match_with_objects
     ]
 
     for test in less_strict_tests:
