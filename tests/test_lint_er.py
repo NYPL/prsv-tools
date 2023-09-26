@@ -67,20 +67,20 @@ def good_package_access(tmp_path: Path):
     pkg = tmp_path.joinpath("M12345_ER_0002")
     f_object = pkg.joinpath("objects")
     f_object.mkdir(parents=True)
-    object_filepath = f_object.joinpath("randomFile.txt")
+    object_filepath = f_object.joinpath("randomFile.wpd")
     object_filepath.touch()
     object_filepath.write_bytes(b"some bytes for object")
 
     f_access = f_object / "access"
     f_access.mkdir()
-    access_file = f_access / "accesstextfile.txt"
+    access_file = f_access / "randomFile.wpd.txt"
     access_file.touch()
     access_file.write_bytes(b"some bytes for access file")
 
     f_metadata = pkg.joinpath("metadata")
     f_metadata.mkdir()
 
-    metadata_filepath = f_metadata.joinpath("M12345_ER_0001.csv")
+    metadata_filepath = f_metadata.joinpath("M12345_ER_0002.csv")
     metadata_filepath.touch()
     metadata_filepath.write_bytes(b"some bytes for metadata")
 
