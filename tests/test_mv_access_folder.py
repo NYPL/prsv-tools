@@ -71,3 +71,17 @@ def test_no_access_path(package_with_access):
     access_path = mv_access_folder.get_access_path(no_access_package)
 
     assert not access_path
+
+def test_mv_access_path(package_with_access):
+    """Test that mv_access_path does move the access folder
+    one level up, including the file inside the folder"""
+    access_path = package_with_access / "objects" / "access"
+
+    mv_access_folder.mv_access_path(package_with_access, access_path)
+
+    new_access_path = package_with_access / "access"
+    new_access_file_path = package_with_access / "access" / "textaccessfile.txt"
+
+    assert not access_path.exists()
+    assert new_access_path.exists()
+    assert new_access_file_path.exists()
