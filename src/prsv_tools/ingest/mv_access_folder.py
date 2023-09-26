@@ -26,7 +26,15 @@ def get_access_path(package: Path) -> Path | None:
     if expected_path.is_dir():
         return expected_path
     else:
+        LOGGER.error(f"access folder does not exist")
         return None
+
+def mv_access_path(package: Path, access_path: Path):
+    """Move access folder one level up, alongside with objects and metadata"""
+    target = package / "access"
+
+    LOGGER.info(f"Now moving {access_path} to be {target}")
+    access_path.rename(target)
 
 def main():
     """
@@ -48,6 +56,8 @@ def main():
 
     for package in args.packages:
         access_path = get_access_path(package)
+
+        mv_access_path(package, access_path)
 
 
 if __name__ == "__main__":
