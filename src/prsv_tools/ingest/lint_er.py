@@ -191,6 +191,36 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
     else:
         return True
 
+def access_files_match_with_objects(package: Path) -> bool:
+    """Matching files in access folder with ones in objects folder"""
+    access_dir = package / "access"
+    objects_dir = package / "objects"
+
+    if not access_dir.exists():
+        LOGGER.info(f"{package.name} does not have access folder. It will be skipped")
+        return True
+    else:
+        access_fn = [ f.name for f in access_dir.rglob("*") if f.is_file() ] # accessfile.wpd.txt
+        access_fn_to_match = list()
+        objects_fn = [ f.name for f in objects_dir.rglob("*") if f.is_file() ]
+
+        for fn in access_fn:
+            match = re.match(r"(.+)\.+", fn)
+            access_fn_to_match.append(match.group(1))
+
+        issue_ls = list()
+
+        for matchfn in access_fn_to_match:
+            if not matchfn in objects_fn:
+                issue_ls.append(matchfn)
+
+        if issue_ls:
+            LOGGER.warning(f"""These files have matching issues:
+                           {issue_ls}""")
+            return False
+        else:
+            return True
+
 
 def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
     """Run all linting tests against a package"""
