@@ -36,6 +36,7 @@ testendpoints = [
     f"https://nypl.preservica.com/api/entity/structural-objects/{test_er_uuid}/children",
 ]
 
+uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 @pytest.mark.parametrize("url", testendpoints)
 def test_used_endpoints_are_valid(url):
@@ -65,8 +66,6 @@ def test_get_so_metadata():
     secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
     and children (url endpoint)"""
 
-    global uuid_pattern
-    uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     so_schema = Schema(
         {
             "title": Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
