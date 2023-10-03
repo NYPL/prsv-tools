@@ -135,6 +135,22 @@ def get_spec_mdfrag(token, so_dict, namespaces: dict) -> dict:
     return mdfrag_dict
 
 
+def get_fa_mdfrag(token, contents_so_dict, namespaces: dict) -> dict:
+    mdfrag_dict = dict()
+
+    mfrag_res = get_api_results(token, contents_so_dict["metadata_url"])
+    mfrag_root = ET.fromstring(mfrag_res.text)
+
+    fa_component_id = mfrag_root.find(f".//{namespaces['fa_ns']}faComponentId")
+    fa_collection_id = mfrag_root.find(f".//{namespaces['fa_ns']}faCollectionId")
+    er_number = mfrag_root.find(f".//{namespaces['fa_ns']}erNumber")
+
+    mdfrag_dict["faComponentId"] = fa_component_id.text
+    mdfrag_dict["faCollectionId"] = fa_collection_id.text
+    mdfrag_dict["erNumber"] = er_number.text
+
+    return mdfrag_dict
+
 def get_so_children(token, so_dict, namespaces) -> dict:
     children_dict = dict()
 
@@ -148,6 +164,22 @@ def get_so_children(token, so_dict, namespaces) -> dict:
         children_dict["children"].append(c.text)
 
     return children_dict
+
+def validate_top_level_so(so_dict, collectionId):
+    socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
+
+    if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']):
+        logging.error(f"Top level folder name incorrect {so_dict['title']}")
+    elif not so_dict["sectag"] == "open":
+        logging.error(f"Top level folder security tag incorrect: {so_dict['sectag']}")
+    elif not so_dict["type"] == "soCategory":
+        logging.error(f"Top level type is not soCategory")
+    elif not so_dict["soCat"] == f"{socat}Container":
+        logging.error(f"Top level SO Category is incorrect: {so_dict['soCat']}")
+    elif not so_dict["speccolID"] == collectionId:
+        logging.error(f"Top level SPEC Collection ID is incorrect: {so_dict['speccolID']}")
+    else:
+        logging.info(f"Top level folder {so_dict['title']} is VALID")
 
 
 def main():
@@ -180,11 +212,12 @@ def main():
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
         "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
         "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
+        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}"
     }
 
     # check top-level SO M1234_ER_1
-    fields = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
-    res_uuid = search_within_DigArch(token, fields, parentuuid)
+    fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
+    res_uuid = search_within_DigArch(token, fields_top, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
 
     ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls)
@@ -197,28 +230,38 @@ def main():
 
         mdfrag_dict = get_spec_mdfrag(token, so_dict, namespaces)
         so_dict.update(mdfrag_dict)
-        # may not need children
+
         children_dict = get_so_children(token, so_dict, namespaces)
         so_dict.update(children_dict)
 
-        rm_list = ["id_url", "metadata_url", "children_url"]
-        for key in rm_list:
+        for key in ["id_url", "metadata_url", "children_url"]:
             del so_dict[key]
 
-        socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
+        validate_top_level_so(so_dict, args.collectionID)
 
-        if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']):
-            logging.error(f"Top level folder name incorrect {so_dict['title']}")
-        elif not so_dict["sectag"] == "open":
-            logging.error(f"Top level folder security tag incorrect: {so_dict['sectag']}")
-        elif not so_dict["type"] == "soCategory":
-            logging.error(f"Top level type is not soCategory")
-        elif not so_dict["soCat"] == f"{socat}Container":
-            logging.error(f"Top level SO Category is incorrect: {so_dict['soCat']}")
-        elif not so_dict["speccolID"] == args.collectionID:
-            logging.error(f"Top level SPEC Collection ID is incorrect: {so_dict['speccolID']}")
-        else:
-            logging.info(f"Top level folder {so_dict['title']} is VALID")
+        contents_so_dict = get_so_metadata(so_dict["children"][0][-36:], token, namespaces)
+
+        contents_id_dict = get_so_identifier(token, contents_so_dict, namespaces)
+        contents_so_dict.update(contents_id_dict)
+
+        contents_mdfrag_dict = get_fa_mdfrag(token, contents_so_dict, namespaces)
+        contents_so_dict.update(contents_mdfrag_dict)
+
+        contents_children_dict = get_so_children(token, contents_so_dict, namespaces)
+        contents_so_dict.update(contents_children_dict)
+
+        for key in ["id_url", "metadata_url", "children_url"]:
+            del contents_so_dict[key]
+        print(contents_so_dict)
+
+
+        # check second level SO M1234_ER_1_contents and M1234_ER_1_metadata
+        # contents_title = f"{so_dict['title']}_contents"
+        # fields_contents = [{"name": "xip.title", "values": [contents_title]}]
+        # contents_so_uuid = search_within_DigArch(token, fields_contents, parentuuid)
+        # contents_uuid_ls = parse_structural_object_uuid(contents_so_uuid)
+        # print(contents_uuid_ls)
+
 
 
 
