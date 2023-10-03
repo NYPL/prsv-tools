@@ -22,9 +22,11 @@ namespaces = {
     "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
 }
 
+fields = [{"name": "spec.specCollectionID", "values": [collectionid]}]
+
 query = {
     "q": "",
-    "fields": [{"name": "spec.specCollectionID", "values": [collectionid]}],
+    "fields": fields
 }
 q = json.dumps(query)
 
@@ -49,7 +51,7 @@ def test_content_searchwithin_so_endpoint():
     # test that the response text has the conceived structure,
     # which is a non-empty list consisting of UUID(s)
     response = ingest_validator.search_within_DigArch(
-        token, collectionid, test_digarch_uuid
+        token, fields, test_digarch_uuid
     )
 
     uuid_ls = ingest_validator.parse_structural_object_uuid(response)
