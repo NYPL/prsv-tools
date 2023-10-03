@@ -2,6 +2,7 @@ import json
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
+import re
 
 import requests
 
@@ -40,10 +41,10 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     return response
 
 
-def search_within_DigArch(accesstoken, collectionid, parentuuid):
+def search_within_DigArch(accesstoken, fields, parentuuid):
     query = {
         "q": "",
-        "fields": [{"name": "spec.specCollectionID", "values": [collectionid]}],
+        "fields": fields
     }
     q = json.dumps(query)
     url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''"  # noqa
@@ -181,7 +182,9 @@ def main():
         "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
     }
 
-    res_uuid = search_within_DigArch(token, args.collectionID, parentuuid)
+    # check top-level SO M1234_ER_1
+    fields = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
+    res_uuid = search_within_DigArch(token, fields, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
 
     ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls)
@@ -194,7 +197,7 @@ def main():
 
         mdfrag_dict = get_spec_mdfrag(token, so_dict, namespaces)
         so_dict.update(mdfrag_dict)
-
+        # may not need children
         children_dict = get_so_children(token, so_dict, namespaces)
         so_dict.update(children_dict)
 
@@ -202,7 +205,25 @@ def main():
         for key in rm_list:
             del so_dict[key]
 
-        print(so_dict)
+        socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
+
+        if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']):
+            logging.error(f"Top level folder name incorrect {so_dict['title']}")
+        elif not so_dict["sectag"] == "open":
+            logging.error(f"Top level folder security tag incorrect: {so_dict['sectag']}")
+        elif not so_dict["type"] == "soCategory":
+            logging.error(f"Top level type is not soCategory")
+        elif not so_dict["soCat"] == f"{socat}Container":
+            logging.error(f"Top level SO Category is incorrect: {so_dict['soCat']}")
+        elif not so_dict["speccolID"] == args.collectionID:
+            logging.error(f"Top level SPEC Collection ID is incorrect: {so_dict['speccolID']}")
+        else:
+            logging.info(f"Top level folder {so_dict['title']} is VALID")
+
+
+
+
+
 
 
 if __name__ == "__main__":
