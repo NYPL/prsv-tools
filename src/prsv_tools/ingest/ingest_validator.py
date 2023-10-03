@@ -181,6 +181,29 @@ def validate_top_level_so(so_dict, collectionId):
     else:
         logging.info(f"Top level folder {so_dict['title']} is VALID")
 
+def validate_contents_so(contents_so_dict, collectionId):
+    socat = re.search(r"[A-Z]{2}", contents_so_dict["title"]).group(0)
+    fa_component_id = re.search(r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so_dict['title']).group(1)
+    er_number = re.search(r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so_dict['title']).group(1)
+
+    if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict['title']):
+        logging.error(f"Contents folder name incorrect {contents_so_dict['title']}")
+    elif not contents_so_dict["sectag"] == "open":
+        logging.error(f"Contents folder security tag incorrect: {contents_so_dict['sectag']}")
+    elif not contents_so_dict["type"] == "soCategory":
+        logging.error(f"Contents folder type is not soCategory")
+    elif not contents_so_dict["soCat"] == f"{socat}Contents":
+        logging.error(f"Contents SO Category is incorrect: {contents_so_dict['soCat']}")
+    elif not contents_so_dict["faComponentId"] == fa_component_id:
+        logging.error(f"Contents fa component ID is incorrect: {contents_so_dict['speccolID']}")
+    elif not contents_so_dict["faCollectionId"] == collectionId:
+        logging.error(f"Contents fa collection ID is incorrect: {contents_so_dict['faCollectionId']}")
+    elif not contents_so_dict["erNumber"] == er_number:
+        logging.error(f"Contents fa ER Number is incorrect: {contents_so_dict['erNumber']}")
+    else:
+        logging.info(f"Top level folder {contents_so_dict['title']} is VALID")
+
+
 
 def main():
     """
@@ -215,7 +238,6 @@ def main():
         "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}"
     }
 
-    # check top-level SO M1234_ER_1
     fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
     res_uuid = search_within_DigArch(token, fields_top, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
@@ -252,7 +274,8 @@ def main():
 
         for key in ["id_url", "metadata_url", "children_url"]:
             del contents_so_dict[key]
-        print(contents_so_dict)
+
+        validate_contents_so(contents_so_dict, args.collectionID)
 
 
         # check second level SO M1234_ER_1_contents and M1234_ER_1_metadata
