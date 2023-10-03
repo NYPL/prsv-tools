@@ -201,7 +201,7 @@ def validate_contents_so(contents_so_dict, collectionId):
     elif not contents_so_dict["erNumber"] == er_number:
         logging.error(f"Contents fa ER Number is incorrect: {contents_so_dict['erNumber']}")
     else:
-        logging.info(f"Top level folder {contents_so_dict['title']} is VALID")
+        logging.info(f"Contents folder {contents_so_dict['title']} is VALID")
 
 
 
@@ -276,6 +276,12 @@ def main():
             del contents_so_dict[key]
 
         validate_contents_so(contents_so_dict, args.collectionID)
+
+        """
+        children of contents can be SO or IO
+        if SO
+        """
+
 
 
         # check second level SO M1234_ER_1_contents and M1234_ER_1_metadata
