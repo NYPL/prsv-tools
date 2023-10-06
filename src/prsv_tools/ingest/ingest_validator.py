@@ -1,8 +1,8 @@
 import json
 import logging
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-import re
 
 import requests
 
@@ -10,6 +10,7 @@ import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
 
 logging.basicConfig(level=logging.INFO)
+
 
 def parse_args():
     parser = prsvcli.Parser()
@@ -42,10 +43,7 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
 
 
 def search_within_DigArch(accesstoken, fields, parentuuid):
-    query = {
-        "q": "",
-        "fields": fields
-    }
+    query = {"q": "", "fields": fields}
     q = json.dumps(query)
     url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''"  # noqa
     res = get_api_results(accesstoken, url)
@@ -151,6 +149,7 @@ def get_fa_mdfrag(token, contents_so_dict, namespaces: dict) -> dict:
 
     return mdfrag_dict
 
+
 def get_so_children(token, so_dict, namespaces) -> dict:
     children_dict = dict()
 
@@ -165,16 +164,19 @@ def get_so_children(token, so_dict, namespaces) -> dict:
 
     return children_dict
 
+
 def validate_top_level_so(so_dict, collectionId):
     socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
 
-    validations = [re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']),
-                   so_dict["sectag"] == "open",
-                   so_dict["type"] == "soCategory",
-                   so_dict["soCat"] == f"{socat}Container",
-                   so_dict["speccolID"] == collectionId]
+    validations = [
+        re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]),
+        so_dict["sectag"] == "open",
+        so_dict["type"] == "soCategory",
+        so_dict["soCat"] == f"{socat}Container",
+        so_dict["speccolID"] == collectionId,
+    ]
 
-    if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']):
+    if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]):
         logging.error(f"Top level folder name incorrect {so_dict['title']}")
     elif not so_dict["sectag"] == "open":
         logging.error(f"Top level folder security tag incorrect: {so_dict['sectag']}")
@@ -183,32 +185,48 @@ def validate_top_level_so(so_dict, collectionId):
     elif not so_dict["soCat"] == f"{socat}Container":
         logging.error(f"Top level SO Category is incorrect: {so_dict['soCat']}")
     elif not so_dict["speccolID"] == collectionId:
-        logging.error(f"Top level SPEC Collection ID is incorrect: {so_dict['speccolID']}")
+        logging.error(
+            f"Top level SPEC Collection ID is incorrect: {so_dict['speccolID']}"
+        )
     else:
         logging.info(f"Top level folder {so_dict['title']} is VALID")
 
+
 def validate_contents_so(contents_so_dict, collectionId):
     socat = re.search(r"[A-Z]{2}", contents_so_dict["title"]).group(0)
-    fa_component_id = re.search(r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so_dict['title']).group(1)
-    er_number = re.search(r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so_dict['title']).group(1)
+    fa_component_id = re.search(
+        r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
+    ).group(1)
+    er_number = re.search(
+        r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
+    ).group(1)
 
-    if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict['title']):
+    if not re.fullmatch(
+        r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]
+    ):
         logging.error(f"Contents folder name incorrect {contents_so_dict['title']}")
     elif not contents_so_dict["sectag"] == "open":
-        logging.error(f"Contents folder security tag incorrect: {contents_so_dict['sectag']}")
+        logging.error(
+            f"Contents folder security tag incorrect: {contents_so_dict['sectag']}"
+        )
     elif not contents_so_dict["type"] == "soCategory":
         logging.error(f"Contents folder type is not soCategory")
     elif not contents_so_dict["soCat"] == f"{socat}Contents":
         logging.error(f"Contents SO Category is incorrect: {contents_so_dict['soCat']}")
     elif not contents_so_dict["faComponentId"] == fa_component_id:
-        logging.error(f"Contents fa component ID is incorrect: {contents_so_dict['speccolID']}")
+        logging.error(
+            f"Contents fa component ID is incorrect: {contents_so_dict['speccolID']}"
+        )
     elif not contents_so_dict["faCollectionId"] == collectionId:
-        logging.error(f"Contents fa collection ID is incorrect: {contents_so_dict['faCollectionId']}")
+        logging.error(
+            f"Contents fa collection ID is incorrect: {contents_so_dict['faCollectionId']}"
+        )
     elif not contents_so_dict["erNumber"] == er_number:
-        logging.error(f"Contents fa ER Number is incorrect: {contents_so_dict['erNumber']}")
+        logging.error(
+            f"Contents fa ER Number is incorrect: {contents_so_dict['erNumber']}"
+        )
     else:
         logging.info(f"Contents folder {contents_so_dict['title']} is VALID")
-
 
 
 def main():
@@ -241,7 +259,7 @@ def main():
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
         "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
         "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
-        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}"
+        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}",
     }
 
     fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
@@ -267,7 +285,9 @@ def main():
 
         validate_top_level_so(so_dict, args.collectionID)
 
-        contents_so_dict = get_so_metadata(so_dict["children"][0][-36:], token, namespaces)
+        contents_so_dict = get_so_metadata(
+            so_dict["children"][0][-36:], token, namespaces
+        )
 
         contents_id_dict = get_so_identifier(token, contents_so_dict, namespaces)
         contents_so_dict.update(contents_id_dict)
@@ -290,20 +310,12 @@ def main():
         if SO
         """
 
-
-
         # check second level SO M1234_ER_1_contents and M1234_ER_1_metadata
         # contents_title = f"{so_dict['title']}_contents"
         # fields_contents = [{"name": "xip.title", "values": [contents_title]}]
         # contents_so_uuid = search_within_DigArch(token, fields_contents, parentuuid)
         # contents_uuid_ls = parse_structural_object_uuid(contents_so_uuid)
         # print(contents_uuid_ls)
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
