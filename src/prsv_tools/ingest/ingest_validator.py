@@ -231,6 +231,15 @@ def validate_contents_so(contents_so_dict, collectionId):
         return "Invalid"
 
 
+def get_so_children(token, so_uuid, namespaces):
+    """the limit of this API is 1000 items"""
+    url = f"https://nypl.preservica.com/api/entity/structural-objects/{so_uuid}/children?start=0&max=1000"
+    res = get_api_results(token, url)
+    root = ET.fromstring(res.text)
+
+    print(res.text)
+
+
 def main():
     """
     First type of check:
@@ -287,9 +296,9 @@ def main():
 
         validate_top_level_so(so_dict, args.collectionID)
 
-        contents_so_dict = get_so_metadata(
-            so_dict["children"][0][-36:], token, namespaces
-        )
+        contents_so_uuid = so_dict["children"][0][-36:]
+
+        contents_so_dict = get_so_metadata(contents_so_uuid, token, namespaces)
 
         contents_id_dict = get_so_identifier(token, contents_so_dict, namespaces)
         contents_so_dict.update(contents_id_dict)
@@ -304,20 +313,14 @@ def main():
             del contents_so_dict[key]
 
         validate_contents_so(contents_so_dict, args.collectionID)
-        print(f"SO and IO within contents: {len(contents_so_dict['children'])}")
-        # this limits to 100 items
 
-        """
-        children of contents can be SO or IO
-        if SO
-        """
-
-        # check second level SO M1234_ER_1_contents and M1234_ER_1_metadata
-        # contents_title = f"{so_dict['title']}_contents"
-        # fields_contents = [{"name": "xip.title", "values": [contents_title]}]
-        # contents_so_uuid = search_within_DigArch(token, fields_contents, parentuuid)
-        # contents_uuid_ls = parse_structural_object_uuid(contents_so_uuid)
-        # print(contents_uuid_ls)
+        x = get_so_children(token, contents_so_uuid, namespaces)
+        # x can be a list or set or dictionary.
+        # loop through x, if SO:
+        #                       validate_contents_so_metadata
+        #                       run get children_so_io again
+        #                 if IO:
+        #                       run get io_metadata (sth like that) and validate
 
 
 if __name__ == "__main__":
