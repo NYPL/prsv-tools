@@ -168,6 +168,12 @@ def get_so_children(token, so_dict, namespaces) -> dict:
 def validate_top_level_so(so_dict, collectionId):
     socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
 
+    validations = [re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']),
+                   so_dict["sectag"] == "open",
+                   so_dict["type"] == "soCategory",
+                   so_dict["soCat"] == f"{socat}Container",
+                   so_dict["speccolID"] == collectionId]
+
     if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict['title']):
         logging.error(f"Top level folder name incorrect {so_dict['title']}")
     elif not so_dict["sectag"] == "open":
@@ -276,6 +282,8 @@ def main():
             del contents_so_dict[key]
 
         validate_contents_so(contents_so_dict, args.collectionID)
+        print(f"SO and IO within contents: {len(contents_so_dict['children'])}")
+        # this limits to 100 items
 
         """
         children of contents can be SO or IO
