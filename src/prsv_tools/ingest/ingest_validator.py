@@ -176,20 +176,22 @@ def validate_top_level_so(so_dict, collectionId):
         so_dict["speccolID"] == collectionId,
     ]
 
-    if not re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]):
-        logging.error(f"Top level folder name incorrect {so_dict['title']}")
-    elif not so_dict["sectag"] == "open":
-        logging.error(f"Top level folder security tag incorrect: {so_dict['sectag']}")
-    elif not so_dict["type"] == "soCategory":
-        logging.error(f"Top level type is not soCategory")
-    elif not so_dict["soCat"] == f"{socat}Container":
-        logging.error(f"Top level SO Category is incorrect: {so_dict['soCat']}")
-    elif not so_dict["speccolID"] == collectionId:
-        logging.error(
-            f"Top level SPEC Collection ID is incorrect: {so_dict['speccolID']}"
-        )
+    indexed_results = []
+
+    for i, validation in enumerate(validations):
+        if validation:
+            indexed_results.append(True)
+            logging.info(f"Top level SO validation {i+1} passed")
+        else:
+            indexed_results.append(False)
+            logging.error(f"Top level SO validation {i+1} failed")
+
+    if all(indexed_results):
+        logging.info(f"Top level SO valid")
+        return "Valid"
     else:
-        logging.info(f"Top level folder {so_dict['title']} is VALID")
+        logging.error(f"Top level SO invalid")
+        return "Invalid"
 
 
 def validate_contents_so(contents_so_dict, collectionId):
@@ -201,32 +203,32 @@ def validate_contents_so(contents_so_dict, collectionId):
         r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
     ).group(1)
 
-    if not re.fullmatch(
-        r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]
-    ):
-        logging.error(f"Contents folder name incorrect {contents_so_dict['title']}")
-    elif not contents_so_dict["sectag"] == "open":
-        logging.error(
-            f"Contents folder security tag incorrect: {contents_so_dict['sectag']}"
-        )
-    elif not contents_so_dict["type"] == "soCategory":
-        logging.error(f"Contents folder type is not soCategory")
-    elif not contents_so_dict["soCat"] == f"{socat}Contents":
-        logging.error(f"Contents SO Category is incorrect: {contents_so_dict['soCat']}")
-    elif not contents_so_dict["faComponentId"] == fa_component_id:
-        logging.error(
-            f"Contents fa component ID is incorrect: {contents_so_dict['speccolID']}"
-        )
-    elif not contents_so_dict["faCollectionId"] == collectionId:
-        logging.error(
-            f"Contents fa collection ID is incorrect: {contents_so_dict['faCollectionId']}"
-        )
-    elif not contents_so_dict["erNumber"] == er_number:
-        logging.error(
-            f"Contents fa ER Number is incorrect: {contents_so_dict['erNumber']}"
-        )
+    validations = [
+        re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]),
+        contents_so_dict["sectag"] == "open",
+        contents_so_dict["type"] == "soCategory",
+        contents_so_dict["soCat"] == f"{socat}Contents",
+        contents_so_dict["faComponentId"] == fa_component_id,
+        contents_so_dict["faCollectionId"] == collectionId,
+        contents_so_dict["erNumber"] == er_number,
+    ]
+
+    indexed_results = []
+
+    for i, validation in enumerate(validations):
+        if validation:
+            indexed_results.append(True)
+            logging.info(f"Contents SO validation {i+1} passed")
+        else:
+            indexed_results.append(False)
+            logging.error(f"Contents SO validation {i+1} failed")
+
+    if all(indexed_results):
+        logging.info(f"Contents SO valid")
+        return "Valid"
     else:
-        logging.info(f"Contents folder {contents_so_dict['title']} is VALID")
+        logging.error(f"Contents SO invalid")
+        return "Invalid"
 
 
 def main():
