@@ -231,13 +231,13 @@ def validate_contents_so(contents_so_dict, collectionId):
         return "Invalid"
 
 
-def get_so_children(token, so_uuid, namespaces):
-    """the limit of this API is 1000 items"""
-    url = f"https://nypl.preservica.com/api/entity/structural-objects/{so_uuid}/children?start=0&max=1000"
-    res = get_api_results(token, url)
-    root = ET.fromstring(res.text)
+# def get_so_children(token, so_uuid, namespaces):
+#     """the limit of this API is 1000 items"""
+#     url = f"https://nypl.preservica.com/api/entity/structural-objects/{so_uuid}/children?start=0&max=1000"
+#     res = get_api_results(token, url)
+#     root = ET.fromstring(res.text)
 
-    print(res.text)
+#     print(res.text)
 
 
 def main():
@@ -314,7 +314,7 @@ def main():
 
         validate_contents_so(contents_so_dict, args.collectionID)
 
-        x = get_so_children(token, contents_so_uuid, namespaces)
+        # x = get_so_children(token, contents_so_uuid, namespaces)
         # x can be a list or set or dictionary.
         # loop through x, if SO:
         #                       validate_contents_so_metadata
