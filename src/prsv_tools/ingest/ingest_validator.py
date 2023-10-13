@@ -165,7 +165,7 @@ def get_so_children(token, so_dict, namespaces) -> dict:
     return children_dict
 
 def valid_top_so_title(top_so_dict):
-    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]):
+    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", top_so_dict["title"]):
         return True
     else:
         logging.error(f"{top_so_dict['title']} does not confirm to convention")
@@ -193,7 +193,7 @@ def valid_so_type(so_dict):
         return False
 
 def valid_top_so_category(top_so_dict):
-    socat = re.search(r"[A-Z]{2}", top_so_dict["title"].group(0))
+    socat = re.search(r"[A-Z]{2}", top_so_dict["title"]).group(0)
 
     if top_so_dict["soCat"] == f"{socat}Container":
         return True
@@ -214,52 +214,54 @@ def valid_top_level_specId(top_so_dict, collectionId):
     if top_so_dict["speccolID"] == collectionId:
         return True
     else:
-        logging.error(f"Top SO Spec collection ID incorrect: {top_so_dict["speccolID"]}")
+        logging.error(f"Top SO Spec collection ID incorrect: {top_so_dict['speccolID']}")
         return False
 
-def valid_all_top_level_so_conditions(top_so_dict, collectionId):
-    valid_top_so_title(top_so_dict)
-    valid_open_sectag(top_so_dict)
-    valid_so_type(top_so_dict)
-    valid_top_so_category(top_so_dict)
-    valid_top_level_specId(top_so_dict, collectionId)
-
-
-def validate_contents_so(contents_so_dict, collectionId):
-    socat = re.search(r"[A-Z]{2}", contents_so_dict["title"]).group(0)
+def valid_contents_level_faComponentId(contents_so_dict):
     fa_component_id = re.search(
         r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
     ).group(1)
+
+    if contents_so_dict["faComponentId"] == fa_component_id:
+        return True
+    else:
+        logging.error(f"{contents_so_dict['title']} has incorrect faComponentId: {contents_so_dict['faComponentId']}")
+        return False
+
+def valid_contents_level_faCollectionId(contents_so_dict, collectionId):
+    if contents_so_dict["faCollectionId"] == collectionId:
+        return True
+    else:
+        logging.error(f"{contents_so_dict['title']} has incorrect faCollectionId: {contents_so_dict['faCollectionId']}")
+        return False
+
+def valid_contents_level_erNumber(contents_so_dict):
     er_number = re.search(
         r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
     ).group(1)
 
-    validations = [
-        re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]),
-        contents_so_dict["sectag"] == "open",
-        contents_so_dict["type"] == "soCategory",
-        contents_so_dict["soCat"] == f"{socat}Contents",
-        contents_so_dict["faComponentId"] == fa_component_id,
-        contents_so_dict["faCollectionId"] == collectionId,
-        contents_so_dict["erNumber"] == er_number,
-    ]
-
-    indexed_results = []
-
-    for i, validation in enumerate(validations):
-        if validation:
-            indexed_results.append(True)
-            logging.info(f"Contents SO validation {i+1} passed")
-        else:
-            indexed_results.append(False)
-            logging.error(f"Contents SO validation {i+1} failed")
-
-    if all(indexed_results):
-        logging.info(f"Contents SO valid")
-        return "Valid"
+    if contents_so_dict["erNumber"] == er_number:
+        return True
     else:
-        logging.error(f"Contents SO invalid")
-        return "Invalid"
+        logging.error(f"{contents_so_dict['title']} has incorrect erNumber: {contents_so_dict['erNumber']}")
+        return False
+
+def valid_all_top_level_so_conditions(top_so_dict, collectionId):
+    valid_top_so_title(top_so_dict),
+    valid_open_sectag(top_so_dict),
+    valid_so_type(top_so_dict),
+    valid_top_so_category(top_so_dict),
+    valid_top_level_specId(top_so_dict, collectionId)
+
+def valid_all_contents_level_so_conditions(contents_so_dict, collectionId):
+    valid_contents_so_title(contents_so_dict)
+    valid_open_sectag(contents_so_dict)
+    valid_so_type(contents_so_dict)
+    valid_contents_so_category(contents_so_dict)
+    valid_contents_level_faComponentId(contents_so_dict)
+    valid_contents_level_faCollectionId(contents_so_dict, collectionId)
+    valid_contents_level_erNumber(contents_so_dict)
+
 
 
 # def get_so_children(token, so_uuid, namespaces):
@@ -311,23 +313,23 @@ def main():
     ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls)
 
     for uuid in uuid_ls:
-        so_dict = get_so_metadata(uuid, token, namespaces)
+        top_so_dict = get_so_metadata(uuid, token, namespaces)
 
-        id_dict = get_so_identifier(token, so_dict, namespaces)
-        so_dict.update(id_dict)
+        id_dict = get_so_identifier(token, top_so_dict, namespaces)
+        top_so_dict.update(id_dict)
 
-        mdfrag_dict = get_spec_mdfrag(token, so_dict, namespaces)
-        so_dict.update(mdfrag_dict)
+        mdfrag_dict = get_spec_mdfrag(token, top_so_dict, namespaces)
+        top_so_dict.update(mdfrag_dict)
 
-        children_dict = get_so_children(token, so_dict, namespaces)
-        so_dict.update(children_dict)
+        children_dict = get_so_children(token, top_so_dict, namespaces)
+        top_so_dict.update(children_dict)
 
         for key in ["id_url", "metadata_url", "children_url"]:
-            del so_dict[key]
+            del top_so_dict[key]
 
-        validate_top_level_so(so_dict, args.collectionID)
+        valid_all_top_level_so_conditions(top_so_dict, args.collectionID)
 
-        contents_so_uuid = so_dict["children"][0][-36:]
+        contents_so_uuid = top_so_dict["children"][0][-36:]
 
         contents_so_dict = get_so_metadata(contents_so_uuid, token, namespaces)
 
@@ -343,7 +345,7 @@ def main():
         for key in ["id_url", "metadata_url", "children_url"]:
             del contents_so_dict[key]
 
-        validate_contents_so(contents_so_dict, args.collectionID)
+        valid_all_contents_level_so_conditions(contents_so_dict, args.collectionID)
 
         # x = get_so_children(token, contents_so_uuid, namespaces)
         # x can be a list or set or dictionary.
