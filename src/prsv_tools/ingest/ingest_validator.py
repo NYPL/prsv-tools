@@ -164,6 +164,20 @@ def get_so_children(token, so_dict, namespaces) -> dict:
 
     return children_dict
 
+def validate_top_so_title(so_dict):
+    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]):
+        return True
+    else:
+        logging.error(f"{so_dict['title']} does not confirm to convention")
+        return False
+
+def validate_contents_so_title(contents_so_dict):
+    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]):
+        return True
+    else:
+        logging.error(f"{contents_so_dict['title']} does not confirm to convention")
+        return False
+
 
 def validate_top_level_so(so_dict, collectionId):
     socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
