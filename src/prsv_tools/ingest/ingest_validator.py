@@ -183,12 +183,32 @@ def valid_open_sectag(so_dict):
         return True
     else:
         logging.error(f"Security tag is not open, but {so_dict['sectag']}")
+        return False
 
 def valid_so_type(so_dict):
     if so_dict["type"] == "soCategory":
         return True
     else:
         logging.error(f"Type is not soCategory, but {so_dict['type']}")
+        return False
+
+def valid_top_so_category(top_so_dict):
+    socat = re.search(r"[A-Z]{2}", top_so_dict["title"].group(0))
+
+    if top_so_dict["soCat"] == f"{socat}Container":
+        return True
+    else:
+        logging.error(f"{top_so_dict['title']} SO category is incorrect: {top_so_dict['soCat']}")
+        return False
+
+def valid_contents_so_category(contents_so_dict):
+    socat = re.search(r"[A-Z]{2}", contents_so_dict["title"]).group(0)
+
+    if contents_so_dict["soCat"] == f"{socat}Contents":
+        return True
+    else:
+        logging.error(f"{contents_so_dict['title']} SO category is incorrect: {contents_so_dict['soCat']}")
+        return False
 
 def validate_top_level_so(so_dict, collectionId):
     socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
