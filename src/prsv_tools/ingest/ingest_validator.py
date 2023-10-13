@@ -210,33 +210,19 @@ def valid_contents_so_category(contents_so_dict):
         logging.error(f"{contents_so_dict['title']} SO category is incorrect: {contents_so_dict['soCat']}")
         return False
 
-def validate_top_level_so(so_dict, collectionId):
-    socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
-
-    validations = [
-        re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]),
-        so_dict["sectag"] == "open",
-        so_dict["type"] == "soCategory",
-        so_dict["soCat"] == f"{socat}Container",
-        so_dict["speccolID"] == collectionId,
-    ]
-
-    indexed_results = []
-
-    for i, validation in enumerate(validations):
-        if validation:
-            indexed_results.append(True)
-            logging.info(f"Top level SO validation {i+1} passed")
-        else:
-            indexed_results.append(False)
-            logging.error(f"Top level SO validation {i+1} failed")
-
-    if all(indexed_results):
-        logging.info(f"Top level SO valid")
-        return "Valid"
+def valid_top_level_specId(top_so_dict, collectionId):
+    if top_so_dict["speccolID"] == collectionId:
+        return True
     else:
-        logging.error(f"Top level SO invalid")
-        return "Invalid"
+        logging.error(f"Top SO Spec collection ID incorrect: {top_so_dict["speccolID"]}")
+        return False
+
+def valid_all_top_level_so_conditions(top_so_dict, collectionId):
+    valid_top_so_title(top_so_dict)
+    valid_open_sectag(top_so_dict)
+    valid_so_type(top_so_dict)
+    valid_top_so_category(top_so_dict)
+    valid_top_level_specId(top_so_dict, collectionId)
 
 
 def validate_contents_so(contents_so_dict, collectionId):
