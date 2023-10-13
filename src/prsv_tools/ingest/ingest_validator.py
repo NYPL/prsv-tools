@@ -164,20 +164,31 @@ def get_so_children(token, so_dict, namespaces) -> dict:
 
     return children_dict
 
-def validate_top_so_title(so_dict):
+def valid_top_so_title(top_so_dict):
     if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", so_dict["title"]):
         return True
     else:
-        logging.error(f"{so_dict['title']} does not confirm to convention")
+        logging.error(f"{top_so_dict['title']} does not confirm to convention")
         return False
 
-def validate_contents_so_title(contents_so_dict):
+def valid_contents_so_title(contents_so_dict):
     if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]):
         return True
     else:
         logging.error(f"{contents_so_dict['title']} does not confirm to convention")
         return False
 
+def valid_open_sectag(so_dict):
+    if so_dict["sectag"] == "open":
+        return True
+    else:
+        logging.error(f"Security tag is not open, but {so_dict['sectag']}")
+
+def valid_so_type(so_dict):
+    if so_dict["type"] == "soCategory":
+        return True
+    else:
+        logging.error(f"Type is not soCategory, but {so_dict['type']}")
 
 def validate_top_level_so(so_dict, collectionId):
     socat = re.search(r"[A-Z]{2}", so_dict["title"]).group(0)
