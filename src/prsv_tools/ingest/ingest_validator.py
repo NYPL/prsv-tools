@@ -53,9 +53,10 @@ class model_top_Structural_Object:
         if not re.match(r"M[0-9]+_(ER|DI|EM)_[0-9]+", self.title):
             raise ValueError("Title does not match the required pattern.")
         if not re.match(r"(ER|DI|EM)Container", self.soCategory):
-            raise ValueError("Title does not match the required pattern.")
-        if not Schema({"speccolID": Regex(r"M[0-9]+")}).validate(self.mdFragments):
-            raise SchemaError("Missing Spec Collection ID")
+            raise ValueError("soCategory does not match the required pattern.")
+        if self.mdFragments:
+            if not Schema({"speccolID": Regex(r"M[0-9]+")}).validate(self.mdFragments):
+                raise SchemaError("Missing Spec Collection ID")
 
 
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
