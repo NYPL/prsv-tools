@@ -3,8 +3,10 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-
+from dataclasses import dataclass
 import requests
+from typing import Optional
+from schema import Schema, Regex
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
@@ -31,6 +33,29 @@ def parse_args():
     )
 
     return parser.parse_args()
+
+
+@dataclass
+class model_Structural_Object:
+    title: str
+    securityTag: str
+    soCategory: str
+    mdFragments: Optional[dict]
+
+@dataclass
+class model_top_Structural_Object:
+    title: str
+    securityTag: "open"
+    soCategory: str
+    mdFragments: Optional[dict]
+
+    def __post_init__(self):
+        if not re.match(r"M[0-9]+_(ER|DI|EM)_[0-9]+", self.title):
+            raise ValueError("Title does not match the required pattern.")
+        if not re.match(r"(ER|DI|EM)Container", self.soCategory):
+            raise ValueError("Title does not match the required pattern.")
+        if not Schema({"speccolID": Regex(r"M[0-9]+")}).validate(self.mdFragments):
+            raise SchemaError("Missing Spec Collection ID")
 
 
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
