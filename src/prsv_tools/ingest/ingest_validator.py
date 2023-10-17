@@ -114,7 +114,10 @@ def get_so(uuid, token, namespaces: dict, so_type: str):
     type = id_root.find(f".//{namespaces['xip_ns']}Type").text
     soCat = id_root.find(f".//{namespaces['xip_ns']}Value").text
 
-    metadata_url = root.find(f".//{namespaces['entity_ns']}Fragment").text
+    if so_type in ["metadata", "contents_element"]:
+        md = None
+    else:
+        metadata_url = root.find(f".//{namespaces['entity_ns']}Fragment").text
 
     if so_type == "top":
         md = get_spec_mdfrag(token, metadata_url, namespaces)
@@ -320,9 +323,13 @@ def main():
         top_level_so = get_so(uuid, token, namespaces, "top")
         print(top_level_so)
         contents_f = f"{top_level_so.title}_contents"
+        metadata_f = f"{top_level_so.title}_metadata"
         contents_uuid = top_level_so.children_uuid[contents_f]
         contents_so = get_so(contents_uuid, token, namespaces, "contents")
-        print(contents_so)
+        metadata_uuid = top_level_so.children_uuid[metadata_f]
+        metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
+        print(metadata_so)
+
 
 
 if __name__ == "__main__":
