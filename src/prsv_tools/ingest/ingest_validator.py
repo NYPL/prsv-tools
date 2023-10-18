@@ -167,7 +167,9 @@ def get_so_children_uuid(token, children_url, namespaces) -> dict:
     for child in children_root.findall(f".//{namespaces['entity_ns']}Child"):
         title = child.attrib.get("title")
         ref = child.attrib.get("ref")
-        children_dict[title] = ref
+        type = child.attrib.get("type")
+        children_dict[title] = {"type": type,
+                                "uuid": ref}
 
     return children_dict
 
@@ -324,9 +326,10 @@ def main():
         print(top_level_so)
         contents_f = f"{top_level_so.title}_contents"
         metadata_f = f"{top_level_so.title}_metadata"
-        contents_uuid = top_level_so.children_uuid[contents_f]
+        contents_uuid = top_level_so.children_uuid[contents_f]["uuid"]
         contents_so = get_so(contents_uuid, token, namespaces, "contents")
-        metadata_uuid = top_level_so.children_uuid[metadata_f]
+        print(contents_so)
+        metadata_uuid = top_level_so.children_uuid[metadata_f]["uuid"]
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
         print(metadata_so)
 
