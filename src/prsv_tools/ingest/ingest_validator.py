@@ -6,6 +6,8 @@ from pathlib import Path
 from dataclasses import dataclass
 import requests
 import typing
+from pprint import pprint
+
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
@@ -51,7 +53,7 @@ class prsv_Structural_Object:
     securityTag: str
     soCategory: str
     mdFragments: dict | None
-    children_uuid: dict | None
+    children: dict | None
 
 
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
@@ -127,8 +129,7 @@ def get_so(uuid, token, namespaces: dict, so_type: str):
     elif so_type == "contents":
         md = get_fa_mdfrag(token, metadata_url, namespaces)
 
-    children_url = root.find(f".//{namespaces['entity_ns']}Children").text
-    children = get_so_children_uuid(token, children_url, namespaces)
+    children = get_so_children(token, uuid, namespaces)
 
     return prsv_Structural_Object(uuid, title, type, sectag, soCat, md, children)
 
@@ -162,16 +163,18 @@ def get_fa_mdfrag(token, metadata_url, namespaces: dict) -> dict:
     return mdfrag_dict
 
 
-def get_so_children_uuid(token, children_url, namespaces) -> dict:
+def get_so_children(token, so_uuid, namespaces):
     children_dict = dict()
+    children_url = f"https://nypl.preservica.com/api/entity/structural-objects/{so_uuid}/children?start=0&max=1000" #noqa
 
     children_res = get_api_results(token, children_url)
     children_root = ET.fromstring(children_res.text)
+
     for child in children_root.findall(f".//{namespaces['entity_ns']}Child"):
         title = child.attrib.get("title")
         ref = child.attrib.get("ref")
         type = child.attrib.get("type")
-        children_dict[title] = {"type": type,
+        children_dict[title] = {"objType": type,
                                 "uuid": ref}
 
     return children_dict
@@ -276,15 +279,6 @@ def valid_all_contents_level_so_conditions(contents_so_dict, collectionId):
 
 
 
-# def get_so_children(token, so_uuid, namespaces):
-#     """the limit of this API is 1000 items"""
-#     url = f"https://nypl.preservica.com/api/entity/structural-objects/{so_uuid}/children?start=0&max=1000"
-#     res = get_api_results(token, url)
-#     root = ET.fromstring(res.text)
-
-#     print(res.text)
-
-
 def main():
     """
     First type of check:
@@ -326,15 +320,16 @@ def main():
 
     for uuid in uuid_ls:
         top_level_so = get_so(uuid, token, namespaces, "top")
-        print(top_level_so)
+        pprint(top_level_so)
         contents_f = f"{top_level_so.title}_contents"
         metadata_f = f"{top_level_so.title}_metadata"
-        contents_uuid = top_level_so.children_uuid[contents_f]["uuid"]
+        contents_uuid = top_level_so.children[contents_f]["uuid"]
         contents_so = get_so(contents_uuid, token, namespaces, "contents")
-        print(contents_so)
-        metadata_uuid = top_level_so.children_uuid[metadata_f]["uuid"]
+        pprint(contents_so)
+        metadata_uuid = top_level_so.children[metadata_f]["uuid"]
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
-        print(metadata_so)
+        pprint(metadata_so)
+        contents_children = get_so_children(token, contents_uuid, namespaces)
 
 
 
