@@ -177,6 +177,18 @@ def get_so_children(token, so_uuid, namespaces):
         children_dict[title] = {"objType": type,
                                 "uuid": ref}
 
+    if len(children_root.findall(f".//{namespaces['entity_ns']}Next")) > 0:
+        for next in children_root.findall(f".//{namespaces['entity_ns']}Next"):
+            next_url = next.text
+            next_res = get_api_results(token, next_url)
+            next_root = ET.fromstring(next_res.text)
+            for n in next_root.findall(f".//{namespaces['entity_ns']}Child"):
+                title = n.attrib.get("title")
+                ref = n.attrib.get("ref")
+                type = n.attrib.get("type")
+                children_dict[title] = {"objType": type,
+                                        "uuid": ref}
+
     return children_dict
 
 def valid_top_so_title(top_so_dict):
@@ -325,11 +337,12 @@ def main():
         metadata_f = f"{top_level_so.title}_metadata"
         contents_uuid = top_level_so.children[contents_f]["uuid"]
         contents_so = get_so(contents_uuid, token, namespaces, "contents")
-        pprint(contents_so)
+        # pprint(contents_so)
         metadata_uuid = top_level_so.children[metadata_f]["uuid"]
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
-        pprint(metadata_so)
+        # pprint(metadata_so)
         contents_children = get_so_children(token, contents_uuid, namespaces)
+        pprint(contents_children)
 
 
 
