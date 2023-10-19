@@ -45,6 +45,7 @@ class datamodel_Structural_Object:
 
 @dataclass
 class prsv_Structural_Object:
+    uuid: str
     title: str
     type: str
     securityTag: str
@@ -102,6 +103,8 @@ def get_so(uuid, token, namespaces: dict, so_type: str):
     res = get_api_results(token, url)
     root = ET.fromstring(res.text)
 
+    uuid = root.find(f".//{namespaces['xip_ns']}Ref").text
+
     title = root.find(f".//{namespaces['xip_ns']}Title").text
 
     sectag = root.find(f".//{namespaces['xip_ns']}SecurityTag").text
@@ -127,7 +130,7 @@ def get_so(uuid, token, namespaces: dict, so_type: str):
     children_url = root.find(f".//{namespaces['entity_ns']}Children").text
     children = get_so_children_uuid(token, children_url, namespaces)
 
-    return prsv_Structural_Object(title, type, sectag, soCat, md, children)
+    return prsv_Structural_Object(uuid, title, type, sectag, soCat, md, children)
 
 
 def get_spec_mdfrag(token,  metadata_url, namespaces: dict) -> dict:
