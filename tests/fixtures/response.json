@@ -1,0 +1,83 @@
+{
+    "success": true,
+    "version": 1,
+    "value": {
+        "objectIds": [
+            "sdb:SO|01234567-89ab-cdef-0123-456789abcdef",
+            "sdb:SO|01234567-89ab-cdef-0123-456789abcde0",
+            "sdb:SO|01234567-89ab-cdef-0123-456789abcde1"
+        ],
+        "totalHits": 3,
+        "simpleChildSearch": false,
+        "facets": [],
+        "metadata": [
+            [
+                {
+                    "name": "xip.title",
+                    "value": "M1234_ER_1"
+                },
+                {
+                    "name": "xip.securitytag",
+                    "value": "open"
+                },
+                {
+                    "name": "xip.identifier",
+                    "value": ["soCategory ERContainer"]
+                },
+                {
+                    "name": "xip.parent_ref",
+                    "value": "fedcba98-7654-3210-fedc-ba9876543210"
+                },
+                {
+                    "name": "spec.specCollectionID",
+                    "value": "M1234"
+                }
+            ],
+            [
+                {
+                    "name": "xip.title",
+                    "value": "M1234_ER_2"
+                },
+                {
+                    "name": "xip.securitytag",
+                    "value": "open"
+                },
+                {
+                    "name": "xip.identifier",
+                    "value": ["soCategory ERContainer"]
+                },
+                {
+                    "name": "xip.parent_ref",
+                    "value": "fedcba98-7654-3210-fedc-ba9876543210"
+                },
+                {
+                    "name": "spec.specCollectionID",
+                    "value": "M1234"
+                }
+            ],
+            [
+                {
+                    "name": "xip.title",
+                    "value": "M1234_ER_3"
+                },
+                {
+                    "name": "xip.securitytag",
+                    "value": "open"
+                },
+                {
+                    "name": "xip.identifier",
+                    "value": ["soCategory ERContainer"]
+                },
+                {
+                    "name": "xip.parent_ref",
+                    "value": "fedcba98-7654-3210-fedc-ba9876543210"
+                },
+                {
+                    "name": "spec.specCollectionID",
+                    "value": "M1234"
+                }
+            ]
+        ],
+        "highlighting": {}
+    }
+}
