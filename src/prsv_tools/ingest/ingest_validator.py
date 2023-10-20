@@ -249,52 +249,32 @@ def valid_contents_so_category(contents_so: dataclass):
         return False
 
 
-def valid_top_level_specId(top_level_so: dataclass, collectionId):
-    if top_level_so.mdFragments["speccolID"] == collectionId:
+def validate_mdfrag(prsv_object: dataclass, field_name, expected_value):
+    # mdFragments is a dictionary
+    if prsv_object.mdFragments.get(field_name) == expected_value:
         return True
     else:
         logging.error(
-            f"Top SO Spec collection ID incorrect: {top_level_so.mdFragments['speccolID']}"
+            f"{prsv_object.title} has incorrect {field_name}: {prsv_object.mdFragments.get(field_name)}"
         )
-        return False
 
 
-def valid_contents_level_faComponentId(contents_so: dataclass):
+def valid_top_level_mdfrag(top_level_so: dataclass, collectionId):
+    validate_mdfrag(top_level_so, "speccolID", collectionId)
+
+
+def valid_contents_mdfrags(contents_so: dataclass, collectionId):
     fa_component_id = re.search(
         r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so.title
     ).group(1)
 
-    if contents_so.mdFragments["faComponentId"] == fa_component_id:
-        return True
-    else:
-        logging.error(
-            f"{contents_so.title} has incorrect faComponentId: {contents_so.mdFragments['faComponentId']}"
-        )
-        return False
-
-
-def valid_contents_level_faCollectionId(contents_so: dataclass, collectionId):
-    if contents_so.mdFragments["faCollectionId"] == collectionId:
-        return True
-    else:
-        logging.error(
-            f"{contents_so.title} has incorrect faCollectionId: {contents_so.mdFragments['faCollectionId']}"
-        )
-        return False
-
-
-def valid_contents_level_erNumber(contents_so: dataclass):
     er_number = re.search(
         r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so.title
     ).group(1)
 
-    if contents_so.mdFragments["erNumber"] == er_number:
-        return True
-    else:
-        logging.error(
-            f"{contents_so.title} has incorrect erNumber: {contents_so.mdFragments['erNumber']}"
-        )
-        return False
+    validate_mdfrag(contents_so, "faComponentId", fa_component_id)
+    validate_mdfrag(contents_so, "faCollectionId", collectionId)
+    validate_mdfrag(contents_so, "erNumber", er_number)
 
 
 def valid_all_top_level_so_conditions(top_level_so: dataclass, collectionId):
@@ -303,7 +283,7 @@ def valid_all_top_level_so_conditions(top_level_so: dataclass, collectionId):
     valid_open_sectag(top_level_so)
     valid_so_type(top_level_so)
     valid_top_so_category(top_level_so)
-    valid_top_level_specId(top_level_so, collectionId)
+    valid_top_level_mdfrag(top_level_so, collectionId)
 
 
 def valid_all_contents_level_so_conditions(contents_so: dataclass, collectionId):
@@ -312,9 +292,7 @@ def valid_all_contents_level_so_conditions(contents_so: dataclass, collectionId)
     valid_open_sectag(contents_so)
     valid_so_type(contents_so)
     valid_contents_so_category(contents_so)
-    valid_contents_level_faComponentId(contents_so)
-    valid_contents_level_faCollectionId(contents_so, collectionId)
-    valid_contents_level_erNumber(contents_so)
+    valid_contents_mdfrags(contents_so, collectionId)
 
 
 def main():
