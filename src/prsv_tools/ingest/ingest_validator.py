@@ -193,126 +193,128 @@ def get_so_children(token, so_uuid, namespaces):
     return children_dict
 
 
-def valid_top_so_title(top_so_dict):
-    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", top_so_dict["title"]):
+def valid_top_so_title(top_level_so: dataclass):
+    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", top_level_so.title):
         return True
     else:
-        logging.error(f"{top_so_dict['title']} does not confirm to convention")
+        logging.error(f"{top_level_so.title} does not confirm to convention")
         return False
 
 
-def valid_contents_so_title(contents_so_dict):
-    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dict["title"]):
+def valid_contents_so_title(contents_so):
+    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so.title):
         return True
     else:
-        logging.error(f"{contents_so_dict['title']} does not confirm to convention")
+        logging.error(f"{contents_so.title} does not confirm to convention")
         return False
 
 
-def valid_open_sectag(so_dict):
-    if so_dict["sectag"] == "open":
+def valid_open_sectag(so: dataclass):
+    if so.securityTag == "open":
         return True
     else:
-        logging.error(f"Security tag is not open, but {so_dict['sectag']}")
+        logging.error(f"Security tag is not open, but {so.securityTag}")
         return False
 
 
-def valid_so_type(so_dict):
-    if so_dict["type"] == "soCategory":
+def valid_so_type(so: dataclass):
+    if so.type == "soCategory":
         return True
     else:
-        logging.error(f"Type is not soCategory, but {so_dict['type']}")
+        logging.error(f"Type is not soCategory, but {so.type}")
         return False
 
 
-def valid_top_so_category(top_so_dict):
-    socat = re.search(r"[A-Z]{2}", top_so_dict["title"]).group(0)
+def valid_top_so_category(top_level_so: dataclass):
+    socat = re.search(r"[A-Z]{2}", top_level_so.title).group(0)
 
-    if top_so_dict["soCat"] == f"{socat}Container":
+    if top_level_so.soCategory == f"{socat}Container":
         return True
     else:
         logging.error(
-            f"{top_so_dict['title']} SO category is incorrect: {top_so_dict['soCat']}"
+            f"{top_level_so.title} SO category is incorrect: {top_level_so.soCategory}"
         )
         return False
 
 
-def valid_contents_so_category(contents_so_dict):
-    socat = re.search(r"[A-Z]{2}", contents_so_dict["title"]).group(0)
+def valid_contents_so_category(contents_so: dataclass):
+    socat = re.search(r"[A-Z]{2}", contents_so.title).group(0)
 
-    if contents_so_dict["soCat"] == f"{socat}Contents":
+    if contents_so.soCategory == f"{socat}Contents":
         return True
     else:
         logging.error(
-            f"{contents_so_dict['title']} SO category is incorrect: {contents_so_dict['soCat']}"
+            f"{contents_so.title} SO category is incorrect: {contents_so.soCategory}"
         )
         return False
 
 
-def valid_top_level_specId(top_so_dict, collectionId):
-    if top_so_dict["speccolID"] == collectionId:
+def valid_top_level_specId(top_level_so: dataclass, collectionId):
+    if top_level_so.mdFragments["speccolID"] == collectionId:
         return True
     else:
         logging.error(
-            f"Top SO Spec collection ID incorrect: {top_so_dict['speccolID']}"
+            f"Top SO Spec collection ID incorrect: {top_level_so.mdFragments['speccolID']}"
         )
         return False
 
 
-def valid_contents_level_faComponentId(contents_so_dict):
+def valid_contents_level_faComponentId(contents_so: dataclass):
     fa_component_id = re.search(
-        r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
+        r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so.title
     ).group(1)
 
-    if contents_so_dict["faComponentId"] == fa_component_id:
+    if contents_so.mdFragments["faComponentId"] == fa_component_id:
         return True
     else:
         logging.error(
-            f"{contents_so_dict['title']} has incorrect faComponentId: {contents_so_dict['faComponentId']}"
+            f"{contents_so.title} has incorrect faComponentId: {contents_so.mdFragments['faComponentId']}"
         )
         return False
 
 
-def valid_contents_level_faCollectionId(contents_so_dict, collectionId):
-    if contents_so_dict["faCollectionId"] == collectionId:
+def valid_contents_level_faCollectionId(contents_so: dataclass, collectionId):
+    if contents_so.mdFragments["faCollectionId"] == collectionId:
         return True
     else:
         logging.error(
-            f"{contents_so_dict['title']} has incorrect faCollectionId: {contents_so_dict['faCollectionId']}"
+            f"{contents_so.title} has incorrect faCollectionId: {contents_so.mdFragments['faCollectionId']}"
         )
         return False
 
 
-def valid_contents_level_erNumber(contents_so_dict):
+def valid_contents_level_erNumber(contents_so: dataclass):
     er_number = re.search(
-        r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so_dict["title"]
+        r"M[0-9]+_((ER|DI|EM)_[0-9]+)_contents", contents_so.title
     ).group(1)
 
-    if contents_so_dict["erNumber"] == er_number:
+    if contents_so.mdFragments["erNumber"] == er_number:
         return True
     else:
         logging.error(
-            f"{contents_so_dict['title']} has incorrect erNumber: {contents_so_dict['erNumber']}"
+            f"{contents_so.title} has incorrect erNumber: {contents_so.mdFragments['erNumber']}"
         )
         return False
 
 
-def valid_all_top_level_so_conditions(top_so_dict, collectionId):
-    valid_top_so_title(top_so_dict),
-    valid_open_sectag(top_so_dict),
-    valid_so_type(top_so_dict),
-    valid_top_so_category(top_so_dict),
-    valid_top_level_specId(top_so_dict, collectionId)
+def valid_all_top_level_so_conditions(top_level_so: dataclass, collectionId):
+    logging.info(f"validating top level {top_level_so.title}")
+    valid_top_so_title(top_level_so)
+    valid_open_sectag(top_level_so)
+    valid_so_type(top_level_so)
+    valid_top_so_category(top_level_so)
+    valid_top_level_specId(top_level_so, collectionId)
 
 
-def valid_all_contents_level_so_conditions(contents_so_dict, collectionId):
-    valid_contents_so_title(contents_so_dict)
-    valid_open_sectag(contents_so_dict)
-    valid_so_type(contents_so_dict)
-    valid_contents_so_category(contents_so_dict)
-    valid_contents_level_faComponentId(contents_so_dict)
-    valid_contents_level_faCollectionId(contents_so_dict, collectionId)
-    valid_contents_level_erNumber(contents_so_dict)
+def valid_all_contents_level_so_conditions(contents_so: dataclass, collectionId):
+    logging.info(f"validating contents level {contents_so.title}")
+    valid_contents_so_title(contents_so)
+    valid_open_sectag(contents_so)
+    valid_so_type(contents_so)
+    valid_contents_so_category(contents_so)
+    valid_contents_level_faComponentId(contents_so)
+    valid_contents_level_faCollectionId(contents_so, collectionId)
+    valid_contents_level_erNumber(contents_so)
 
 
 def main():
@@ -356,17 +358,20 @@ def main():
 
     for uuid in uuid_ls:
         top_level_so = get_so(uuid, token, namespaces, "top")
-        pprint(top_level_so)
+        # pprint(top_level_so)
         contents_f = f"{top_level_so.title}_contents"
         metadata_f = f"{top_level_so.title}_metadata"
         contents_uuid = top_level_so.children[contents_f]["uuid"]
         contents_so = get_so(contents_uuid, token, namespaces, "contents")
-        pprint(contents_so)
+        # pprint(contents_so)
         metadata_uuid = top_level_so.children[metadata_f]["uuid"]
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
-        pprint(metadata_so)
+        # pprint(metadata_so)
         contents_children = get_so_children(token, contents_uuid, namespaces)
-        pprint(contents_children)
+        # pprint(contents_children)
+
+        valid_all_top_level_so_conditions(top_level_so, args.collectionID)
+        valid_all_contents_level_so_conditions(contents_so, args.collectionID)
 
 
 if __name__ == "__main__":
