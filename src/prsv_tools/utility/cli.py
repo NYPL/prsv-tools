@@ -87,9 +87,8 @@ class Parser(argparse.ArgumentParser):
         # it would be better to extend the parse_args function, but have not
         # figured out how
         all_ids = [item.dest for item in ids._actions]
-        if not any(f'--{id}' in sys.argv for id in all_ids):
-            self.error('at least one ID argument is required')
-
+        if not any(f"--{id}" in sys.argv for id in all_ids):
+            self.error("at least one ID argument is required")
 
 
 class ExtendUnique(argparse.Action):

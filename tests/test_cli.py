@@ -279,46 +279,28 @@ def test_reject_invalid_logdirectory(
 
 # All tests for search related arguments
 SINGLE_ID_ARGS = {
-    'one_ami': {
-        '--ami': '123456'
-    },
-    'one_spec_object': {
-        '--object': '123456'
-    }
+    "one_ami": {"--ami": "123456"},
+    "one_spec_object": {"--object": "123456"},
 }
 
-SET_IDS = ['--coll', '--acq']
+SET_IDS = ["--coll", "--acq"]
 
 SET_ID_ARGS = {
-    'one_er': {
-        '--coll': 'M12345',
-        '--er': 'ER_1'
-    },
-    'all_coll_ami': {
-        '--coll': 'M12345',
-        '--ami': 'all'
-    },
-    'all_coll_er': {
-        '--er': 'all',
-        '--coll': 'M12345'
-    },
-    'all_coll': {
-        '--coll': 'M12345',
-        '--er': 'all',
-        '--ami': 'all'
-    },
-    'all_acq': {
-        '--object': 'all',
-        '--acq': '123456'
-    }
+    "one_er": {"--coll": "M12345", "--er": "ER_1"},
+    "all_coll_ami": {"--coll": "M12345", "--ami": "all"},
+    "all_coll_er": {"--er": "all", "--coll": "M12345"},
+    "all_coll": {"--coll": "M12345", "--er": "all", "--ami": "all"},
+    "all_acq": {"--object": "all", "--acq": "123456"},
 }
 
 ALL_ID_ARGS = {**SINGLE_ID_ARGS, **SET_ID_ARGS}
 
 
 @pytest.mark.parametrize("scenario,ids", ALL_ID_ARGS.items())
-def test_accept_valid_id_sets(monkeypatch: pytest.MonkeyPatch, scenario: str, ids: dict):
-    cmd = ['script']
+def test_accept_valid_id_sets(
+    monkeypatch: pytest.MonkeyPatch, scenario: str, ids: dict
+):
+    cmd = ["script"]
     for id_type, id_value in ids.items():
         cmd.extend([id_type, id_value])
 
@@ -334,16 +316,21 @@ def test_accept_valid_id_sets(monkeypatch: pytest.MonkeyPatch, scenario: str, id
 
 
 @pytest.mark.parametrize("scenario,ids", ALL_ID_ARGS.items())
-def test_reject_invalid_ids(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture, scenario: str, ids: dict):
-    cmd = ['script']
+def test_reject_invalid_ids(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+    scenario: str,
+    ids: dict,
+):
+    cmd = ["script"]
 
     first_value = None
     for id_type, id_value in ids.items():
         if not first_value:
             first_value = id_value
-        cmd.extend([id_type, f'@{id_value}@'])
+        cmd.extend([id_type, f"@{id_value}@"])
 
-    monkeypatch.setattr('sys.argv', cmd)
+    monkeypatch.setattr("sys.argv", cmd)
 
     fake_cli = prsvcli.Parser()
     fake_cli.add_id_search()
@@ -353,20 +340,25 @@ def test_reject_invalid_ids(monkeypatch: pytest.MonkeyPatch, capsys: pytest.Capt
 
     stderr = capsys.readouterr().err
 
-    assert f'@{first_value}@ does not match the expected' in stderr
+    assert f"@{first_value}@ does not match the expected" in stderr
 
 
 @pytest.mark.parametrize("scenario,ids", SET_ID_ARGS.items())
-def test_reject_missing_ids(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture, scenario: str, ids: dict):
-    cmd = ['script']
+def test_reject_missing_ids(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture,
+    scenario: str,
+    ids: dict,
+):
+    cmd = ["script"]
 
     for id_type, id_value in ids.items():
-        if not id_type in SET_IDS:
+        if id_type not in SET_IDS:
             cmd.extend([id_type, id_value])
         else:
             required = id_type
 
-    monkeypatch.setattr('sys.argv', cmd)
+    monkeypatch.setattr("sys.argv", cmd)
 
     fake_cli = prsvcli.Parser()
     fake_cli.add_id_search()
@@ -376,24 +368,24 @@ def test_reject_missing_ids(monkeypatch: pytest.MonkeyPatch, capsys: pytest.Capt
 
     stderr = capsys.readouterr().err
 
-    assert f'the following arguments are required: {required}' in stderr
+    assert f"the following arguments are required: {required}" in stderr
 
 
 @pytest.mark.parametrize("scenario,ids", ALL_ID_ARGS.items())
 def test_accept_multiple_ids(monkeypatch: pytest.MonkeyPatch, scenario: str, ids: dict):
-    cmd = ['script']
+    cmd = ["script"]
     number_of_id_args = 6
 
     for id_type, id_value in ids.items():
         cmd.append(id_type)
-        if not id_type in SET_IDS:
+        if id_type not in SET_IDS:
             cmd.extend([id_value] * number_of_id_args)
             final_type = id_type
             print(id_type)
         else:
             cmd.append(id_value)
 
-    monkeypatch.setattr('sys.argv', cmd)
+    monkeypatch.setattr("sys.argv", cmd)
 
     fake_cli = prsvcli.Parser()
     fake_cli.add_id_search()
@@ -402,10 +394,13 @@ def test_accept_multiple_ids(monkeypatch: pytest.MonkeyPatch, scenario: str, ids
 
     assert number_of_id_args == len(getattr(args, final_type[2:]))
 
-def test_require_at_least_one_id(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture):
-    cmd = ['script']
 
-    monkeypatch.setattr('sys.argv', cmd)
+def test_require_at_least_one_id(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+):
+    cmd = ["script"]
+
+    monkeypatch.setattr("sys.argv", cmd)
 
     fake_cli = prsvcli.Parser()
 
@@ -414,4 +409,4 @@ def test_require_at_least_one_id(monkeypatch: pytest.MonkeyPatch, capsys: pytest
 
     stderr = capsys.readouterr().err
 
-    assert f'at least one ID argument is required' in stderr
+    assert "at least one ID argument is required" in stderr
