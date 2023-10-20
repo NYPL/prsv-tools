@@ -209,11 +209,11 @@ def valid_contents_so_title(contents_so):
         return False
 
 
-def valid_open_sectag(so: dataclass):
-    if so.securityTag == "open":
+def valid_sectag(so: dataclass, expected):
+    if so.securityTag == expected:
         return True
     else:
-        logging.error(f"Security tag is not open, but {so.securityTag}")
+        logging.error(f"Security tag is not {expected}, but {so.securityTag}")
         return False
 
 
@@ -277,10 +277,28 @@ def valid_contents_mdfrags(contents_so: dataclass, collectionId):
     validate_mdfrag(contents_so, "erNumber", er_number)
 
 
+def valid_metadata_so_title(metadata_so: dataclass):
+    if re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata", metadata_so.title):
+        return True
+    else:
+        logging.error(f"{metadata_so.title} does not confirm to convention")
+        return False
+
+def valid_metadata_so_category(metadata_so: dataclass):
+    socat = re.search(r"[A-Z]{2}", metadata_so.title).group(0)
+
+    if metadata_so.soCategory == f"{socat}Metadata":
+        return True
+    else:
+        logging.error(
+            f"{metadata_so.title} SO category is incorrect: {metadata_so.soCategory}"
+        )
+        return False
+
 def valid_all_top_level_so_conditions(top_level_so: dataclass, collectionId):
     logging.info(f"validating top level {top_level_so.title}")
     valid_top_so_title(top_level_so)
-    valid_open_sectag(top_level_so)
+    valid_sectag(top_level_so, "open")
     valid_so_type(top_level_so)
     valid_top_so_category(top_level_so)
     valid_top_level_mdfrag(top_level_so, collectionId)
@@ -289,10 +307,17 @@ def valid_all_top_level_so_conditions(top_level_so: dataclass, collectionId):
 def valid_all_contents_level_so_conditions(contents_so: dataclass, collectionId):
     logging.info(f"validating contents level {contents_so.title}")
     valid_contents_so_title(contents_so)
-    valid_open_sectag(contents_so)
+    valid_sectag(contents_so, "open")
     valid_so_type(contents_so)
     valid_contents_so_category(contents_so)
     valid_contents_mdfrags(contents_so, collectionId)
+
+def valid_all_metadata_level_so_conditions(metadata_so: dataclass):
+    logging.info(f"validating metadata level {metadata_so.title}")
+    valid_metadata_so_title(metadata_so)
+    valid_sectag(metadata_so, "preservation")
+    valid_so_type(metadata_so)
+    valid_metadata_so_category(metadata_so)
 
 
 def main():
@@ -350,6 +375,7 @@ def main():
 
         valid_all_top_level_so_conditions(top_level_so, args.collectionID)
         valid_all_contents_level_so_conditions(contents_so, args.collectionID)
+        valid_all_metadata_level_so_conditions(metadata_so)
 
 
 if __name__ == "__main__":
