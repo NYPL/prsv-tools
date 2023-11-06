@@ -24,10 +24,7 @@ namespaces = {
 
 fields = [{"name": "spec.specCollectionID", "values": [collectionid]}]
 
-query = {
-    "q": "",
-    "fields": fields
-}
+query = {"q": "", "fields": fields}
 q = json.dumps(query)
 
 testendpoints = [
@@ -40,6 +37,7 @@ testendpoints = [
 
 uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
+
 @pytest.mark.parametrize("url", testendpoints)
 def test_used_endpoints_are_valid(url):
     res = ingest_validator.get_api_results(token, url)
@@ -50,9 +48,7 @@ def test_used_endpoints_are_valid(url):
 def test_content_searchwithin_so_endpoint():
     # test that the response text has the conceived structure,
     # which is a non-empty list consisting of UUID(s)
-    response = ingest_validator.search_within_DigArch(
-        token, fields, test_digarch_uuid
-    )
+    response = ingest_validator.search_within_DigArch(token, fields, test_digarch_uuid)
 
     uuid_ls = ingest_validator.parse_structural_object_uuid(response)
 
@@ -62,6 +58,15 @@ def test_content_searchwithin_so_endpoint():
 
     assert expected_schema.is_valid(uuid_ls) == True
 
+
+def test_get_spec_mdfrag():
+
+
+def test_get_fa_mdfrag():
+
+def test_get_so_children():
+
+def test_get_so()""
 
 def test_get_so_metadata():
     """test that get_so_metadata function returns a dictionary with title (str),
