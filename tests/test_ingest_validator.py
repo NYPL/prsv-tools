@@ -1,4 +1,5 @@
 import json
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -59,81 +60,111 @@ def test_content_searchwithin_so_endpoint():
     assert expected_schema.is_valid(uuid_ls) == True
 
 
-def test_get_spec_mdfrag():
+def test_get_top_so():
+    """test that get_so function returns the correct
+    data class structure for the top level SO"""
 
+    top_so_dataclass = ingest_validator.get_so(test_er_uuid, token, namespaces, "top")
+    assert top_so_dataclass.uuid == test_er_uuid
+    assert re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", top_so_dataclass.title)
+    assert top_so_dataclass.type == "soCategory"
+    assert top_so_dataclass.securityTag == "open"
+    assert top_so_dataclass.soCategory in ["ERContainer", "DIContainer", "EMContainer"]
+    assert isinstance(top_so_dataclass.mdFragments, dict)
+    assert "speccolID" in top_so_dataclass.mdFragments
+    assert re.fullmatch(r"M[0-9]+", top_so_dataclass.mdFragments["speccolID"])
+    assert isinstance(top_so_dataclass.children, dict)
+    # need to add validation of the children dictionary
 
-def test_get_fa_mdfrag():
-
-def test_get_so_children():
-
-def test_get_so()""
-
-def test_get_so_metadata():
-    """test that get_so_metadata function returns a dictionary with title (str),
-    secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
-    and children (url endpoint)"""
-
-    so_schema = Schema(
+    # below will be deleted
+    top_so_schema = Schema(
         {
+            "uuid": test_er_uuid,
             "title": Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
-            "sectag": Or("open", "preservation"),
-            "id_url": Regex(
-                rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/identifiers$"
-            ),
-            "metadata_url": Regex(
-                rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/metadata/{uuid_pattern}$"
-            ),
-            "children_url": Regex(
-                rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/children$"
-            ),
+            "type": "soCategory",
+            "securityTag": "open",
+            "soCategory": Or("ERContainer", "DIContainer", "EMContainer"),
+            "mdFragments": {"speccolID": Regex(r"M[0-9]+")},
+            "children": {
+                Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"): {
+                    "objType": "SO",
+                    "uuid": Regex(f"{uuid_pattern}"),
+                },
+                Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"): {
+                    "objType": "SO",
+                    "uuid": Regex(f"{uuid_pattern}"),
+                },
+            },
         }
     )
 
-    global er_dict
-    er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
 
-    assert so_schema.is_valid(er_dict) == True
+# def test_get_so_metadata():
+#     """test that get_so_metadata function returns a dictionary with title (str),
+#     secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
+#     and children (url endpoint)"""
+
+#     so_schema = Schema(
+#         {
+#             "title": Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
+#             "sectag": Or("open", "preservation"),
+#             "id_url": Regex(
+#                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/identifiers$"
+#             ),
+#             "metadata_url": Regex(
+#                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/metadata/{uuid_pattern}$"
+#             ),
+#             "children_url": Regex(
+#                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/children$"
+#             ),
+#         }
+#     )
+
+#     global er_dict
+#     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
+
+#     assert so_schema.is_valid(er_dict) == True
 
 
-def test_get_so_identifier():
-    """test that get_so_identifier returns a dictionary with type (str)
-    and SO category (soCat) (str)"""
+# def test_get_so_identifier():
+#     """test that get_so_identifier returns a dictionary with type (str)
+#     and SO category (soCat) (str)"""
 
-    id_schema = Schema(
-        {"type": "soCategory", "soCat": Or("DIContainer", "ERContainer", "EMContainer")}
-    )
-    id_dict = ingest_validator.get_so_identifier(token, er_dict, namespaces)
+#     id_schema = Schema(
+#         {"type": "soCategory", "soCat": Or("DIContainer", "ERContainer", "EMContainer")}
+#     )
+#     id_dict = ingest_validator.get_so_identifier(token, er_dict, namespaces)
 
-    assert id_schema.is_valid(id_dict) == True
-
-
-def test_get_spec_mdfrag():
-    """test that get_spec_mdfrag returns a dictionary with
-    SPEC collection ID"""
-
-    speccol_schema = Schema({"speccolID": Regex(r"M[0-9]+")})
-
-    spec_dict = ingest_validator.get_spec_mdfrag(token, er_dict, namespaces)
-
-    assert speccol_schema.is_valid(spec_dict) == True
+#     assert id_schema.is_valid(id_dict) == True
 
 
-def test_get_so_children():
-    """test that get_so_children returns a dictionary with
-    children as the key and a list of url(s) as its value"""
+# def test_get_spec_mdfrag():
+#     """test that get_spec_mdfrag returns a dictionary with
+#     SPEC collection ID"""
 
-    children_schema = Schema(
-        {
-            "children": [
-                Regex(
-                    rf"https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}"
-                )
-            ]
-        }
-    )
-    children_dict = ingest_validator.get_so_children(token, er_dict, namespaces)
+#     speccol_schema = Schema({"speccolID": Regex(r"M[0-9]+")})
 
-    assert children_schema.is_valid(children_dict) == True
+#     spec_dict = ingest_validator.get_spec_mdfrag(token, er_dict, namespaces)
+
+#     assert speccol_schema.is_valid(spec_dict) == True
+
+
+# def test_get_so_children():
+#     """test that get_so_children returns a dictionary with
+#     children as the key and a list of url(s) as its value"""
+
+#     children_schema = Schema(
+#         {
+#             "children": [
+#                 Regex(
+#                     rf"https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}"
+#                 )
+#             ]
+#         }
+#     )
+#     children_dict = ingest_validator.get_so_children(token, er_dict, namespaces)
+
+#     assert children_schema.is_valid(children_dict) == True
 
 
 """
