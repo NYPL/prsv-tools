@@ -88,6 +88,46 @@ def test_get_top_so():
     )
     assert children_schema.is_valid(top_so_dataclass.children) == True
 
+
+def test_get_contents_so():
+    """test that get_so function returns the correct
+    data class structure for the contents SO"""
+
+    contents_so_dataclass = ingest_validator.get_so(
+        test_er_uuid, token, namespaces, "contents"
+    )
+    # uuid here is incorrect. how to get the contents uuid, or do we set it up
+    # like the test_er_uuid?
+    assert re.fullmatch(uuid_pattern, contents_so_dataclass.uuid)
+    assert re.fullmatch(
+        r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dataclass.title
+    )
+    assert contents_so_dataclass.type == "soCategory"
+    assert contents_so_dataclass.securityTag == "open"
+    assert contents_so_dataclass.soCategory in [
+        "ERContents",
+        "DIContents",
+        "EMContents",
+    ]
+    assert isinstance(contents_so_dataclass.mdFragments, dict)
+    assert "erNumber" in contents_so_dataclass.mdFragments
+    assert re.fullmatch(
+        f"(ER|DI|EM)_[0-9]+", contents_so_dataclass.mdFragments["erNumber"]
+    )
+    assert "faCollectionId" in contents_so_dataclass.mdFragments
+    assert re.fullmatch(f"M[0-9]+", contents_so_dataclass.mdFragments["faCollectionId"])
+    assert "faComponentId" in contents_so_dataclass.mdFragments
+    assert re.fullmatch(
+        f"M[0-9]+_(ER|DI|EM)_[0-9]+", contents_so_dataclass.mdFragments["faComponentId"]
+    )
+    assert isinstance(contents_so_dataclass.children, dict)
+    child_schema = Schema(
+        {Regex(r".+"): {"objType": Or("SO", "IO"), "uuid": Regex(f"{uuid_pattern}")}}
+    )
+    for child in contents_so_dataclass.children:
+        assert child_schema.is_valid(child)
+
+
 # def test_get_so_metadata():
 #     """test that get_so_metadata function returns a dictionary with title (str),
 #     secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
