@@ -74,30 +74,19 @@ def test_get_top_so():
     assert "speccolID" in top_so_dataclass.mdFragments
     assert re.fullmatch(r"M[0-9]+", top_so_dataclass.mdFragments["speccolID"])
     assert isinstance(top_so_dataclass.children, dict)
-    # need to add validation of the children dictionary
-
-    # below will be deleted
-    top_so_schema = Schema(
+    children_schema = Schema(
         {
-            "uuid": test_er_uuid,
-            "title": Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
-            "type": "soCategory",
-            "securityTag": "open",
-            "soCategory": Or("ERContainer", "DIContainer", "EMContainer"),
-            "mdFragments": {"speccolID": Regex(r"M[0-9]+")},
-            "children": {
-                Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"): {
-                    "objType": "SO",
-                    "uuid": Regex(f"{uuid_pattern}"),
-                },
-                Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"): {
-                    "objType": "SO",
-                    "uuid": Regex(f"{uuid_pattern}"),
-                },
+            Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"): {
+                "objType": "SO",
+                "uuid": Regex(f"{uuid_pattern}"),
+            },
+            Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"): {
+                "objType": "SO",
+                "uuid": Regex(f"{uuid_pattern}"),
             },
         }
     )
-
+    assert children_schema.is_valid(top_so_dataclass.children) == True
 
 # def test_get_so_metadata():
 #     """test that get_so_metadata function returns a dictionary with title (str),
