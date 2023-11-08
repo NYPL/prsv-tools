@@ -129,26 +129,31 @@ def test_get_contents_so():
     assert child_schema.is_valid(contents_so_dataclass.children)
 
 
-# def test_get_so_metadata():
-#     """test that get_so function returns the correct
-#     data class structure for the metadata SO"""
+def test_get_so_metadata():
+    """test that get_so function returns the correct
+    data class structure for the metadata SO"""
 
-#     metadata_so_dataclass = ingest_validator.get_so(
-#         test_metadata_uuid, token, namespaces, "metadata"
-#     )
-#     assert re.fullmatch(uuid_pattern, metadata_so_dataclass.uuid)
-#     assert re.fullmatch(
-#         r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata", metadata_so_dataclass.title
-#     )
-#     assert metadata_so_dataclass.type == "soCategory"
-#     assert metadata_so_dataclass.securityTag == "preservation"
-#     assert metadata_so_dataclass.soCategory in [
-#         "ERMetadata",
-#         "DIMetadata",
-#         "EMMetadata",
-#     ]
-#     assert metadata_so_dataclass.mdFragments == None
-#     assert isinstance(metadata_so_dataclass.children, dict)
+    metadata_so_dataclass = ingest_validator.get_so(
+        test_metadata_uuid, token, namespaces, "metadata"
+    )
+    assert re.fullmatch(uuid_pattern, metadata_so_dataclass.uuid)
+    assert re.fullmatch(
+        r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata", metadata_so_dataclass.title
+    )
+    assert metadata_so_dataclass.type == "soCategory"
+    assert metadata_so_dataclass.securityTag == "preservation"
+    assert metadata_so_dataclass.soCategory in [
+        "ERMetadata",
+        "DIMetadata",
+        "EMMetadata",
+    ]
+    assert metadata_so_dataclass.mdFragments == None
+    assert isinstance(metadata_so_dataclass.children, dict)
+    child_schema = Schema(
+        {Regex(r".+"): {"objType": Or("SO", "IO"),
+         "uuid": Regex(f"{uuid_pattern}")}}
+    )
+    assert child_schema.is_valid(metadata_so_dataclass.children)
 
 #     so_schema = Schema(
 #         {
