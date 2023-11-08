@@ -23,7 +23,7 @@ namespaces = {
     "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
     "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
     "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
-    "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}"
+    "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}",
 }
 
 fields = [{"name": "spec.specCollectionID", "values": [collectionid]}]
@@ -123,8 +123,7 @@ def test_get_contents_so():
     )
     assert isinstance(contents_so_dataclass.children, dict)
     child_schema = Schema(
-        {Regex(r".+"): {"objType": Or("SO", "IO"),
-         "uuid": Regex(f"{uuid_pattern}")}}
+        {Regex(r".+"): {"objType": Or("SO", "IO"), "uuid": Regex(f"{uuid_pattern}")}}
     )
     assert child_schema.is_valid(contents_so_dataclass.children)
 
@@ -150,10 +149,10 @@ def test_get_so_metadata():
     assert metadata_so_dataclass.mdFragments == None
     assert isinstance(metadata_so_dataclass.children, dict)
     child_schema = Schema(
-        {Regex(r".+"): {"objType": Or("SO", "IO"),
-         "uuid": Regex(f"{uuid_pattern}")}}
+        {Regex(r".+"): {"objType": Or("SO", "IO"), "uuid": Regex(f"{uuid_pattern}")}}
     )
     assert child_schema.is_valid(metadata_so_dataclass.children)
+
 
 #     so_schema = Schema(
 #         {
