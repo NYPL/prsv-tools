@@ -16,11 +16,14 @@ test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
 token = prsvapi.get_token("test-ingest")
 collectionid = "M1126"
 test_er_uuid = "ae7a1ea1-9a75-4348-807a-9923b1f22ad0"
+test_contents_uuid = "9885feb6-3340-4a02-8585-e0f75f55eb92"
+test_metadata_uuid = "5df3566c-36f0-4721-9e5e-bc1c824b5910"
 version = prsvapi.find_apiversion(token)
 namespaces = {
     "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
     "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
     "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
+    "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}"
 }
 
 fields = [{"name": "spec.specCollectionID", "values": [collectionid]}]
@@ -94,10 +97,8 @@ def test_get_contents_so():
     data class structure for the contents SO"""
 
     contents_so_dataclass = ingest_validator.get_so(
-        test_er_uuid, token, namespaces, "contents"
+        test_contents_uuid, token, namespaces, "contents"
     )
-    # uuid here is incorrect. how to get the contents uuid, or do we set it up
-    # like the test_er_uuid?
     assert re.fullmatch(uuid_pattern, contents_so_dataclass.uuid)
     assert re.fullmatch(
         r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dataclass.title
@@ -122,16 +123,32 @@ def test_get_contents_so():
     )
     assert isinstance(contents_so_dataclass.children, dict)
     child_schema = Schema(
-        {Regex(r".+"): {"objType": Or("SO", "IO"), "uuid": Regex(f"{uuid_pattern}")}}
+        {Regex(r".+"): {"objType": Or("SO", "IO"),
+         "uuid": Regex(f"{uuid_pattern}")}}
     )
-    for child in contents_so_dataclass.children:
-        assert child_schema.is_valid(child)
+    assert child_schema.is_valid(contents_so_dataclass.children)
 
 
 # def test_get_so_metadata():
-#     """test that get_so_metadata function returns a dictionary with title (str),
-#     secutiry tag (str), type (url endpoint), metadata fragment (url endpoint)
-#     and children (url endpoint)"""
+#     """test that get_so function returns the correct
+#     data class structure for the metadata SO"""
+
+#     metadata_so_dataclass = ingest_validator.get_so(
+#         test_metadata_uuid, token, namespaces, "metadata"
+#     )
+#     assert re.fullmatch(uuid_pattern, metadata_so_dataclass.uuid)
+#     assert re.fullmatch(
+#         r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata", metadata_so_dataclass.title
+#     )
+#     assert metadata_so_dataclass.type == "soCategory"
+#     assert metadata_so_dataclass.securityTag == "preservation"
+#     assert metadata_so_dataclass.soCategory in [
+#         "ERMetadata",
+#         "DIMetadata",
+#         "EMMetadata",
+#     ]
+#     assert metadata_so_dataclass.mdFragments == None
+#     assert isinstance(metadata_so_dataclass.children, dict)
 
 #     so_schema = Schema(
 #         {
