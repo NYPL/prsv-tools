@@ -1,7 +1,7 @@
 import json
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -288,68 +288,67 @@ def test_get_so_metadata():
     )
     assert child_schema.is_valid(metadata_so_dataclass.children)
 
+@pytest.fixture
+def valid_prsv_top():
+    prsv_top = prsv_Structural_Object(uuid='658e4d63-ccfa-41e8-83ab-4caaf3a1b061',
+                       title='M24468_ER_8',
+                       type='soCategory',
+                       securityTag='open',
+                       soCategory='ERContainer',
+                       mdFragments={'speccolID': 'M24468'},
+                       children={'M24468_ER_8_contents': {'objType': 'SO',
+                                                          'uuid': '84db17ec-acbc-4b06-8cb2-3ceac63eeb00'},
+                                 'M24468_ER_8_metadata': {'objType': 'SO',
+                                                          'uuid': '4b4acc77-8310-44e9-bac3-3b214968c797'}})
+    return prsv_top
 
-#     so_schema = Schema(
-#         {
-#             "title": Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
-#             "sectag": Or("open", "preservation"),
-#             "id_url": Regex(
-#                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/identifiers$"
-#             ),
-#             "metadata_url": Regex(
-#                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/metadata/{uuid_pattern}$"
-#             ),
-#             "children_url": Regex(
-#                 rf"^https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}/children$"
-#             ),
-#         }
-#     )
+@pytest.fixture
+def valid_prsv_contents():
+    prsv_contents = prsv_Structural_Object(uuid='84db17ec-acbc-4b06-8cb2-3ceac63eeb00',
+                       title='M24468_ER_8_contents',
+                       type='soCategory',
+                       securityTag='open',
+                       soCategory='ERContents',
+                       mdFragments={'erNumber': 'ER_8',
+                                    'faCollectionId': 'M24468',
+                                    'faComponentId': 'M24468_ER_8'},
+                       children={'INVOICEpostage.xls': {'objType': 'IO',
+                                                        'uuid': 'f4d3eecf-d621-4f63-8c0f-e9a7d4717492'},
+                                 'Tom Slaughter.doc': {'objType': 'IO',
+                                                       'uuid': '813fc586-1044-4661-98f7-87d9904644de'}})
+    return prsv_contents
 
-#     global er_dict
-#     er_dict = ingest_validator.get_so_metadata(test_er_uuid, token, namespaces)
+@pytest.fixture
+def valid_prsv_metadata():
+    prsv_metadata = prsv_Structural_Object(uuid='bf45162f-a0b2-418c-8b8f-1ef177e58a19',
+                       title='M1126_DI_1_metadata',
+                       type='soCategory',
+                       securityTag='preservation',
+                       soCategory='DIMetadata',
+                       mdFragments=None,
+                       children={'M1126-0046p001.JPG': {'objType': 'IO',
+                                                        'uuid': '36288300-28f7-4edc-b4f3-f6272de64ac5'}})
+    return prsv_metadata
 
-#     assert so_schema.is_valid(er_dict) == True
+def test_validate_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that validate_so_title returns True when
+    the title field matches the pattern"""
 
+    assert ingest_validator.validate_so_title(valid_prsv_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
+    assert ingest_validator.validate_so_title(valid_prsv_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
+    assert ingest_validator.validate_so_title(valid_prsv_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
 
-# def test_get_so_identifier():
-#     """test that get_so_identifier returns a dictionary with type (str)
-#     and SO category (soCat) (str)"""
+def test_invalid_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that validate_so_title returns False when
+    the title field does not match the pattern"""
+    invalid_top = replace(valid_prsv_top, title="M12345")
+    invalid_contents = replace(valid_prsv_contents, title="M12345_")
+    invalid_metadata = replace(valid_prsv_metadata, title="M12345_ER")
 
-#     id_schema = Schema(
-#         {"type": "soCategory", "soCat": Or("DIContainer", "ERContainer", "EMContainer")}
-#     )
-#     id_dict = ingest_validator.get_so_identifier(token, er_dict, namespaces)
+    assert not ingest_validator.validate_so_title(invalid_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
+    assert not ingest_validator.validate_so_title(invalid_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
+    assert not ingest_validator.validate_so_title(invalid_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
 
-#     assert id_schema.is_valid(id_dict) == True
-
-
-# def test_get_spec_mdfrag():
-#     """test that get_spec_mdfrag returns a dictionary with
-#     SPEC collection ID"""
-
-#     speccol_schema = Schema({"speccolID": Regex(r"M[0-9]+")})
-
-#     spec_dict = ingest_validator.get_spec_mdfrag(token, er_dict, namespaces)
-
-#     assert speccol_schema.is_valid(spec_dict) == True
-
-
-# def test_get_so_children():
-#     """test that get_so_children returns a dictionary with
-#     children as the key and a list of url(s) as its value"""
-
-#     children_schema = Schema(
-#         {
-#             "children": [
-#                 Regex(
-#                     rf"https://nypl.preservica.com/api/entity/structural-objects/{uuid_pattern}"
-#                 )
-#             ]
-#         }
-#     )
-#     children_dict = ingest_validator.get_so_children(token, er_dict, namespaces)
-
-#     assert children_schema.is_valid(children_dict) == True
 
 
 """
