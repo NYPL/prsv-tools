@@ -79,26 +79,25 @@ def test_mock_get_top_so():
     """test that get_so function returns the correct
     data class structure for the top level SO"""
 
-    # mock value needs to be modified. This test potentially replaces test_get_top_so
     mock_call_api_value = prsv_Structural_Object(
-        uuid="658e4d63-ccfa-41e8-83ab-4caaf3a1b061",
-        title="M24468_ER_8",
+        uuid="154c2634-d22c-4b85-a9c6-819184551d17",
+        title="M1126_DI_1",
         type="soCategory",
         securityTag="open",
-        soCategory="ERContainer",
+        soCategory="DIContainer",
         mdFragments={"speccolID": "M24468"},
         children={
-            "M24468_ER_8_contents": {
+            "M1126_DI_1_contents": {
                 "objType": "SO",
-                "uuid": "84db17ec-acbc-4b06-8cb2-3ceac63eeb00",
+                "uuid": "9885feb6-3340-4a02-8585-e0f75f55eb92",
             },
-            "M24468_ER_8_metadata": {
+            "M1126_DI_1_metadata": {
                 "objType": "SO",
-                "uuid": "4b4acc77-8310-44e9-bac3-3b214968c797",
+                "uuid": "5df3566c-36f0-4721-9e5e-bc1c824b5910",
             },
         },
     )
-    actual_api_value = ingest_validator.get_so(test_er_uuid, token, namespaces, "top")
+    actual_api_value = ingest_validator.get_so(mock_call_api_value.uuid, token, namespaces, "top")
     assert mock_call_api_value == actual_api_value
 
 
@@ -135,67 +134,34 @@ def test_mock_get_contents_so():
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
-    # mock value needs to be modified. This test potentially replaces test_get_contents_so
     mock_call_api_value = prsv_Structural_Object(
-        uuid="84db17ec-acbc-4b06-8cb2-3ceac63eeb00",
-        title="M24468_ER_8_contents",
+        uuid="605d7c11-ce9a-4536-9b05-e8cba3843e15",
+        title="M1126_ER_12_contents",
         type="soCategory",
         securityTag="open",
         soCategory="ERContents",
         mdFragments={
-            "erNumber": "ER_8",
-            "faCollectionId": "M24468",
-            "faComponentId": "M24468_ER_8",
+            "erNumber": "ER_12",
+            "faCollectionId": "M1126",
+            "faComponentId": "M1126_ER_12",
         },
         children={
-            "INVOICEpostage.xls": {
+            "Feedback Form--Bldg on Diversit": {
                 "objType": "IO",
-                "uuid": "f4d3eecf-d621-4f63-8c0f-e9a7d4717492",
+                "uuid": "909d7fc0-faec-4520-8719-567a393ddb19",
             },
-            "Tom Slaughter.doc": {
+            "Feedback--VSCC": {
                 "objType": "IO",
-                "uuid": "813fc586-1044-4661-98f7-87d9904644de",
+                "uuid": "68381917-ba8e-478d-9453-3ea0d2251e94",
             },
-            "authors fee.doc": {
+            "Feedback--VSCC 2nd DRAFT": {
                 "objType": "IO",
-                "uuid": "ec42db69-6e77-400c-8051-a60362628104",
-            },
-            "beth.doc": {
-                "objType": "IO",
-                "uuid": "1892f8cb-1f94-4830-a9ee-48ba7eb181d6",
-            },
-            "bio fax.doc": {
-                "objType": "IO",
-                "uuid": "a74558f9-6002-4575-92d8-c79a9554c3cd",
-            },
-            "budget memo.doc": {
-                "objType": "IO",
-                "uuid": "8305e1bd-90d6-41a1-9274-969ef4f7783f",
-            },
-            "budget.xls": {
-                "objType": "IO",
-                "uuid": "c278bb6d-e6b2-46f6-a7d3-7a198f969635",
-            },
-            "equity.xls": {
-                "objType": "IO",
-                "uuid": "dccd76ae-993e-47be-9415-98036d59a213",
-            },
-            "snakebit llc.xls": {
-                "objType": "IO",
-                "uuid": "64c479d4-3f5e-45be-a6d3-5e72398fda4a",
-            },
-            "snakebit program notes.doc": {
-                "objType": "IO",
-                "uuid": "a9830d4f-5bc6-411d-98db-f78e52beb4b3",
-            },
-            "snakebit program notes2.doc": {
-                "objType": "IO",
-                "uuid": "411a2a30-f6ec-4463-bf91-8ada46a11b7c",
-            },
+                "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
+            }
         },
     )
     actual_api_value = ingest_validator.get_so(
-        test_er_uuid, token, namespaces, "contents"
+        mock_call_api_value.uuid, token, namespaces, "contents"
     )
 
     assert mock_call_api_value == actual_api_value
@@ -241,23 +207,22 @@ def test_mock_get_contents_so():
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
-    # mock value needs to be modified. This test potentially replaces test_get_metadata_so
     mock_call_api_value = prsv_Structural_Object(
-        uuid="bf45162f-a0b2-418c-8b8f-1ef177e58a19",
-        title="M1126_DI_1_metadata",
+        uuid="be5f6a75-a192-4e33-82ac-8cd5def54858",
+        title="M1126_ER_16_metadata",
         type="soCategory",
         securityTag="preservation",
-        soCategory="DIMetadata",
+        soCategory="ERMetadata",
         mdFragments=None,
         children={
-            "M1126-0046p001.JPG": {
+            "M1126_ER_16.tsv": {
                 "objType": "IO",
-                "uuid": "36288300-28f7-4edc-b4f3-f6272de64ac5",
+                "uuid": "c1718e09-dcb1-4b52-9d77-8d7d0282c347",
             }
         },
     )
     actual_api_value = ingest_validator.get_so(
-        test_er_uuid, token, namespaces, "metadata"
+        mock_call_api_value.uuid, token, namespaces, "metadata"
     )
 
     assert mock_call_api_value == actual_api_value
