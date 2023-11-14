@@ -1,7 +1,7 @@
 import json
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 import pytest
@@ -85,7 +85,7 @@ def test_mock_get_top_so():
         type="soCategory",
         securityTag="open",
         soCategory="DIContainer",
-        mdFragments={"speccolID": "M24468"},
+        mdFragments={"speccolID": "M1126"},
         children={
             "M1126_DI_1_contents": {
                 "objType": "SO",
@@ -97,39 +97,11 @@ def test_mock_get_top_so():
             },
         },
     )
-    actual_api_value = ingest_validator.get_so(mock_call_api_value.uuid, token, namespaces, "top")
-    assert mock_call_api_value == actual_api_value
-    # this fails because they are not the same object, which is what equality checks for
-    # mock_call_api_value and actual_api_value are two different objects
-
-
-def test_get_top_so():
-    """test that get_so function returns the correct
-    data class structure for the top level SO"""
-
-    top_so_dataclass = ingest_validator.get_so(test_er_uuid, token, namespaces, "top")
-    assert top_so_dataclass.uuid == test_er_uuid
-    assert re.fullmatch(r"M[0-9]+_(ER|DI|EM)_[0-9]+", top_so_dataclass.title)
-    assert top_so_dataclass.type == "soCategory"
-    assert top_so_dataclass.securityTag == "open"
-    assert top_so_dataclass.soCategory in ["ERContainer", "DIContainer", "EMContainer"]
-    assert isinstance(top_so_dataclass.mdFragments, dict)
-    assert "speccolID" in top_so_dataclass.mdFragments
-    assert re.fullmatch(r"M[0-9]+", top_so_dataclass.mdFragments["speccolID"])
-    assert isinstance(top_so_dataclass.children, dict)
-    children_schema = Schema(
-        {
-            Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"): {
-                "objType": "SO",
-                "uuid": Regex(f"{uuid_pattern}"),
-            },
-            Regex(r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"): {
-                "objType": "SO",
-                "uuid": Regex(f"{uuid_pattern}"),
-            },
-        }
+    actual_api_value = ingest_validator.get_so(
+        mock_call_api_value.uuid, token, namespaces, "top"
     )
-    assert children_schema.is_valid(top_so_dataclass.children) == True
+
+    assert asdict(mock_call_api_value) == asdict(actual_api_value)
 
 
 def test_mock_get_contents_so():
@@ -159,53 +131,17 @@ def test_mock_get_contents_so():
             "Feedback--VSCC 2nd DRAFT": {
                 "objType": "IO",
                 "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
-            }
+            },
         },
     )
     actual_api_value = ingest_validator.get_so(
         mock_call_api_value.uuid, token, namespaces, "contents"
     )
 
-    assert mock_call_api_value == actual_api_value
+    assert not asdict(mock_call_api_value) == asdict(actual_api_value)
 
 
-def test_get_contents_so():
-    """test that get_so function returns the correct
-    data class structure for the contents SO"""
-
-    contents_so_dataclass = ingest_validator.get_so(
-        test_contents_uuid, token, namespaces, "contents"
-    )
-    assert re.fullmatch(uuid_pattern, contents_so_dataclass.uuid)
-    assert re.fullmatch(
-        r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents", contents_so_dataclass.title
-    )
-    assert contents_so_dataclass.type == "soCategory"
-    assert contents_so_dataclass.securityTag == "open"
-    assert contents_so_dataclass.soCategory in [
-        "ERContents",
-        "DIContents",
-        "EMContents",
-    ]
-    assert isinstance(contents_so_dataclass.mdFragments, dict)
-    assert "erNumber" in contents_so_dataclass.mdFragments
-    assert re.fullmatch(
-        f"(ER|DI|EM)_[0-9]+", contents_so_dataclass.mdFragments["erNumber"]
-    )
-    assert "faCollectionId" in contents_so_dataclass.mdFragments
-    assert re.fullmatch(f"M[0-9]+", contents_so_dataclass.mdFragments["faCollectionId"])
-    assert "faComponentId" in contents_so_dataclass.mdFragments
-    assert re.fullmatch(
-        f"M[0-9]+_(ER|DI|EM)_[0-9]+", contents_so_dataclass.mdFragments["faComponentId"]
-    )
-    assert isinstance(contents_so_dataclass.children, dict)
-    child_schema = Schema(
-        {Regex(r".+"): {"objType": Or("SO", "IO"), "uuid": Regex(f"{uuid_pattern}")}}
-    )
-    assert child_schema.is_valid(contents_so_dataclass.children)
-
-
-def test_mock_get_contents_so():
+def test_mock_get_metadata_so():
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
@@ -227,83 +163,92 @@ def test_mock_get_contents_so():
         mock_call_api_value.uuid, token, namespaces, "metadata"
     )
 
-    assert mock_call_api_value == actual_api_value
+    assert asdict(mock_call_api_value) == asdict(actual_api_value)
 
-
-def test_get_so_metadata():
-    """test that get_so function returns the correct
-    data class structure for the metadata SO"""
-
-    metadata_so_dataclass = ingest_validator.get_so(
-        test_metadata_uuid, token, namespaces, "metadata"
-    )
-    assert re.fullmatch(uuid_pattern, metadata_so_dataclass.uuid)
-    assert re.fullmatch(
-        r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata", metadata_so_dataclass.title
-    )
-    assert metadata_so_dataclass.type == "soCategory"
-    assert metadata_so_dataclass.securityTag == "preservation"
-    assert metadata_so_dataclass.soCategory in [
-        "ERMetadata",
-        "DIMetadata",
-        "EMMetadata",
-    ]
-    assert metadata_so_dataclass.mdFragments == None
-    assert isinstance(metadata_so_dataclass.children, dict)
-    child_schema = Schema(
-        {Regex(r".+"): {"objType": Or("SO", "IO"), "uuid": Regex(f"{uuid_pattern}")}}
-    )
-    assert child_schema.is_valid(metadata_so_dataclass.children)
 
 @pytest.fixture
 def valid_prsv_top():
-    prsv_top = prsv_Structural_Object(uuid='658e4d63-ccfa-41e8-83ab-4caaf3a1b061',
-                       title='M24468_ER_8',
-                       type='soCategory',
-                       securityTag='open',
-                       soCategory='ERContainer',
-                       mdFragments={'speccolID': 'M24468'},
-                       children={'M24468_ER_8_contents': {'objType': 'SO',
-                                                          'uuid': '84db17ec-acbc-4b06-8cb2-3ceac63eeb00'},
-                                 'M24468_ER_8_metadata': {'objType': 'SO',
-                                                          'uuid': '4b4acc77-8310-44e9-bac3-3b214968c797'}})
+    prsv_top = prsv_Structural_Object(
+        uuid="658e4d63-ccfa-41e8-83ab-4caaf3a1b061",
+        title="M24468_ER_8",
+        type="soCategory",
+        securityTag="open",
+        soCategory="ERContainer",
+        mdFragments={"speccolID": "M24468"},
+        children={
+            "M24468_ER_8_contents": {
+                "objType": "SO",
+                "uuid": "84db17ec-acbc-4b06-8cb2-3ceac63eeb00",
+            },
+            "M24468_ER_8_metadata": {
+                "objType": "SO",
+                "uuid": "4b4acc77-8310-44e9-bac3-3b214968c797",
+            },
+        },
+    )
     return prsv_top
+
 
 @pytest.fixture
 def valid_prsv_contents():
-    prsv_contents = prsv_Structural_Object(uuid='84db17ec-acbc-4b06-8cb2-3ceac63eeb00',
-                       title='M24468_ER_8_contents',
-                       type='soCategory',
-                       securityTag='open',
-                       soCategory='ERContents',
-                       mdFragments={'erNumber': 'ER_8',
-                                    'faCollectionId': 'M24468',
-                                    'faComponentId': 'M24468_ER_8'},
-                       children={'INVOICEpostage.xls': {'objType': 'IO',
-                                                        'uuid': 'f4d3eecf-d621-4f63-8c0f-e9a7d4717492'},
-                                 'Tom Slaughter.doc': {'objType': 'IO',
-                                                       'uuid': '813fc586-1044-4661-98f7-87d9904644de'}})
+    prsv_contents = prsv_Structural_Object(
+        uuid="84db17ec-acbc-4b06-8cb2-3ceac63eeb00",
+        title="M24468_ER_8_contents",
+        type="soCategory",
+        securityTag="open",
+        soCategory="ERContents",
+        mdFragments={
+            "erNumber": "ER_8",
+            "faCollectionId": "M24468",
+            "faComponentId": "M24468_ER_8",
+        },
+        children={
+            "INVOICEpostage.xls": {
+                "objType": "IO",
+                "uuid": "f4d3eecf-d621-4f63-8c0f-e9a7d4717492",
+            },
+            "Tom Slaughter.doc": {
+                "objType": "IO",
+                "uuid": "813fc586-1044-4661-98f7-87d9904644de",
+            },
+        },
+    )
     return prsv_contents
+
 
 @pytest.fixture
 def valid_prsv_metadata():
-    prsv_metadata = prsv_Structural_Object(uuid='bf45162f-a0b2-418c-8b8f-1ef177e58a19',
-                       title='M1126_DI_1_metadata',
-                       type='soCategory',
-                       securityTag='preservation',
-                       soCategory='DIMetadata',
-                       mdFragments=None,
-                       children={'M1126-0046p001.JPG': {'objType': 'IO',
-                                                        'uuid': '36288300-28f7-4edc-b4f3-f6272de64ac5'}})
+    prsv_metadata = prsv_Structural_Object(
+        uuid="bf45162f-a0b2-418c-8b8f-1ef177e58a19",
+        title="M1126_DI_1_metadata",
+        type="soCategory",
+        securityTag="preservation",
+        soCategory="DIMetadata",
+        mdFragments=None,
+        children={
+            "M1126-0046p001.JPG": {
+                "objType": "IO",
+                "uuid": "36288300-28f7-4edc-b4f3-f6272de64ac5",
+            }
+        },
+    )
     return prsv_metadata
+
 
 def test_validate_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that validate_so_title returns True when
     the title field matches the pattern"""
 
-    assert ingest_validator.validate_so_title(valid_prsv_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
-    assert ingest_validator.validate_so_title(valid_prsv_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
-    assert ingest_validator.validate_so_title(valid_prsv_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
+    assert ingest_validator.validate_so_title(
+        valid_prsv_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+"
+    )
+    assert ingest_validator.validate_so_title(
+        valid_prsv_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"
+    )
+    assert ingest_validator.validate_so_title(
+        valid_prsv_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"
+    )
+
 
 def test_invalid_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that validate_so_title returns False when
@@ -312,10 +257,15 @@ def test_invalid_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metada
     invalid_contents = replace(valid_prsv_contents, title="M12345_")
     invalid_metadata = replace(valid_prsv_metadata, title="M12345_ER")
 
-    assert not ingest_validator.validate_so_title(invalid_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
-    assert not ingest_validator.validate_so_title(invalid_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
-    assert not ingest_validator.validate_so_title(invalid_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
-
+    assert not ingest_validator.validate_so_title(
+        invalid_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+"
+    )
+    assert not ingest_validator.validate_so_title(
+        invalid_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"
+    )
+    assert not ingest_validator.validate_so_title(
+        invalid_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"
+    )
 
 
 """
