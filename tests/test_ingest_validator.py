@@ -99,6 +99,8 @@ def test_mock_get_top_so():
     )
     actual_api_value = ingest_validator.get_so(mock_call_api_value.uuid, token, namespaces, "top")
     assert mock_call_api_value == actual_api_value
+    # this fails because they are not the same object, which is what equality checks for
+    # mock_call_api_value and actual_api_value are two different objects
 
 
 def test_get_top_so():
