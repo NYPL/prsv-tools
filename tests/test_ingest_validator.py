@@ -267,7 +267,24 @@ def test_invalid_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metada
         invalid_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"
     )
 
+def test_valid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that valid_sectag returns True when
+    the security tag field (securityTag) matches the string value"""
 
+    assert ingest_validator.valid_sectag(valid_prsv_top, "open")
+    assert ingest_validator.valid_sectag(valid_prsv_contents, "open")
+    assert ingest_validator.valid_sectag(valid_prsv_metadata, "preservation")
+
+def test_invalid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that valid_sectag returns False when
+    the security tag field (securityTag) does not match the string value"""
+    invalid_top = replace(valid_prsv_top, securityTag="closed")
+    invalid_contents = replace(valid_prsv_contents, securityTag="closed")
+    invalid_metadata = replace(valid_prsv_metadata, securityTag="open")
+
+    assert not ingest_validator.valid_sectag(invalid_top, "open")
+    assert not ingest_validator.valid_sectag(invalid_contents, "open")
+    assert not ingest_validator.valid_sectag(invalid_metadata, "preservation")
 """
 1. response code should be good (200)
 2. data structure should be as expected
