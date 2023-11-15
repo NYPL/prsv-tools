@@ -323,6 +323,35 @@ def test_invalid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_meta
     assert not ingest_validator.valid_soCategory(invalid_top, "Container")
     assert not ingest_validator.valid_soCategory(invalid_contents, "Contents")
     assert not ingest_validator.valid_soCategory(invalid_metadata, "Metadata")
+
+def test_validate_mdfrag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that validate_mdfrag return True
+    if it is an expected dictionary"""
+
+    assert ingest_validator.validate_mdfrag(valid_prsv_top, "speccolID", "M24468")
+    assert ingest_validator.validate_mdfrag(valid_prsv_contents, "erNumber", "ER_8")
+    assert ingest_validator.validate_mdfrag(valid_prsv_contents, "faCollectionId", "M24468")
+    assert ingest_validator.validate_mdfrag(valid_prsv_contents, "faComponentId", "M24468_ER_8")
+    # how to test for valid_prsv_metadata's mdfrag, which is None
+
+
+
+def test_validate_incorrect_mdfrag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that validate_mdfrag return False
+    if it is not an expected dictionary"""
+
+    invalid_top = replace(valid_prsv_top, mdFragments={'speccolID': 'M1234'})
+    invalid_contents = replace(valid_prsv_contents,
+                               mdFragments={'erNumber': 'ER_100',
+                                    'faCollectionId': 'M1111',
+                                    'faComponentId': 'M1111_ER_12'})
+
+    assert not ingest_validator.validate_mdfrag(invalid_top, "speccolID", "M24468")
+    assert not ingest_validator.validate_mdfrag(invalid_contents, "erNumber", "ER_8")
+    assert not ingest_validator.validate_mdfrag(invalid_contents, "faCollectionId", "M24468")
+    assert not ingest_validator.validate_mdfrag(invalid_contents, "fa", "M24468_ER_8")
+
+
 """
 1. response code should be good (200)
 2. data structure should be as expected
