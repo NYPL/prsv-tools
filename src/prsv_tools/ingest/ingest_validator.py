@@ -295,7 +295,8 @@ def main():
     token = prsvapi.get_token(args.credentials)
     if "test" in args.credentials:
         parentuuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
-        da_source = Path("/data/Preservica_DigArch_Test/DA_Source_Test/DigArch")
+        version = prsvapi.find_apiversion(token)
+        da_source = Path("/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Dev/DA_Source_Dev/DigArch")
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
 
@@ -309,7 +310,7 @@ def main():
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
         "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
         "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
-        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}"
+        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}",
     }
 
     fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
