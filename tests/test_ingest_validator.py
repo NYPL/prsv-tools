@@ -131,14 +131,14 @@ def test_mock_get_contents_so():
             "Feedback--VSCC 2nd DRAFT": {
                 "objType": "IO",
                 "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
-            },
-        },
+            }
+        }
     )
     actual_api_value = ingest_validator.get_so(
         mock_call_api_value.uuid, token, namespaces, "contents"
     )
 
-    assert not asdict(mock_call_api_value) == asdict(actual_api_value)
+    assert asdict(mock_call_api_value) == asdict(actual_api_value)
 
 
 def test_mock_get_metadata_so():
