@@ -304,6 +304,25 @@ def test_invalid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadat
     assert not ingest_validator.valid_so_type(invalid_top)
     assert not ingest_validator.valid_so_type(invalid_contents)
     assert not ingest_validator.valid_so_type(invalid_metadata)
+
+def test_valid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that valid_soCategory returns True when
+    the soCategory is as an expected string value"""
+
+    assert ingest_validator.valid_soCategory(valid_prsv_top, "Container")
+    assert ingest_validator.valid_soCategory(valid_prsv_contents, "Contents")
+    assert ingest_validator.valid_soCategory(valid_prsv_metadata, "Metadata")
+
+def test_invalid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that valid_soCategory returns False when
+    the soCategory is as an unexpected string value"""
+    invalid_top = replace(valid_prsv_top, soCategory="ERContents")
+    invalid_contents = replace(valid_prsv_contents, soCategory="DIMetadata")
+    invalid_metadata = replace(valid_prsv_metadata, soCategory="ERContainer")
+
+    assert not ingest_validator.valid_soCategory(invalid_top, "Container")
+    assert not ingest_validator.valid_soCategory(invalid_contents, "Contents")
+    assert not ingest_validator.valid_soCategory(invalid_metadata, "Metadata")
 """
 1. response code should be good (200)
 2. data structure should be as expected
