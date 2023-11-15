@@ -285,6 +285,25 @@ def test_invalid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata
     assert not ingest_validator.valid_sectag(invalid_top, "open")
     assert not ingest_validator.valid_sectag(invalid_contents, "open")
     assert not ingest_validator.valid_sectag(invalid_metadata, "preservation")
+
+def test_valid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that valid_sectag returns True when
+    the type field is soCategory"""
+
+    assert ingest_validator.valid_so_type(valid_prsv_top)
+    assert ingest_validator.valid_so_type(valid_prsv_contents)
+    assert ingest_validator.valid_so_type(valid_prsv_metadata)
+
+def test_invalid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+    """test that valid_sectag returns False when
+    the type field is not soCategory"""
+    invalid_top = replace(valid_prsv_top, type="ioCategory")
+    invalid_contents = replace(valid_prsv_contents, type="ioCategory")
+    invalid_metadata = replace(valid_prsv_metadata, type="ioCategory")
+
+    assert not ingest_validator.valid_so_type(invalid_top)
+    assert not ingest_validator.valid_so_type(invalid_contents)
+    assert not ingest_validator.valid_so_type(invalid_metadata)
 """
 1. response code should be good (200)
 2. data structure should be as expected
