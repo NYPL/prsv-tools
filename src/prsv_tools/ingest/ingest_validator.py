@@ -223,6 +223,7 @@ def valid_soCategory(so: dataclass, expected_category: str):
         return True
     else:
         logging.error(f"{so.title} SO category is incorrect: {so.soCategory}")
+        return False
 
 
 def validate_mdfrag(prsv_object: dataclass, field_name, expected_value):
@@ -296,7 +297,9 @@ def main():
     if "test" in args.credentials:
         parentuuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
         version = prsvapi.find_apiversion(token)
-        da_source = Path("/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Dev/DA_Source_Dev/DigArch")
+        da_source = Path(
+            "/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Dev/DA_Source_Dev/DigArch"
+        )
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
 
