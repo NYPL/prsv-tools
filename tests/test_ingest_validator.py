@@ -269,7 +269,7 @@ def test_validate_so_title(expected_result, fixture_name, pattern, request):
         (False, "valid_prsv_metadata", "preservation"),
     ],
 )
-def test_valid_sectag_two(expected_result, fixture_name, string, request):
+def test_valid_sectag(expected_result, fixture_name, string, request):
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
