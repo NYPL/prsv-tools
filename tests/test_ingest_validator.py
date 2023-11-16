@@ -256,24 +256,28 @@ def test_validate_so_title(expected_result, fixture_name, pattern, request):
         invalid_input = replace(input_data, title="M00000")
         assert not ingest_validator.validate_so_title(invalid_input, pattern)
 
-def test_valid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that valid_sectag returns True when
-    the security tag field (securityTag) matches the string value"""
+@pytest.mark.parametrize(
+    "expected_result, fixture_name, string",
+    [
+        (True, "valid_prsv_top", "open"),
+        (True, "valid_prsv_contents", "open"),
+        (True, "valid_prsv_metadata", "preservation"),
+        (False, "valid_prsv_top", "open"),
+        (False, "valid_prsv_contents", "open"),
+        (False, "valid_prsv_metadata", "preservation"),
+    ]
+)
 
-    assert ingest_validator.valid_sectag(valid_prsv_top, "open")
-    assert ingest_validator.valid_sectag(valid_prsv_contents, "open")
-    assert ingest_validator.valid_sectag(valid_prsv_metadata, "preservation")
+def test_valid_sectag_two(expected_result, fixture_name, string, request):
 
-def test_invalid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that valid_sectag returns False when
-    the security tag field (securityTag) does not match the string value"""
-    invalid_top = replace(valid_prsv_top, securityTag="closed")
-    invalid_contents = replace(valid_prsv_contents, securityTag="closed")
-    invalid_metadata = replace(valid_prsv_metadata, securityTag="open")
+    input_data = request.getfixturevalue(fixture_name)
 
-    assert not ingest_validator.valid_sectag(invalid_top, "open")
-    assert not ingest_validator.valid_sectag(invalid_contents, "open")
-    assert not ingest_validator.valid_sectag(invalid_metadata, "preservation")
+    if expected_result:
+        assert ingest_validator.valid_sectag(input_data, string)
+    else:
+        invalid_input = replace(input_data, securityTag="public")
+        assert not ingest_validator.valid_sectag(invalid_input, string)
+
 
 def test_valid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that valid_sectag returns True when
