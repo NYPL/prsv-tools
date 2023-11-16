@@ -234,20 +234,20 @@ def valid_prsv_metadata():
     )
     return prsv_metadata
 
-
-def test_validate_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that validate_so_title returns True when
+@pytest.mark.parametrize(
+    "fixture_name, pattern",
+    [
+        ("valid_prsv_top", r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
+        ("valid_prsv_contents", r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"),
+        ("valid_prsv_metadata", r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"),
+    ]
+)
+def test_validate_so_title(fixture_name, pattern, request):
+    """Test that validate_so_title returns True when
     the title field matches the pattern"""
 
-    assert ingest_validator.validate_so_title(
-        valid_prsv_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+"
-    )
-    assert ingest_validator.validate_so_title(
-        valid_prsv_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"
-    )
-    assert ingest_validator.validate_so_title(
-        valid_prsv_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"
-    )
+    input_data = request.getfixturevalue(fixture_name)
+    assert ingest_validator.validate_so_title(input_data, pattern)
 
 
 def test_invalid_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
