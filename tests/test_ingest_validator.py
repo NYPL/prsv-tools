@@ -279,25 +279,25 @@ def test_valid_sectag_two(expected_result, fixture_name, string, request):
         assert not ingest_validator.valid_sectag(invalid_input, string)
 
 
-def test_valid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that valid_sectag returns True when
-    the type field is soCategory"""
+@pytest.mark.parametrize(
+    "expected_result, fixture_name",
+    [
+        (True, "valid_prsv_top"),
+        (True, "valid_prsv_contents"),
+        (True, "valid_prsv_metadata"),
+        (False, "valid_prsv_top"),
+        (False, "valid_prsv_contents"),
+        (False, "valid_prsv_metadata"),
+    ],
+)
+def test_valid_so_type(expected_result, fixture_name, request):
+    input_data = request.getfixturevalue(fixture_name)
 
-    assert ingest_validator.valid_so_type(valid_prsv_top)
-    assert ingest_validator.valid_so_type(valid_prsv_contents)
-    assert ingest_validator.valid_so_type(valid_prsv_metadata)
-
-
-def test_invalid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that valid_sectag returns False when
-    the type field is not soCategory"""
-    invalid_top = replace(valid_prsv_top, type="ioCategory")
-    invalid_contents = replace(valid_prsv_contents, type="ioCategory")
-    invalid_metadata = replace(valid_prsv_metadata, type="ioCategory")
-
-    assert not ingest_validator.valid_so_type(invalid_top)
-    assert not ingest_validator.valid_so_type(invalid_contents)
-    assert not ingest_validator.valid_so_type(invalid_metadata)
+    if expected_result:
+        assert ingest_validator.valid_so_type(input_data)
+    else:
+        invalid_input = replace(input_data, type="ioCategory")
+        assert not ingest_validator.valid_so_type(invalid_input)
 
 
 def test_valid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
