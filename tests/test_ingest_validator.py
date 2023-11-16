@@ -266,23 +266,6 @@ def test_validate_incorrect_so_title(fixture_name, pattern, request):
     assert not ingest_validator.validate_so_title(invalid_input, pattern)
 
 
-def test_invalid_so_title(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that validate_so_title returns False when
-    the title field does not match the pattern"""
-    invalid_top = replace(valid_prsv_top, title="M12345")
-    invalid_contents = replace(valid_prsv_contents, title="M12345_")
-    invalid_metadata = replace(valid_prsv_metadata, title="M12345_ER")
-
-    assert not ingest_validator.validate_so_title(
-        invalid_top, r"M[0-9]+_(ER|DI|EM)_[0-9]+"
-    )
-    assert not ingest_validator.validate_so_title(
-        invalid_contents, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"
-    )
-    assert not ingest_validator.validate_so_title(
-        invalid_metadata, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"
-    )
-
 def test_valid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that valid_sectag returns True when
     the security tag field (securityTag) matches the string value"""
