@@ -300,25 +300,25 @@ def test_valid_so_type(expected_result, fixture_name, request):
         assert not ingest_validator.valid_so_type(invalid_input)
 
 
-def test_valid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that valid_soCategory returns True when
-    the soCategory is as an expected string value"""
+@pytest.mark.parametrize(
+    "expected_result, fixture_name, string",
+    [
+        (True, "valid_prsv_top", "Container"),
+        (True, "valid_prsv_contents", "Contents"),
+        (True, "valid_prsv_metadata", "Metadata"),
+        (False, "valid_prsv_top", "Container"),
+        (False, "valid_prsv_contents", "Contents"),
+        (False, "valid_prsv_metadata", "Metadata"),
+    ],
+)
+def test_valid_soCategory(expected_result, fixture_name, string, request):
+    input_data = request.getfixturevalue(fixture_name)
 
-    assert ingest_validator.valid_soCategory(valid_prsv_top, "Container")
-    assert ingest_validator.valid_soCategory(valid_prsv_contents, "Contents")
-    assert ingest_validator.valid_soCategory(valid_prsv_metadata, "Metadata")
-
-
-def test_invalid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that valid_soCategory returns False when
-    the soCategory is as an unexpected string value"""
-    invalid_top = replace(valid_prsv_top, soCategory="ERContents")
-    invalid_contents = replace(valid_prsv_contents, soCategory="DIMetadata")
-    invalid_metadata = replace(valid_prsv_metadata, soCategory="ERContainer")
-
-    assert not ingest_validator.valid_soCategory(invalid_top, "Container")
-    assert not ingest_validator.valid_soCategory(invalid_contents, "Contents")
-    assert not ingest_validator.valid_soCategory(invalid_metadata, "Metadata")
+    if expected_result:
+        assert ingest_validator.valid_soCategory(input_data, string)
+    else:
+        invalid_input = replace(input_data, soCategory="category")
+        assert not ingest_validator.valid_soCategory(invalid_input, string)
 
 
 def test_validate_mdfrag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
