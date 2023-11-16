@@ -321,43 +321,41 @@ def test_valid_soCategory(expected_result, fixture_name, string, request):
         assert not ingest_validator.valid_soCategory(invalid_input, string)
 
 
-def test_validate_mdfrag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
-    """test that validate_mdfrag return True
-    if it is an expected dictionary"""
+@pytest.mark.parametrize(
+    "fixture_name, key, value",
+    [
+        ("valid_prsv_top", "speccolID", "M24468"),
+        ("valid_prsv_contents", "erNumber", "ER_8"),
+        ("valid_prsv_contents", "faCollectionId", "M24468"),
+        ("valid_prsv_contents", "faComponentId", "M24468_ER_8"),
+    ],
+)
+def test_validate_mdfrag(fixture_name, key, value, request):
+    """Test validate_mdfrag with different inputs and expected results"""
 
-    assert ingest_validator.validate_mdfrag(valid_prsv_top, "speccolID", "M24468")
-    assert ingest_validator.validate_mdfrag(valid_prsv_contents, "erNumber", "ER_8")
-    assert ingest_validator.validate_mdfrag(
-        valid_prsv_contents, "faCollectionId", "M24468"
-    )
-    assert ingest_validator.validate_mdfrag(
-        valid_prsv_contents, "faComponentId", "M24468_ER_8"
-    )
-    # how to test for valid_prsv_metadata's mdfrag, which is None
+    input_data = request.getfixturevalue(fixture_name)
+
+    assert ingest_validator.validate_mdfrag(input_data, key, value)
 
 
+@pytest.mark.parametrize(
+    "fixture_name, key, incorrect_value, correct_value",
+    [
+        ("valid_prsv_top", "speccolID", "M1234", "M24468"),
+        ("valid_prsv_contents", "erNumber", "ER_100", "ER_8"),
+        ("valid_prsv_contents", "faCollectionId", "M1111", "M24468"),
+        ("valid_prsv_contents", "faComponentId", "M1111_ER_12", "M24468_ER_8"),
+    ],
+)
 def test_validate_incorrect_mdfrag(
-    valid_prsv_top, valid_prsv_contents, valid_prsv_metadata
+    fixture_name, key, incorrect_value, correct_value, request
 ):
-    """test that validate_mdfrag return False
-    if it is not an expected dictionary"""
+    """Test validate_mdfrag with different incorrect inputs"""
 
-    invalid_top = replace(valid_prsv_top, mdFragments={"speccolID": "M1234"})
-    invalid_contents = replace(
-        valid_prsv_contents,
-        mdFragments={
-            "erNumber": "ER_100",
-            "faCollectionId": "M1111",
-            "faComponentId": "M1111_ER_12",
-        },
+    invalid_data = replace(
+        request.getfixturevalue(fixture_name), mdFragments={key: incorrect_value}
     )
-
-    assert not ingest_validator.validate_mdfrag(invalid_top, "speccolID", "M24468")
-    assert not ingest_validator.validate_mdfrag(invalid_contents, "erNumber", "ER_8")
-    assert not ingest_validator.validate_mdfrag(
-        invalid_contents, "faCollectionId", "M24468"
-    )
-    assert not ingest_validator.validate_mdfrag(invalid_contents, "fa", "M24468_ER_8")
+    assert not ingest_validator.validate_mdfrag(invalid_data, key, correct_value)
 
 
 """
