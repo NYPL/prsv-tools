@@ -131,8 +131,8 @@ def test_mock_get_contents_so():
             "Feedback--VSCC 2nd DRAFT": {
                 "objType": "IO",
                 "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
-            }
-        }
+            },
+        },
     )
     actual_api_value = ingest_validator.get_so(
         mock_call_api_value.uuid, token, namespaces, "contents"
@@ -234,6 +234,7 @@ def valid_prsv_metadata():
     )
     return prsv_metadata
 
+
 @pytest.mark.parametrize(
     "expected_result, fixture_name, pattern",
     [
@@ -243,7 +244,7 @@ def valid_prsv_metadata():
         (False, "valid_prsv_top", r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
         (False, "valid_prsv_contents", r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"),
         (False, "valid_prsv_metadata", r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"),
-    ]
+    ],
 )
 def test_validate_so_title(expected_result, fixture_name, pattern, request):
     """Test validate_so_title with different inputs and patterns"""
@@ -256,6 +257,7 @@ def test_validate_so_title(expected_result, fixture_name, pattern, request):
         invalid_input = replace(input_data, title="M00000")
         assert not ingest_validator.validate_so_title(invalid_input, pattern)
 
+
 @pytest.mark.parametrize(
     "expected_result, fixture_name, string",
     [
@@ -265,11 +267,9 @@ def test_validate_so_title(expected_result, fixture_name, pattern, request):
         (False, "valid_prsv_top", "open"),
         (False, "valid_prsv_contents", "open"),
         (False, "valid_prsv_metadata", "preservation"),
-    ]
+    ],
 )
-
 def test_valid_sectag_two(expected_result, fixture_name, string, request):
-
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
@@ -287,6 +287,7 @@ def test_valid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata)
     assert ingest_validator.valid_so_type(valid_prsv_contents)
     assert ingest_validator.valid_so_type(valid_prsv_metadata)
 
+
 def test_invalid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that valid_sectag returns False when
     the type field is not soCategory"""
@@ -298,6 +299,7 @@ def test_invalid_so_type(valid_prsv_top, valid_prsv_contents, valid_prsv_metadat
     assert not ingest_validator.valid_so_type(invalid_contents)
     assert not ingest_validator.valid_so_type(invalid_metadata)
 
+
 def test_valid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that valid_soCategory returns True when
     the soCategory is as an expected string value"""
@@ -305,6 +307,7 @@ def test_valid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metada
     assert ingest_validator.valid_soCategory(valid_prsv_top, "Container")
     assert ingest_validator.valid_soCategory(valid_prsv_contents, "Contents")
     assert ingest_validator.valid_soCategory(valid_prsv_metadata, "Metadata")
+
 
 def test_invalid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that valid_soCategory returns False when
@@ -317,31 +320,43 @@ def test_invalid_soCategory(valid_prsv_top, valid_prsv_contents, valid_prsv_meta
     assert not ingest_validator.valid_soCategory(invalid_contents, "Contents")
     assert not ingest_validator.valid_soCategory(invalid_metadata, "Metadata")
 
+
 def test_validate_mdfrag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that validate_mdfrag return True
     if it is an expected dictionary"""
 
     assert ingest_validator.validate_mdfrag(valid_prsv_top, "speccolID", "M24468")
     assert ingest_validator.validate_mdfrag(valid_prsv_contents, "erNumber", "ER_8")
-    assert ingest_validator.validate_mdfrag(valid_prsv_contents, "faCollectionId", "M24468")
-    assert ingest_validator.validate_mdfrag(valid_prsv_contents, "faComponentId", "M24468_ER_8")
+    assert ingest_validator.validate_mdfrag(
+        valid_prsv_contents, "faCollectionId", "M24468"
+    )
+    assert ingest_validator.validate_mdfrag(
+        valid_prsv_contents, "faComponentId", "M24468_ER_8"
+    )
     # how to test for valid_prsv_metadata's mdfrag, which is None
 
 
-
-def test_validate_incorrect_mdfrag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
+def test_validate_incorrect_mdfrag(
+    valid_prsv_top, valid_prsv_contents, valid_prsv_metadata
+):
     """test that validate_mdfrag return False
     if it is not an expected dictionary"""
 
-    invalid_top = replace(valid_prsv_top, mdFragments={'speccolID': 'M1234'})
-    invalid_contents = replace(valid_prsv_contents,
-                               mdFragments={'erNumber': 'ER_100',
-                                    'faCollectionId': 'M1111',
-                                    'faComponentId': 'M1111_ER_12'})
+    invalid_top = replace(valid_prsv_top, mdFragments={"speccolID": "M1234"})
+    invalid_contents = replace(
+        valid_prsv_contents,
+        mdFragments={
+            "erNumber": "ER_100",
+            "faCollectionId": "M1111",
+            "faComponentId": "M1111_ER_12",
+        },
+    )
 
     assert not ingest_validator.validate_mdfrag(invalid_top, "speccolID", "M24468")
     assert not ingest_validator.validate_mdfrag(invalid_contents, "erNumber", "ER_8")
-    assert not ingest_validator.validate_mdfrag(invalid_contents, "faCollectionId", "M24468")
+    assert not ingest_validator.validate_mdfrag(
+        invalid_contents, "faCollectionId", "M24468"
+    )
     assert not ingest_validator.validate_mdfrag(invalid_contents, "fa", "M24468_ER_8")
 
 
