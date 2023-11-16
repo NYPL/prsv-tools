@@ -234,6 +234,7 @@ def validate_mdfrag(prsv_object: dataclass, field_name, expected_value):
         logging.error(
             f"{prsv_object.title} has incorrect {field_name}: {prsv_object.mdFragments.get(field_name)}"
         )
+        return False
 
 
 def valid_top_level_mdfrag(top_level_so: dataclass, collectionId):
