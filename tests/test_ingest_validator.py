@@ -235,36 +235,26 @@ def valid_prsv_metadata():
     return prsv_metadata
 
 @pytest.mark.parametrize(
-    "fixture_name, pattern",
+    "expected_result, fixture_name, pattern",
     [
-        ("valid_prsv_top", r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
-        ("valid_prsv_contents", r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"),
-        ("valid_prsv_metadata", r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"),
+        (True, "valid_prsv_top", r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
+        (True, "valid_prsv_contents", r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"),
+        (True, "valid_prsv_metadata", r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"),
+        (False, "valid_prsv_top", r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
+        (False, "valid_prsv_contents", r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"),
+        (False, "valid_prsv_metadata", r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"),
     ]
 )
-def test_validate_so_title(fixture_name, pattern, request):
-    """Test that validate_so_title returns True when
-    the title field matches the pattern"""
+def test_validate_so_title(expected_result, fixture_name, pattern, request):
+    """Test validate_so_title with different inputs and patterns"""
 
     input_data = request.getfixturevalue(fixture_name)
-    assert ingest_validator.validate_so_title(input_data, pattern)
 
-@pytest.mark.parametrize(
-    "fixture_name, pattern",
-    [
-        ("valid_prsv_top", r"M[0-9]+_(ER|DI|EM)_[0-9]+"),
-        ("valid_prsv_contents", r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents"),
-        ("valid_prsv_metadata", r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata"),
-    ]
-)
-def test_validate_incorrect_so_title(fixture_name, pattern, request):
-    """test that validate_so_title returns False when
-    the title field does not match the pattern"""
-
-    input_data = request.getfixturevalue(fixture_name)
-    invalid_input = replace(input_data, title="random_value")
-    assert not ingest_validator.validate_so_title(invalid_input, pattern)
-
+    if expected_result:
+        assert ingest_validator.validate_so_title(input_data, pattern)
+    else:
+        invalid_input = replace(input_data, title="M00000")
+        assert not ingest_validator.validate_so_title(invalid_input, pattern)
 
 def test_valid_sectag(valid_prsv_top, valid_prsv_contents, valid_prsv_metadata):
     """test that valid_sectag returns True when
