@@ -57,6 +57,15 @@ class prsv_Structural_Object:
     children: dict | None
 
 
+@dataclass
+class prsv_Information_Object:
+    uuid: str
+    title: str
+    type: str
+    securityTag: str
+    ioCategory: str
+
+
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
     headers = {
         "Preservica-Access-Token": accesstoken,
@@ -193,6 +202,28 @@ def get_so_children(token, so_uuid, namespaces):
     return children_dict
 
 
+def get_io(uuid, token, namespaces: dict):
+    url = f"https://nypl.preservica.com/api/entity/information-objects/{uuid}"
+    res = get_api_results(token, url)
+    root = ET.fromstring(res.text)
+
+    uuid = root.find(f".//{namespaces['xip_ns']}Ref").text
+
+    title = root.find(f".//{namespaces['xip_ns']}Title").text
+
+    sectag = root.find(f".//{namespaces['xip_ns']}SecurityTag").text
+
+    identifiers_url = root.find(f".//{namespaces['entity_ns']}Identifiers").text
+
+    identifiers_res = get_api_results(token, identifiers_url)
+    id_root = ET.fromstring(identifiers_res.text)
+
+    type = id_root.find(f".//{namespaces['xip_ns']}Type").text
+    ioCat = id_root.find(f".//{namespaces['xip_ns']}Value").text
+
+    return prsv_Information_Object(uuid, title, type, sectag, ioCat)
+
+
 def validate_so_title(so: dataclass, pattern):
     if re.fullmatch(pattern, so.title):
         return True
@@ -306,9 +337,9 @@ def main():
 
         version = prsvapi.find_apiversion(token)
 
-        da_source = Path(
-            "/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
-        )
+        # da_source = Path(
+        #     "/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
+        # )
 
     namespaces = {
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
@@ -340,6 +371,14 @@ def main():
         valid_all_top_level_so_conditions(top_level_so, args.collectionID)
         valid_all_contents_level_so_conditions(contents_so, args.collectionID)
         valid_all_metadata_level_so_conditions(metadata_so)
+
+        for child in contents_so.children:
+            if contents_so.children[child]["objType"] == "IO":
+                uuid = contents_so.children[child][
+                    "uuid"
+                ]  # assuming all these are IO not SO
+                io = get_io(uuid, token, namespaces)
+                pprint(io)
 
 
 if __name__ == "__main__":
