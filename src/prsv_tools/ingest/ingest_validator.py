@@ -312,6 +312,23 @@ def valid_all_metadata_level_so_conditions(metadata_so: dataclass):
     valid_soCategory(metadata_so, "Metadata")
 
 
+def get_contents_io_so(so: list, token, namespaces):
+    contents_io = []
+    contents_element_so = []
+    for child in so.children:
+        uuid = so.children[child]["uuid"]
+        if so.children[child]["objType"] == "IO":
+            io = get_io(uuid, token, namespaces)
+            contents_io.append(io)
+        elif so.children[child]["objType"] == "SO":
+            element_so = get_so(uuid, token, namespaces, "contents_element")
+            contents_element_so.append(element_so)
+            new_io, new_element_so = get_contents_io_so(element_so, token, namespaces)
+            contents_io.extend(new_io)
+            contents_element_so.extend(new_element_so)
+    return contents_io, contents_element_so
+
+
 def main():
     """
     First type of check:
@@ -372,13 +389,11 @@ def main():
         valid_all_contents_level_so_conditions(contents_so, args.collectionID)
         valid_all_metadata_level_so_conditions(metadata_so)
 
-        for child in contents_so.children:
-            if contents_so.children[child]["objType"] == "IO":
-                uuid = contents_so.children[child][
-                    "uuid"
-                ]  # assuming all these are IO not SO
-                io = get_io(uuid, token, namespaces)
-                pprint(io)
+        contents_io, contents_element_so = get_contents_io_so(
+            contents_so, token, namespaces
+        )
+        pprint(contents_io)
+        pprint(contents_element_so)
 
 
 if __name__ == "__main__":
