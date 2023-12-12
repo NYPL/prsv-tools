@@ -1,11 +1,11 @@
 import json
 import logging
 import re
-import typing
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from pprint import pprint
+from typing import List, Tuple
 
 import requests
 
@@ -312,7 +312,9 @@ def valid_all_metadata_level_so_conditions(metadata_so: dataclass):
     valid_soCategory(metadata_so, "Metadata")
 
 
-def get_contents_io_so(so: list, token, namespaces):
+def get_contents_io_so(
+    so: list, token: str, namespaces: dict
+) -> Tuple[List[prsv_Information_Object], List[prsv_Structural_Object]]:
     contents_io = []
     contents_element_so = []
     for child in so.children:
