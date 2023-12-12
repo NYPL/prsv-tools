@@ -382,8 +382,6 @@ def main():
         metadata_uuid = top_level_so.children[metadata_f]["uuid"]
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
         # pprint(metadata_so)
-        contents_children = get_so_children(token, contents_uuid, namespaces)
-        # pprint(contents_children)
 
         valid_all_top_level_so_conditions(top_level_so, args.collectionID)
         valid_all_contents_level_so_conditions(contents_so, args.collectionID)
