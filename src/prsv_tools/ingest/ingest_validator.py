@@ -339,9 +339,19 @@ def validate_io_title(io_element: prsv_Information_Object) -> bool:
         return False
 
 
+def validate_io_type(io_element: prsv_Information_Object) -> bool:
+    if io_element.type == "ioCategory":
+        return True
+    else:
+        logging.error(
+            f"{io_element.title}'s type is not ioCategory, but {io_element.type}"
+        )
+        return False
+
+
 def validate_all_contents_element_io_conditions(io_element: prsv_Information_Object):
     validate_io_title(io_element)
-    validate_io_type()
+    validate_io_type(io_element)
     valid_sectag(io_element, "open")
     valid_ioCategory(io_element)
 
