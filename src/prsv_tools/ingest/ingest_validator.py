@@ -330,6 +330,12 @@ def get_contents_io_so(
             contents_element_so.extend(new_element_so)
     return contents_io, contents_element_so
 
+def validate_all_contents_element_io_conditions(io_element: prsv_Information_Object):
+    validate_io_title()
+    validate_io_type()
+    valid_sectag(io_element, "open")
+    valid_ioCategory(io_element)
+
 
 def main():
     """
