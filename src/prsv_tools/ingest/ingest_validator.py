@@ -349,11 +349,23 @@ def validate_io_type(io_element: prsv_Information_Object) -> bool:
         return False
 
 
-def validate_all_contents_element_io_conditions(io_element: prsv_Information_Object):
+def valid_ioCategory(io_element: prsv_Information_Object, pkg_type: str) -> bool:
+    if io_element.ioCategory == f"{pkg_type}Element":
+        return True
+    else:
+        logging.error(
+            f"{io_element.title} has incorrect ioCategory: {io_element.ioCategory}"
+        )
+        return False
+
+
+def validate_all_contents_element_io_conditions(
+    io_element: prsv_Information_Object, pkg_type: str
+):
     validate_io_title(io_element)
     validate_io_type(io_element)
     valid_sectag(io_element, "open")
-    valid_ioCategory(io_element)
+    valid_ioCategory(io_element, pkg_type)
 
 
 def main():
@@ -401,6 +413,7 @@ def main():
     for uuid in uuid_ls:
         top_level_so = get_so(uuid, token, namespaces, "top")
         # pprint(top_level_so)
+        pkg_type = re.search(r"(ER|EM|DI)", top_level_so.title).group(0)
         contents_f = f"{top_level_so.title}_contents"
         metadata_f = f"{top_level_so.title}_metadata"
         contents_uuid = top_level_so.children[contents_f]["uuid"]
