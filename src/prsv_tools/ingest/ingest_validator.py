@@ -232,11 +232,11 @@ def validate_so_title(so: dataclass, pattern):
         return False
 
 
-def valid_sectag(so: dataclass, expected):
-    if so.securityTag == expected:
+def valid_sectag(io_so, expected):
+    if io_so.securityTag == expected:
         return True
     else:
-        logging.error(f"Security tag is not {expected}, but {so.securityTag}")
+        logging.error(f"Security tag is not {expected}, but {io_so.securityTag}")
         return False
 
 
