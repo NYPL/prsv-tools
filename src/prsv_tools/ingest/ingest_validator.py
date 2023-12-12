@@ -336,6 +336,7 @@ def validate_io_title(io_element: prsv_Information_Object) -> bool:
         return True
     else:
         logging.error(f"{io_element.title} is not a string")
+        return False
 
 
 def validate_all_contents_element_io_conditions(io_element: prsv_Information_Object):
