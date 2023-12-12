@@ -362,6 +362,7 @@ def valid_ioCategory(io_element: prsv_Information_Object, pkg_type: str) -> bool
 def validate_all_contents_element_io_conditions(
     io_element: prsv_Information_Object, pkg_type: str
 ):
+    logging.info(f"validating {io_element.title}")
     validate_io_title(io_element)
     validate_io_type(io_element)
     valid_sectag(io_element, "open")
@@ -430,7 +431,10 @@ def main():
         contents_io, contents_element_so = get_contents_io_so(
             contents_so, token, namespaces
         )
-        pprint(contents_io)
+
+        for io in contents_io:
+            validate_all_contents_element_io_conditions(io, pkg_type)
+
         pprint(contents_element_so)
 
 
