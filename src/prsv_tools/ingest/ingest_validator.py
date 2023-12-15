@@ -369,6 +369,16 @@ def validate_all_contents_element_io_conditions(
     valid_ioCategory(io_element, pkg_type)
 
 
+def validate_all_contents_element_so_conditions(
+    so_element: prsv_Structural_Object, pkg_type: str
+):
+    logging.info(f"validating {so_element.title}")
+    validate_contents_element_title(so_element)
+    valid_so_type(so_element)
+    valid_sectag(so_element, "open")
+    valid_soCategory(so_element, pkg_type)
+
+
 def main():
     """
     First type of check:
