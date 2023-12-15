@@ -331,11 +331,13 @@ def get_contents_io_so(
     return contents_io, contents_element_so
 
 
-def validate_io_title(io_element: prsv_Information_Object) -> bool:
-    if isinstance(io_element.title, str):
+def validate_contents_element_title(
+    contents_element: prsv_Information_Object | prsv_Structural_Object,
+) -> bool:
+    if isinstance(contents_element.title, str):
         return True
     else:
-        logging.error(f"{io_element.title} is not a string")
+        logging.error(f"{contents_element.title} is not a string")
         return False
 
 
