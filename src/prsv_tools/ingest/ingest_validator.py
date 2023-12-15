@@ -248,9 +248,8 @@ def valid_so_type(so: dataclass):
         return False
 
 
-def valid_soCategory(so: dataclass, expected_category: str):
-    socat = re.search(r"[A-Z]{2}", so.title).group(0)
-    if so.soCategory == f"{socat}{expected_category}":
+def valid_soCategory(so: dataclass, pkg_type, expected_category: str):
+    if so.soCategory == f"{pkg_type}{expected_category}":
         return True
     else:
         logging.error(f"{so.title} SO category is incorrect: {so.soCategory}")
@@ -286,30 +285,32 @@ def valid_contents_mdfrags(contents_so: dataclass, collectionId):
     validate_mdfrag(contents_so, "erNumber", er_number)
 
 
-def valid_all_top_level_so_conditions(top_level_so: dataclass, collectionId):
+def valid_all_top_level_so_conditions(top_level_so: dataclass, pkg_type, collectionId):
     logging.info(f"validating top level {top_level_so.title}")
     validate_so_title(top_level_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
     valid_sectag(top_level_so, "open")
     valid_so_type(top_level_so)
-    valid_soCategory(top_level_so, "Container")
+    valid_soCategory(top_level_so, pkg_type, "Container")
     valid_top_level_mdfrag(top_level_so, collectionId)
 
 
-def valid_all_contents_level_so_conditions(contents_so: dataclass, collectionId):
+def valid_all_contents_level_so_conditions(
+    contents_so: dataclass, pkg_type, collectionId
+):
     logging.info(f"validating contents level {contents_so.title}")
     validate_so_title(contents_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
     valid_sectag(contents_so, "open")
     valid_so_type(contents_so)
-    valid_soCategory(contents_so, "Contents")
+    valid_soCategory(contents_so, pkg_type, "Contents")
     valid_contents_mdfrags(contents_so, collectionId)
 
 
-def valid_all_metadata_level_so_conditions(metadata_so: dataclass):
+def valid_all_metadata_level_so_conditions(metadata_so: dataclass, pkg_type):
     logging.info(f"validating metadata level {metadata_so.title}")
     validate_so_title(metadata_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
     valid_sectag(metadata_so, "preservation")
     valid_so_type(metadata_so)
-    valid_soCategory(metadata_so, "Metadata")
+    valid_soCategory(metadata_so, pkg_type, "Metadata")
 
 
 def get_contents_io_so(
@@ -378,7 +379,7 @@ def validate_all_contents_element_so_conditions(
     validate_contents_element_title(so_element)
     valid_so_type(so_element)
     valid_sectag(so_element, "open")
-    valid_soCategory(so_element, pkg_type)
+    valid_soCategory(so_element, pkg_type, "Element")
 
 
 def main():
@@ -436,9 +437,9 @@ def main():
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
         # pprint(metadata_so)
 
-        valid_all_top_level_so_conditions(top_level_so, args.collectionID)
-        valid_all_contents_level_so_conditions(contents_so, args.collectionID)
-        valid_all_metadata_level_so_conditions(metadata_so)
+        valid_all_top_level_so_conditions(top_level_so, pkg_type, args.collectionID)
+        valid_all_contents_level_so_conditions(contents_so, pkg_type, args.collectionID)
+        valid_all_metadata_level_so_conditions(metadata_so, pkg_type)
 
         contents_io, contents_element_so = get_contents_io_so(
             contents_so, token, namespaces
