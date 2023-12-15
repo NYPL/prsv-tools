@@ -448,7 +448,8 @@ def main():
         for io in contents_io:
             validate_all_contents_element_io_conditions(io, pkg_type)
 
-        pprint(contents_element_so)
+        for so in contents_element_so:
+            validate_all_contents_element_so_conditions(so, pkg_type)
 
 
 if __name__ == "__main__":
