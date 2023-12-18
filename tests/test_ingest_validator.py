@@ -60,6 +60,15 @@ class prsv_Structural_Object:
     children: dict | None
 
 
+@dataclass
+class prsv_Information_Object:
+    uuid: str
+    title: str
+    type: str
+    securityTag: str
+    ioCategory: str
+
+
 # unit tests
 def test_content_searchwithin_so_endpoint():
     # test that the response text has the conceived structure,
@@ -233,6 +242,32 @@ def valid_prsv_metadata():
         },
     )
     return prsv_metadata
+
+
+@pytest.fixture  # placeholder. need to fill in
+def valid_prsv_contents_information_object():
+    prsv_contents_io = prsv_Information_Object(
+        uuid="",
+        title="",
+        type="",
+        securityTag="",
+        ioCategory="",
+    )
+    return prsv_contents_io
+
+
+@pytest.fixture  # placeholder. need to fill in
+def valid_prsv_contents_structural_object():
+    prsv_contents_so = prsv_Structural_Object(
+        uuid="",
+        title="",
+        type="soCategory",
+        securityTag="",
+        soCategory="",
+        mdFragments=None,
+        children={},
+    )
+    return prsv_contents_so
 
 
 @pytest.mark.parametrize(
