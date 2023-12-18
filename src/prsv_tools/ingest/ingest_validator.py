@@ -224,7 +224,7 @@ def get_io(uuid, token, namespaces: dict):
     return prsv_Information_Object(uuid, title, type, sectag, ioCat)
 
 
-def validate_so_title(so: dataclass, pattern):
+def validate_so_title(so: prsv_Structural_Object, pattern):
     if re.fullmatch(pattern, so.title):
         return True
     else:
@@ -240,7 +240,7 @@ def valid_sectag(io_so, expected):
         return False
 
 
-def valid_so_type(so: dataclass):
+def valid_so_type(so: prsv_Structural_Object):
     if so.type == "soCategory":
         return True
     else:
@@ -248,7 +248,7 @@ def valid_so_type(so: dataclass):
         return False
 
 
-def valid_soCategory(so: dataclass, pkg_type, expected_category: str):
+def valid_soCategory(so: prsv_Structural_Object, pkg_type, expected_category: str):
     if so.soCategory == f"{pkg_type}{expected_category}":
         return True
     else:
@@ -267,11 +267,11 @@ def validate_mdfrag(prsv_object: dataclass, field_name, expected_value):
         return False
 
 
-def valid_top_level_mdfrag(top_level_so: dataclass, collectionId):
+def valid_top_level_mdfrag(top_level_so: prsv_Structural_Object, collectionId):
     validate_mdfrag(top_level_so, "speccolID", collectionId)
 
 
-def valid_contents_mdfrags(contents_so: dataclass, collectionId):
+def valid_contents_mdfrags(contents_so: prsv_Structural_Object, collectionId):
     fa_component_id = re.search(
         r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so.title
     ).group(1)
@@ -285,7 +285,9 @@ def valid_contents_mdfrags(contents_so: dataclass, collectionId):
     validate_mdfrag(contents_so, "erNumber", er_number)
 
 
-def valid_all_top_level_so_conditions(top_level_so: dataclass, pkg_type, collectionId):
+def valid_all_top_level_so_conditions(
+    top_level_so: prsv_Structural_Object, pkg_type, collectionId
+):
     logging.info(f"validating top level {top_level_so.title}")
     validate_so_title(top_level_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
     valid_sectag(top_level_so, "open")
@@ -295,7 +297,7 @@ def valid_all_top_level_so_conditions(top_level_so: dataclass, pkg_type, collect
 
 
 def valid_all_contents_level_so_conditions(
-    contents_so: dataclass, pkg_type, collectionId
+    contents_so: prsv_Structural_Object, pkg_type, collectionId
 ):
     logging.info(f"validating contents level {contents_so.title}")
     validate_so_title(contents_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
@@ -305,7 +307,9 @@ def valid_all_contents_level_so_conditions(
     valid_contents_mdfrags(contents_so, collectionId)
 
 
-def valid_all_metadata_level_so_conditions(metadata_so: dataclass, pkg_type):
+def valid_all_metadata_level_so_conditions(
+    metadata_so: prsv_Structural_Object, pkg_type
+):
     logging.info(f"validating metadata level {metadata_so.title}")
     validate_so_title(metadata_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
     valid_sectag(metadata_so, "preservation")
