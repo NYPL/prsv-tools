@@ -244,28 +244,37 @@ def valid_prsv_metadata():
     return prsv_metadata
 
 
-@pytest.fixture  # placeholder. need to fill in
+@pytest.fixture
 def valid_prsv_contents_information_object():
     prsv_contents_io = prsv_Information_Object(
-        uuid="",
-        title="",
-        type="",
-        securityTag="",
-        ioCategory="",
+        uuid="49ad6aff-4528-4726-80c6-6e2013d8e9ce",
+        title="angels logo.eps",
+        type="ioCategory",
+        securityTag="open",
+        ioCategory="ERElement",
     )
     return prsv_contents_io
 
 
-@pytest.fixture  # placeholder. need to fill in
+@pytest.fixture
 def valid_prsv_contents_structural_object():
     prsv_contents_so = prsv_Structural_Object(
-        uuid="",
-        title="",
+        uuid="14830eed-dd67-4dbf-846d-8269ef3c5d63",
+        title="Sally's Proposal",
         type="soCategory",
-        securityTag="",
-        soCategory="",
+        securityTag="open",
+        soCategory="ERElement",
         mdFragments=None,
-        children={},
+        children={
+            "Sally 2.doc": {
+                "objType": "IO",
+                "uuid": "b093de24-e33d-487d-a92f-f1eb9fdf6357",
+            },
+            "Sally's proposal.doc": {
+                "objType": "IO",
+                "uuid": "5bd231e7-14b9-4d11-a671-b3559eaf1434",
+            },
+        },
     )
     return prsv_contents_so
 
