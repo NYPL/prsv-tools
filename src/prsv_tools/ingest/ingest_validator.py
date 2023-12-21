@@ -449,6 +449,9 @@ def main():
             contents_so, token, namespaces
         )
 
+        logging.info(f"{contents_f} has {len(contents_io)} files in total")
+        logging.info(f"{contents_f} has {len(contents_element_so)} folders in total")
+
         for io in contents_io:
             validate_all_contents_element_io_conditions(io, pkg_type)
 
