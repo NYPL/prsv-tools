@@ -247,7 +247,7 @@ def valid_prsv_metadata():
 @pytest.fixture
 def valid_prsv_contents_information_object():
     prsv_contents_io = prsv_Information_Object(
-        uuid="49ad6aff-4528-4726-80c6-6e2013d8e9ce",
+        uuid="267bea1b-5f42-4c85-953c-c5127758df85",
         title="angels logo.eps",
         type="ioCategory",
         securityTag="open",
@@ -259,20 +259,20 @@ def valid_prsv_contents_information_object():
 @pytest.fixture
 def valid_prsv_contents_structural_object():
     prsv_contents_so = prsv_Structural_Object(
-        uuid="14830eed-dd67-4dbf-846d-8269ef3c5d63",
-        title="Sally's Proposal",
+        uuid="5ba09c07-7420-4557-b098-0bca94b59378",
+        title="[root].12",
         type="soCategory",
         securityTag="open",
         soCategory="ERElement",
         mdFragments=None,
         children={
-            "Sally 2.doc": {
+            "HULBERT": {
                 "objType": "IO",
-                "uuid": "b093de24-e33d-487d-a92f-f1eb9fdf6357",
+                "uuid": "aa69acd3-b54c-49c3-b01c-90e0a8b176cd",
             },
-            "Sally's proposal.doc": {
+            "HULBERT.BAK": {
                 "objType": "IO",
-                "uuid": "5bd231e7-14b9-4d11-a671-b3559eaf1434",
+                "uuid": "43761244-678b-44ee-b339-67a253c5f781",
             },
         },
     )
@@ -402,6 +402,12 @@ def test_validate_incorrect_mdfrag(
     assert not ingest_validator.validate_mdfrag(invalid_data, key, correct_value)
 
 
+"""
+get_contents_io_so
+validate_contents_element_title
+validate_io_type
+valid_ioCategory
+"""
 """
 1. response code should be good (200)
 2. data structure should be as expected
