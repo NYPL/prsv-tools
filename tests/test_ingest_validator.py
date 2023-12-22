@@ -69,129 +69,23 @@ class prsv_Information_Object:
     ioCategory: str
 
 
-# unit tests
-def test_content_searchwithin_so_endpoint():
-    # test that the response text has the conceived structure,
-    # which is a non-empty list consisting of UUID(s)
-    response = ingest_validator.search_within_DigArch(token, fields, test_digarch_uuid)
-
-    uuid_ls = ingest_validator.parse_structural_object_uuid(response)
-
-    expected_schema = Schema(
-        [Regex(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
-    )
-
-    assert expected_schema.is_valid(uuid_ls) == True
-
-
-def test_mock_get_top_so():
-    """test that get_so function returns the correct
-    data class structure for the top level SO"""
-
-    mock_call_api_value = prsv_Structural_Object(
-        uuid="154c2634-d22c-4b85-a9c6-819184551d17",
-        title="M1126_DI_1",
-        type="soCategory",
-        securityTag="open",
-        soCategory="DIContainer",
-        mdFragments={"speccolID": "M1126"},
-        children={
-            "M1126_DI_1_contents": {
-                "objType": "SO",
-                "uuid": "9885feb6-3340-4a02-8585-e0f75f55eb92",
-            },
-            "M1126_DI_1_metadata": {
-                "objType": "SO",
-                "uuid": "5df3566c-36f0-4721-9e5e-bc1c824b5910",
-            },
-        },
-    )
-    actual_api_value = ingest_validator.get_so(
-        mock_call_api_value.uuid, token, namespaces, "top"
-    )
-
-    assert asdict(mock_call_api_value) == asdict(actual_api_value)
-
-
-def test_mock_get_contents_so():
-    """test that get_so function returns the correct
-    data class structure for the contents SO"""
-
-    mock_call_api_value = prsv_Structural_Object(
-        uuid="605d7c11-ce9a-4536-9b05-e8cba3843e15",
-        title="M1126_ER_12_contents",
-        type="soCategory",
-        securityTag="open",
-        soCategory="ERContents",
-        mdFragments={
-            "erNumber": "ER_12",
-            "faCollectionId": "M1126",
-            "faComponentId": "M1126_ER_12",
-        },
-        children={
-            "Feedback Form--Bldg on Diversit": {
-                "objType": "IO",
-                "uuid": "909d7fc0-faec-4520-8719-567a393ddb19",
-            },
-            "Feedback--VSCC": {
-                "objType": "IO",
-                "uuid": "68381917-ba8e-478d-9453-3ea0d2251e94",
-            },
-            "Feedback--VSCC 2nd DRAFT": {
-                "objType": "IO",
-                "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
-            },
-        },
-    )
-    actual_api_value = ingest_validator.get_so(
-        mock_call_api_value.uuid, token, namespaces, "contents"
-    )
-
-    assert asdict(mock_call_api_value) == asdict(actual_api_value)
-
-
-def test_mock_get_metadata_so():
-    """test that get_so function returns the correct
-    data class structure for the contents SO"""
-
-    mock_call_api_value = prsv_Structural_Object(
-        uuid="be5f6a75-a192-4e33-82ac-8cd5def54858",
-        title="M1126_ER_16_metadata",
-        type="soCategory",
-        securityTag="preservation",
-        soCategory="ERMetadata",
-        mdFragments=None,
-        children={
-            "M1126_ER_16.tsv": {
-                "objType": "IO",
-                "uuid": "c1718e09-dcb1-4b52-9d77-8d7d0282c347",
-            }
-        },
-    )
-    actual_api_value = ingest_validator.get_so(
-        mock_call_api_value.uuid, token, namespaces, "metadata"
-    )
-
-    assert asdict(mock_call_api_value) == asdict(actual_api_value)
-
-
 @pytest.fixture
 def valid_prsv_top():
     prsv_top = prsv_Structural_Object(
-        uuid="658e4d63-ccfa-41e8-83ab-4caaf3a1b061",
-        title="M24468_ER_8",
+        uuid="70ecde98-d40e-4a6f-b5e4-dd6dda34443d",
+        title="M23385_ER_11",
         type="soCategory",
         securityTag="open",
         soCategory="ERContainer",
-        mdFragments={"speccolID": "M24468"},
+        mdFragments={"speccolID": "M23385"},
         children={
-            "M24468_ER_8_contents": {
+            "M23385_ER_11_contents": {
                 "objType": "SO",
-                "uuid": "84db17ec-acbc-4b06-8cb2-3ceac63eeb00",
+                "uuid": "70e2f9b8-10e7-4cc6-95cf-78755d03dfd7",
             },
-            "M24468_ER_8_metadata": {
+            "M23385_ER_11_metadata": {
                 "objType": "SO",
-                "uuid": "4b4acc77-8310-44e9-bac3-3b214968c797",
+                "uuid": "d2bb302c-5e1b-477e-89ab-4436af786c53",
             },
         },
     )
@@ -277,6 +171,94 @@ def valid_prsv_contents_structural_object():
         },
     )
     return prsv_contents_so
+
+
+# unit tests
+def test_content_searchwithin_so_endpoint():
+    # test that the response text has the conceived structure,
+    # which is a non-empty list consisting of UUID(s)
+    response = ingest_validator.search_within_DigArch(token, fields, test_digarch_uuid)
+
+    uuid_ls = ingest_validator.parse_structural_object_uuid(response)
+
+    expected_schema = Schema(
+        [Regex(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
+    )
+
+    assert expected_schema.is_valid(uuid_ls) == True
+
+
+def test_get_top_so(valid_prsv_top):
+    """test that get_so function returns the correct
+    data class structure for the top level SO"""
+
+    actual_api_value = ingest_validator.get_so(
+        valid_prsv_top.uuid, token, namespaces, "top"
+    )
+
+    assert asdict(valid_prsv_top) == asdict(actual_api_value)
+
+
+def test_mock_get_contents_so():
+    """test that get_so function returns the correct
+    data class structure for the contents SO"""
+
+    mock_call_api_value = prsv_Structural_Object(
+        uuid="605d7c11-ce9a-4536-9b05-e8cba3843e15",
+        title="M1126_ER_12_contents",
+        type="soCategory",
+        securityTag="open",
+        soCategory="ERContents",
+        mdFragments={
+            "erNumber": "ER_12",
+            "faCollectionId": "M1126",
+            "faComponentId": "M1126_ER_12",
+        },
+        children={
+            "Feedback Form--Bldg on Diversit": {
+                "objType": "IO",
+                "uuid": "909d7fc0-faec-4520-8719-567a393ddb19",
+            },
+            "Feedback--VSCC": {
+                "objType": "IO",
+                "uuid": "68381917-ba8e-478d-9453-3ea0d2251e94",
+            },
+            "Feedback--VSCC 2nd DRAFT": {
+                "objType": "IO",
+                "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
+            },
+        },
+    )
+    actual_api_value = ingest_validator.get_so(
+        mock_call_api_value.uuid, token, namespaces, "contents"
+    )
+
+    assert asdict(mock_call_api_value) == asdict(actual_api_value)
+
+
+def test_mock_get_metadata_so():
+    """test that get_so function returns the correct
+    data class structure for the contents SO"""
+
+    mock_call_api_value = prsv_Structural_Object(
+        uuid="be5f6a75-a192-4e33-82ac-8cd5def54858",
+        title="M1126_ER_16_metadata",
+        type="soCategory",
+        securityTag="preservation",
+        soCategory="ERMetadata",
+        mdFragments=None,
+        children={
+            "M1126_ER_16.tsv": {
+                "objType": "IO",
+                "uuid": "c1718e09-dcb1-4b52-9d77-8d7d0282c347",
+            }
+        },
+    )
+    actual_api_value = ingest_validator.get_so(
+        mock_call_api_value.uuid, token, namespaces, "metadata"
+    )
+
+    assert asdict(mock_call_api_value) == asdict(actual_api_value)
 
 
 @pytest.mark.parametrize(
@@ -376,7 +358,7 @@ def test_valid_soCategory(
 @pytest.mark.parametrize(
     "fixture_name, key, value",
     [
-        ("valid_prsv_top", "speccolID", "M24468"),
+        ("valid_prsv_top", "speccolID", "M23385"),
         ("valid_prsv_contents", "erNumber", "ER_8"),
         ("valid_prsv_contents", "faCollectionId", "M24468"),
         ("valid_prsv_contents", "faComponentId", "M24468_ER_8"),
