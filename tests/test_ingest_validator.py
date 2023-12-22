@@ -366,6 +366,15 @@ def test_validate_contents_element_title(expected_result, fixture_name, request)
         assert not ingest_validator.validate_contents_element_title(invalid_data)
 
 
+def test_validate_io_type(valid_prsv_contents_information_object):
+    assert ingest_validator.validate_io_type(valid_prsv_contents_information_object)
+
+
+def test_invalid_io_type(valid_prsv_contents_information_object):
+    invalid_data = replace(valid_prsv_contents_information_object, type="soCategory")
+    assert not ingest_validator.validate_io_type(invalid_data)
+
+
 """
 get_contents_io_so
 validate_contents_element_title
