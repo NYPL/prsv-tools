@@ -374,6 +374,12 @@ def test_invalid_io_type(valid_prsv_contents_information_object):
     invalid_data = replace(valid_prsv_contents_information_object, type="soCategory")
     assert not ingest_validator.validate_io_type(invalid_data)
 
+def test_valid_ioCategory(valid_prsv_contents_information_object):
+    assert ingest_validator.valid_ioCategory(valid_prsv_contents_information_object, "ER")
+
+def test_invalid_ioCategory(valid_prsv_contents_information_object):
+    invalid_data = replace(valid_prsv_contents_information_object, ioCategory="DIElement")
+    assert not ingest_validator.valid_ioCategory(invalid_data, "ER")
 
 """
 get_contents_io_so
