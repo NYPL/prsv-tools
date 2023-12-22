@@ -350,9 +350,11 @@ def test_valid_so_type(expected_result, fixture_name, request):
         (True, "valid_prsv_top", "ER", "Container"),
         (True, "valid_prsv_contents", "ER", "Contents"),
         (True, "valid_prsv_metadata", "DI", "Metadata"),
+        (True, "valid_prsv_contents_structural_object", "ER", "Element"),
         (False, "valid_prsv_top", "ER", "Container"),
         (False, "valid_prsv_contents", "ER", "Contents"),
         (False, "valid_prsv_metadata", "DI", "Metadata"),
+        (False, "valid_prsv_contents_structural_object", "ER", "Element"),
     ],
 )
 def test_valid_soCategory(
