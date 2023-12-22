@@ -345,24 +345,30 @@ def test_valid_so_type(expected_result, fixture_name, request):
 
 
 @pytest.mark.parametrize(
-    "expected_result, fixture_name, string",
+    "expected_result, fixture_name, pkg_type, expected_category",
     [
-        (True, "valid_prsv_top", "Container"),
-        (True, "valid_prsv_contents", "Contents"),
-        (True, "valid_prsv_metadata", "Metadata"),
-        (False, "valid_prsv_top", "Container"),
-        (False, "valid_prsv_contents", "Contents"),
-        (False, "valid_prsv_metadata", "Metadata"),
+        (True, "valid_prsv_top", "ER", "Container"),
+        (True, "valid_prsv_contents", "ER", "Contents"),
+        (True, "valid_prsv_metadata", "DI", "Metadata"),
+        (False, "valid_prsv_top", "ER", "Container"),
+        (False, "valid_prsv_contents", "ER", "Contents"),
+        (False, "valid_prsv_metadata", "DI", "Metadata"),
     ],
 )
-def test_valid_soCategory(expected_result, fixture_name, string, request):
+def test_valid_soCategory(
+    expected_result, fixture_name, pkg_type, expected_category, request
+):
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
-        assert ingest_validator.valid_soCategory(input_data, string)
+        assert ingest_validator.valid_soCategory(
+            input_data, pkg_type, expected_category
+        )
     else:
         invalid_input = replace(input_data, soCategory="category")
-        assert not ingest_validator.valid_soCategory(invalid_input, string)
+        assert not ingest_validator.valid_soCategory(
+            invalid_input, pkg_type, expected_category
+        )
 
 
 @pytest.mark.parametrize(
