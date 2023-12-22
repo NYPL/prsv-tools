@@ -206,29 +206,15 @@ def test_get_contents_so(valid_prsv_contents):
     assert asdict(valid_prsv_contents) == asdict(actual_api_value)
 
 
-def test_mock_get_metadata_so():
+def test_get_metadata_so(valid_prsv_metadata):
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
-    mock_call_api_value = prsv_Structural_Object(
-        uuid="be5f6a75-a192-4e33-82ac-8cd5def54858",
-        title="M1126_ER_16_metadata",
-        type="soCategory",
-        securityTag="preservation",
-        soCategory="ERMetadata",
-        mdFragments=None,
-        children={
-            "M1126_ER_16.tsv": {
-                "objType": "IO",
-                "uuid": "c1718e09-dcb1-4b52-9d77-8d7d0282c347",
-            }
-        },
-    )
     actual_api_value = ingest_validator.get_so(
-        mock_call_api_value.uuid, token, namespaces, "metadata"
+        valid_prsv_metadata.uuid, token, namespaces, "metadata"
     )
 
-    assert asdict(mock_call_api_value) == asdict(actual_api_value)
+    assert asdict(valid_prsv_metadata) == asdict(actual_api_value)
 
 
 @pytest.mark.parametrize(
