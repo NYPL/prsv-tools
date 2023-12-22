@@ -169,6 +169,52 @@ def valid_prsv_contents_structural_object():
     return prsv_contents_so
 
 
+@pytest.fixture
+def valid_prsv_contents_so_element_list():
+    so_element_list = [
+        prsv_Structural_Object(
+            uuid="5ba09c07-7420-4557-b098-0bca94b59378",
+            title="[root].12",
+            type="soCategory",
+            securityTag="open",
+            soCategory="ERElement",
+            mdFragments=None,
+            children={
+                "HULBERT": {
+                    "objType": "IO",
+                    "uuid": "aa69acd3-b54c-49c3-b01c-90e0a8b176cd",
+                },
+                "HULBERT.BAK": {
+                    "objType": "IO",
+                    "uuid": "43761244-678b-44ee-b339-67a253c5f781",
+                },
+            },
+        )
+    ]
+    return so_element_list
+
+
+@pytest.fixture
+def valid_prsv_contents_io_element_list():
+    io_element_list = [
+        prsv_Information_Object(
+            uuid="aa69acd3-b54c-49c3-b01c-90e0a8b176cd",
+            title="HULBERT",
+            type="ioCategory",
+            securityTag="open",
+            ioCategory="ERElement",
+        ),
+        prsv_Information_Object(
+            uuid="43761244-678b-44ee-b339-67a253c5f781",
+            title="HULBERT.BAK",
+            type="ioCategory",
+            securityTag="open",
+            ioCategory="ERElement",
+        ),
+    ]
+    return io_element_list
+
+
 # unit tests
 def test_content_searchwithin_so_endpoint():
     # test that the response text has the conceived structure,
@@ -374,12 +420,32 @@ def test_invalid_io_type(valid_prsv_contents_information_object):
     invalid_data = replace(valid_prsv_contents_information_object, type="soCategory")
     assert not ingest_validator.validate_io_type(invalid_data)
 
+
 def test_valid_ioCategory(valid_prsv_contents_information_object):
-    assert ingest_validator.valid_ioCategory(valid_prsv_contents_information_object, "ER")
+    assert ingest_validator.valid_ioCategory(
+        valid_prsv_contents_information_object, "ER"
+    )
+
 
 def test_invalid_ioCategory(valid_prsv_contents_information_object):
-    invalid_data = replace(valid_prsv_contents_information_object, ioCategory="DIElement")
+    invalid_data = replace(
+        valid_prsv_contents_information_object, ioCategory="DIElement"
+    )
     assert not ingest_validator.valid_ioCategory(invalid_data, "ER")
+
+
+def test_get_contents_io_so(
+    valid_prsv_contents,
+    valid_prsv_contents_io_element_list,
+    valid_prsv_contents_so_element_list,
+):
+    # This fails, because the lists contain dataclasses that cannot be compared
+    io_list, so_list = ingest_validator.get_contents_io_so(
+        valid_prsv_contents, token, namespaces
+    )
+    assert io_list == valid_prsv_contents_io_element_list
+    assert so_list == valid_prsv_contents_so_element_list
+
 
 """
 get_contents_io_so
