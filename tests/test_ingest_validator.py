@@ -348,6 +348,24 @@ def test_validate_incorrect_mdfrag(
     assert not ingest_validator.validate_mdfrag(invalid_data, key, correct_value)
 
 
+@pytest.mark.parametrize(
+    "expected_result, fixture_name",
+    [
+        (True, "valid_prsv_contents_information_object"),
+        (True, "valid_prsv_contents_structural_object"),
+        (False, "valid_prsv_contents_information_object"),
+        (False, "valid_prsv_contents_structural_object"),
+    ],
+)
+def test_validate_contents_element_title(expected_result, fixture_name, request):
+    if expected_result:
+        input_data = request.getfixturevalue(fixture_name)
+        assert ingest_validator.validate_contents_element_title(input_data)
+    else:
+        invalid_data = replace(request.getfixturevalue(fixture_name), title=None)
+        assert not ingest_validator.validate_contents_element_title(invalid_data)
+
+
 """
 get_contents_io_so
 validate_contents_element_title
