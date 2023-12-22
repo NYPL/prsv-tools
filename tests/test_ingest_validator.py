@@ -107,7 +107,7 @@ def valid_prsv_contents():
         },
         children={
             "[root].12": {
-                "objType": "IO",
+                "objType": "SO",
                 "uuid": "5ba09c07-7420-4557-b098-0bca94b59378",
             },
         },
@@ -195,41 +195,15 @@ def test_get_top_so(valid_prsv_top):
     assert asdict(valid_prsv_top) == asdict(actual_api_value)
 
 
-def test_mock_get_contents_so():
+def test_get_contents_so(valid_prsv_contents):
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
-    mock_call_api_value = prsv_Structural_Object(
-        uuid="605d7c11-ce9a-4536-9b05-e8cba3843e15",
-        title="M1126_ER_12_contents",
-        type="soCategory",
-        securityTag="open",
-        soCategory="ERContents",
-        mdFragments={
-            "erNumber": "ER_12",
-            "faCollectionId": "M1126",
-            "faComponentId": "M1126_ER_12",
-        },
-        children={
-            "Feedback Form--Bldg on Diversit": {
-                "objType": "IO",
-                "uuid": "909d7fc0-faec-4520-8719-567a393ddb19",
-            },
-            "Feedback--VSCC": {
-                "objType": "IO",
-                "uuid": "68381917-ba8e-478d-9453-3ea0d2251e94",
-            },
-            "Feedback--VSCC 2nd DRAFT": {
-                "objType": "IO",
-                "uuid": "dbb5c7e4-eb38-45fe-9a73-0530b78d3252",
-            },
-        },
-    )
     actual_api_value = ingest_validator.get_so(
-        mock_call_api_value.uuid, token, namespaces, "contents"
+        valid_prsv_contents.uuid, token, namespaces, "contents"
     )
 
-    assert asdict(mock_call_api_value) == asdict(actual_api_value)
+    assert asdict(valid_prsv_contents) == asdict(actual_api_value)
 
 
 def test_mock_get_metadata_so():
