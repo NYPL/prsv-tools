@@ -95,24 +95,20 @@ def valid_prsv_top():
 @pytest.fixture
 def valid_prsv_contents():
     prsv_contents = prsv_Structural_Object(
-        uuid="84db17ec-acbc-4b06-8cb2-3ceac63eeb00",
-        title="M24468_ER_8_contents",
+        uuid="70e2f9b8-10e7-4cc6-95cf-78755d03dfd7",
+        title="M23385_ER_11_contents",
         type="soCategory",
         securityTag="open",
         soCategory="ERContents",
         mdFragments={
-            "erNumber": "ER_8",
-            "faCollectionId": "M24468",
-            "faComponentId": "M24468_ER_8",
+            "erNumber": "ER_11",
+            "faCollectionId": "M23385",
+            "faComponentId": "M23385_ER_11",
         },
         children={
-            "INVOICEpostage.xls": {
+            "[root].12": {
                 "objType": "IO",
-                "uuid": "f4d3eecf-d621-4f63-8c0f-e9a7d4717492",
-            },
-            "Tom Slaughter.doc": {
-                "objType": "IO",
-                "uuid": "813fc586-1044-4661-98f7-87d9904644de",
+                "uuid": "5ba09c07-7420-4557-b098-0bca94b59378",
             },
         },
     )
@@ -122,7 +118,7 @@ def valid_prsv_contents():
 @pytest.fixture
 def valid_prsv_metadata():
     prsv_metadata = prsv_Structural_Object(
-        uuid="bf45162f-a0b2-418c-8b8f-1ef177e58a19",
+        uuid="5df3566c-36f0-4721-9e5e-bc1c824b5910",
         title="M1126_DI_1_metadata",
         type="soCategory",
         securityTag="preservation",
@@ -131,7 +127,7 @@ def valid_prsv_metadata():
         children={
             "M1126-0046p001.JPG": {
                 "objType": "IO",
-                "uuid": "36288300-28f7-4edc-b4f3-f6272de64ac5",
+                "uuid": "359548a5-f1ee-4c47-a0ee-992ff0c7597d",
             }
         },
     )
@@ -359,9 +355,9 @@ def test_valid_soCategory(
     "fixture_name, key, value",
     [
         ("valid_prsv_top", "speccolID", "M23385"),
-        ("valid_prsv_contents", "erNumber", "ER_8"),
-        ("valid_prsv_contents", "faCollectionId", "M24468"),
-        ("valid_prsv_contents", "faComponentId", "M24468_ER_8"),
+        ("valid_prsv_contents", "erNumber", "ER_11"),
+        ("valid_prsv_contents", "faCollectionId", "M23385"),
+        ("valid_prsv_contents", "faComponentId", "M23385_ER_11"),
     ],
 )
 def test_validate_mdfrag(fixture_name, key, value, request):
