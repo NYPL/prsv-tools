@@ -461,7 +461,9 @@ def validate_all_contents_element_io_conditions(
 
 def validate_all_contents_element_so_conditions(
     so_element: prsv_Structural_Object, pkg_type: str
-):
+) -> None:
+    """function to run other functions to validate all contents element
+    Structural Objects's conditions"""
     logging.info(f"validating {so_element.title}")
     validate_contents_element_title(so_element)
     valid_so_type(so_element)
