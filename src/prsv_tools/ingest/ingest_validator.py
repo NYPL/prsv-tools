@@ -94,7 +94,7 @@ def search_within_DigArch(accesstoken: str, fields, parentuuid: str):
     return res
 
 
-def parse_structural_object_uuid(res) -> list:
+def parse_structural_object_uuid(res: requests.models.Response) -> list:
     """function to parse json API response into a list of UUIDs"""
     uuid_ls = list()
     json_obj = json.loads(res.text)
