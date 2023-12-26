@@ -356,7 +356,7 @@ def validate_io_type(io_element: prsv_Information_Object) -> bool:
         return False
 
 
-def valid_ioCategory(io_element: prsv_Information_Object, pkg_type: str) -> bool:
+def valid_contents_ioCategory(io_element: prsv_Information_Object, pkg_type: str) -> bool:
     if io_element.ioCategory == f"{pkg_type}Element":
         return True
     else:
@@ -390,7 +390,7 @@ def validate_all_contents_element_io_conditions(
     validate_contents_element_title(io_element)
     validate_io_type(io_element)
     valid_sectag(io_element, "open")
-    valid_ioCategory(io_element, pkg_type)
+    valid_contents_ioCategory(io_element, pkg_type)
 
 
 def validate_all_contents_element_so_conditions(
@@ -487,7 +487,6 @@ def main():
                     metadata_so.children[child]["uuid"], token, namespaces
                 )
                 validate_all_metadata_io_conditions(metadata_io)
-
 
 
 if __name__ == "__main__":
