@@ -358,8 +358,10 @@ def valid_all_contents_level_so_conditions(
 
 
 def valid_all_metadata_level_so_conditions(
-    metadata_so: prsv_Structural_Object, pkg_type
-):
+    metadata_so: prsv_Structural_Object, pkg_type: str
+) -> None:
+    """function to run other functions to validate all metadata level folder
+    requirements"""
     logging.info(f"validating metadata level {metadata_so.title}")
     validate_so_title(metadata_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+_metadata")
     valid_sectag(metadata_so, "preservation")
