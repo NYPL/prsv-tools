@@ -33,6 +33,13 @@ def parse_args():
         help="the collection you'd like to check for, M\d+",
     )
 
+    parser.add_argument(
+        "--source",
+        type=str,
+        required=False,
+        help="the source directory you want to compare to, usually ICA",
+    )
+
     return parser.parse_args()
 
 
@@ -356,7 +363,9 @@ def validate_io_type(io_element: prsv_Information_Object) -> bool:
         return False
 
 
-def valid_contents_ioCategory(io_element: prsv_Information_Object, pkg_type: str) -> bool:
+def valid_contents_ioCategory(
+    io_element: prsv_Information_Object, pkg_type: str
+) -> bool:
     if io_element.ioCategory == f"{pkg_type}Element":
         return True
     else:
@@ -427,17 +436,12 @@ def main():
     if "test" in args.credentials:
         parentuuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
         version = prsvapi.find_apiversion(token)
-        da_source = Path(
-            "/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Dev/DA_Source_Dev/DigArch"
-        )
+        da_source = Path(args.source)
+
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
-
         version = prsvapi.find_apiversion(token)
-
-        # da_source = Path(
-        #     "/Users/hilaryszuyinshiue/mnt/vm/Preservica_DigArch_Prod/DA_Source_Prod/DigArch"
-        # )
+        da_source = Path(args.source)
 
     namespaces = {
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
