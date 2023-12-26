@@ -393,6 +393,8 @@ def get_contents_io_so(
 def validate_contents_element_title(
     contents_element: prsv_Information_Object | prsv_Structural_Object,
 ) -> bool:
+    """function to validate contents element (IO and SO) title.
+    They must be string datatype"""
     if isinstance(contents_element.title, str):
         return True
     else:
