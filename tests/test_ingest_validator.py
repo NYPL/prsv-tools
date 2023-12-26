@@ -483,6 +483,8 @@ def test_invalid_contents_ioCategory(valid_prsv_contents_information_object):
     ],
 )
 def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
+    """test valid_metadata_ioCategory will return expected value with different
+    fixtures and inputs"""
     if expected_result:
         input_data = request.getfixturevalue(fixture_name)
         assert ingest_validator.valid_metadata_ioCategory(input_data)
