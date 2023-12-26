@@ -377,6 +377,8 @@ def test_valid_so_type(expected_result, fixture_name, request):
 def test_valid_soCategory(
     expected_result, fixture_name, pkg_type, expected_category, request
 ):
+    """test valid_soCategory will return expected result using different fixtures and
+    expected strings"""
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
