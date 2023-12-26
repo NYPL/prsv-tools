@@ -471,7 +471,9 @@ def validate_all_contents_element_so_conditions(
     valid_soCategory(so_element, pkg_type, "Element")
 
 
-def validate_all_metadata_io_conditions(metadata_io: prsv_Information_Object):
+def validate_all_metadata_io_conditions(metadata_io: prsv_Information_Object) -> None:
+    """function to run other functions to validate all metadata
+    Information Object's conditions"""
     logging.info(f"validating {metadata_io.title}")
     validate_io_type(metadata_io)
     valid_sectag(metadata_io, "preservation")
