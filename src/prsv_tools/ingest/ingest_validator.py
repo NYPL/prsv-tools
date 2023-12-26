@@ -269,7 +269,9 @@ def valid_sectag(
         return False
 
 
-def valid_so_type(so: prsv_Structural_Object):
+def valid_so_type(so: prsv_Structural_Object) -> bool:
+    """function to validate Structural Object type, which must be soCategory
+    return True if so; False if not"""
     if so.type == "soCategory":
         return True
     else:
