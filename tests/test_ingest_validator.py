@@ -486,15 +486,3 @@ def test_get_contents_io_so(
     )
     assert io_list == valid_prsv_contents_io_element_list
     assert so_list == valid_prsv_contents_so_element_list
-
-
-"""
-get_contents_io_so
-validate_contents_element_title
-validate_io_type
-valid_ioCategory
-"""
-"""
-1. response code should be good (200)
-2. data structure should be as expected
-"""
