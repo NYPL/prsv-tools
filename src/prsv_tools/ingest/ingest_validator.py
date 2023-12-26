@@ -126,7 +126,10 @@ def ingest_has_correct_ER_number(
         return False
 
 
-def get_so(uuid, token, namespaces: dict, so_type: str):
+def get_so(
+    uuid: str, token: str, namespaces: dict, so_type: str
+) -> prsv_Structural_Object:
+    """function to parse API result and return a prsv_Structural_Object data class object"""
     url = f"https://nypl.preservica.com/api/entity/structural-objects/{uuid}"
     res = get_api_results(token, url)
     root = ET.fromstring(res.text)
