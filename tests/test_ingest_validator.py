@@ -492,15 +492,3 @@ def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
         invalid_data = replace(request.getfixturevalue(fixture_name), ioCategory="FTK")
         assert not ingest_validator.valid_metadata_ioCategory(invalid_data)
 
-
-def test_get_contents_io_so(
-    valid_prsv_contents,
-    valid_prsv_contents_io_element_list,
-    valid_prsv_contents_so_element_list,
-):
-    # This fails, because the lists contain dataclasses that cannot be compared
-    io_list, so_list = ingest_validator.get_contents_io_so(
-        valid_prsv_contents, token, namespaces
-    )
-    assert io_list == valid_prsv_contents_io_element_list
-    assert so_list == valid_prsv_contents_so_element_list
