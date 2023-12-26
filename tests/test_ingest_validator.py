@@ -238,8 +238,8 @@ def valid_prsv_metadata_io_jpg():
 
 # unit tests
 def test_content_searchwithin_so_endpoint():
-    # test that the response text has the conceived structure,
-    # which is a non-empty list consisting of UUID(s)
+    """test that the response text has the conceived structure,
+    which is a non-empty list consisting of UUID(s)"""
     response = ingest_validator.search_within_DigArch(token, fields, test_digarch_uuid)
 
     uuid_ls = ingest_validator.parse_structural_object_uuid(response)
