@@ -313,12 +313,21 @@ def test_validate_so_title(expected_result, fixture_name, pattern, request):
         (True, "valid_prsv_top", "open"),
         (True, "valid_prsv_contents", "open"),
         (True, "valid_prsv_metadata", "preservation"),
+        (True, "valid_prsv_contents_information_object", "open"),
+        (True, "valid_prsv_contents_structural_object", "open"),
+        (True, "valid_prsv_metadata_io_ftk", "preservation"),
+        (True, "valid_prsv_metadata_io_jpg", "preservation"),
         (False, "valid_prsv_top", "open"),
         (False, "valid_prsv_contents", "open"),
         (False, "valid_prsv_metadata", "preservation"),
+        (False, "valid_prsv_contents_information_object", "open"),
+        (False, "valid_prsv_contents_structural_object", "open"),
+        (False, "valid_prsv_metadata_io_ftk", "preservation"),
+        (False, "valid_prsv_metadata_io_jpg", "preservation"),
     ],
 )
 def test_valid_sectag(expected_result, fixture_name, string, request):
+    """test that valid_sectag will return expected result with different prsv fixtures"""
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
