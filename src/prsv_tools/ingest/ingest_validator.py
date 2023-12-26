@@ -258,7 +258,10 @@ def validate_so_title(so: prsv_Structural_Object, pattern: str) -> bool:
         return False
 
 
-def valid_sectag(io_so, expected):
+def valid_sectag(
+    io_so: prsv_Structural_Object | prsv_Information_Object, expected: str
+) -> bool:
+    """function to validate prsv Structural and Information Object security tag values"""
     if io_so.securityTag == expected:
         return True
     else:
