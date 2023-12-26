@@ -429,6 +429,8 @@ def valid_contents_ioCategory(
 
 
 def valid_metadata_ioCategory(metadata_io: prsv_Information_Object) -> bool:
+    """function to validate metadata ioCategory, which must be either FTK report
+    or Carrier photograph, depending on the file extension"""
     if (
         Path(metadata_io.title).suffix.lower() == ".tsv"
         or Path(metadata_io.title).suffix.lower() == ".csv"
