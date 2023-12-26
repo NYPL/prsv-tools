@@ -85,7 +85,7 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
 
 def search_within_DigArch(
     accesstoken: str, fields, parentuuid: str
-) -> requests.models.Response:
+) -> requests.Response:
     """function to search within the DigArch folder in Preservica with
     predefined queried fields"""
     query = {"q": "", "fields": fields}
@@ -96,7 +96,7 @@ def search_within_DigArch(
     return res
 
 
-def parse_structural_object_uuid(res: requests.models.Response) -> list:
+def parse_structural_object_uuid(res: requests.Response) -> list:
     """function to parse json API response into a list of UUIDs"""
     uuid_ls = list()
     json_obj = json.loads(res.text)
