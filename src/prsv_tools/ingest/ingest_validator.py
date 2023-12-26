@@ -305,7 +305,11 @@ def validate_mdfrag(
         return False
 
 
-def valid_top_level_mdfrag(top_level_so: prsv_Structural_Object, collectionId):
+def valid_top_level_mdfrag(
+    top_level_so: prsv_Structural_Object, collectionId: str
+) -> None:
+    """function to run other function to validate top level folder
+    metadata fragment field"""
     validate_mdfrag(top_level_so, "speccolID", collectionId)
 
 
