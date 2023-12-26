@@ -343,12 +343,15 @@ def test_valid_sectag(expected_result, fixture_name, string, request):
         (True, "valid_prsv_top"),
         (True, "valid_prsv_contents"),
         (True, "valid_prsv_metadata"),
+        (True, "valid_prsv_contents_structural_object"),
         (False, "valid_prsv_top"),
         (False, "valid_prsv_contents"),
         (False, "valid_prsv_metadata"),
+        (False, "valid_prsv_contents_structural_object"),
     ],
 )
 def test_valid_so_type(expected_result, fixture_name, request):
+    """test valid_so_type will return expected result with different prsv SO fixtures"""
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
