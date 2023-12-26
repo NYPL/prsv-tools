@@ -74,6 +74,7 @@ class prsv_Information_Object:
 
 
 def get_api_results(accesstoken: str, url: str) -> requests.Response:
+    """function to get api results"""
     headers = {
         "Preservica-Access-Token": accesstoken,
         "Content-Type": "application/xml",
