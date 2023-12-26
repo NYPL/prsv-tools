@@ -165,7 +165,8 @@ def get_so(
     return prsv_Structural_Object(uuid, title, type, sectag, soCat, md, children)
 
 
-def get_spec_mdfrag(token, metadata_url, namespaces: dict) -> dict:
+def get_spec_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
+    """function to get and parse API result for metadata and return a dictionary"""
     mdfrag_dict = dict()
 
     mfrag_res = get_api_results(token, metadata_url)
