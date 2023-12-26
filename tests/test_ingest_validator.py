@@ -215,6 +215,30 @@ def valid_prsv_contents_io_element_list():
     return io_element_list
 
 
+@pytest.fixture
+def valid_prsv_metadata_io_ftk():
+    metadata_io = prsv_Information_Object(
+        uuid="2236cc8d-b38f-4167-96c1-abc953621c20",
+        title="M1126_ER_10.tsv",
+        type="ioCategory",
+        securityTag="preservation",
+        ioCategory="FTK report",
+    )
+    return metadata_io
+
+
+@pytest.fixture
+def valid_prsv_metadata_io_jpg():
+    metadata_io = prsv_Information_Object(
+        uuid="359548a5-f1ee-4c47-a0ee-992ff0c7597d",
+        title="M1126-0046p001.JPG",
+        type="ioCategory",
+        securityTag="preservation",
+        ioCategory="Carrier photograph",
+    )
+    return metadata_io
+
+
 # unit tests
 def test_content_searchwithin_so_endpoint():
     # test that the response text has the conceived structure,
@@ -432,6 +456,23 @@ def test_invalid_ioCategory(valid_prsv_contents_information_object):
         valid_prsv_contents_information_object, ioCategory="DIElement"
     )
     assert not ingest_validator.valid_ioCategory(invalid_data, "ER")
+
+
+@pytest.mark.parametrize(
+    "expected_result, fixture_name",
+    [
+        (True, "valid_prsv_metadata_io_ftk"),
+        (True, "valid_prsv_metadata_io_jpg"),
+        (False, "valid_prsv_metadata_io_ftk"),
+    ],
+)
+def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
+    if expected_result:
+        input_data = request.getfixturevalue(fixture_name)
+        assert ingest_validator.valid_metadata_ioCategory(input_data)
+    else:
+        invalid_data = replace(request.getfixturevalue(fixture_name), ioCategory="FTK")
+        assert not ingest_validator.valid_metadata_ioCategory(invalid_data)
 
 
 def test_get_contents_io_so(
