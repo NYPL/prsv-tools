@@ -332,8 +332,10 @@ def valid_contents_mdfrags(
 
 
 def valid_all_top_level_so_conditions(
-    top_level_so: prsv_Structural_Object, pkg_type, collectionId
-):
+    top_level_so: prsv_Structural_Object, pkg_type: str, collectionId: str
+) -> None:
+    """function to run other functions to validate all top level folder
+    requirements"""
     logging.info(f"validating top level {top_level_so.title}")
     validate_so_title(top_level_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+")
     valid_sectag(top_level_so, "open")
