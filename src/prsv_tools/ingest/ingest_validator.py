@@ -166,7 +166,7 @@ def get_so(
 
 
 def get_spec_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
-    """function to get and parse API result for metadata and return a dictionary"""
+    """function to get and parse API result for SPEC metadata and return a dictionary"""
     mdfrag_dict = dict()
 
     mfrag_res = get_api_results(token, metadata_url)
@@ -178,7 +178,9 @@ def get_spec_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
     return mdfrag_dict
 
 
-def get_fa_mdfrag(token, metadata_url, namespaces: dict) -> dict:
+def get_fa_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
+    """function to get and parse API result for Finding Aids metadata and
+    return a dictionary"""
     mdfrag_dict = dict()
 
     mfrag_res = get_api_results(token, metadata_url)
