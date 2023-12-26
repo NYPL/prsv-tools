@@ -459,17 +459,19 @@ def test_invalid_io_type(valid_prsv_contents_information_object):
     assert not ingest_validator.validate_io_type(invalid_data)
 
 
-def test_valid_ioCategory(valid_prsv_contents_information_object):
-    assert ingest_validator.valid_ioCategory(
+def test_valid_contents_ioCategory(valid_prsv_contents_information_object):
+    """test valid_contents_ioCategory returns True with correct input"""
+    assert ingest_validator.valid_contents_ioCategory(
         valid_prsv_contents_information_object, "ER"
     )
 
 
-def test_invalid_ioCategory(valid_prsv_contents_information_object):
+def test_invalid_contents_ioCategory(valid_prsv_contents_information_object):
+    """test valid_contents_ioCategory returns False with incorrect input"""
     invalid_data = replace(
         valid_prsv_contents_information_object, ioCategory="DIElement"
     )
-    assert not ingest_validator.valid_ioCategory(invalid_data, "ER")
+    assert not ingest_validator.valid_contents_ioCategory(invalid_data, "ER")
 
 
 @pytest.mark.parametrize(
