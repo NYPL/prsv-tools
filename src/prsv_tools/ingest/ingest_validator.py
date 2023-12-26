@@ -290,7 +290,11 @@ def valid_soCategory(
         return False
 
 
-def validate_mdfrag(prsv_object: dataclass, field_name, expected_value):
+def validate_mdfrag(
+    prsv_object: prsv_Structural_Object, field_name: str, expected_value: str
+) -> bool:
+    """function to validate Structural Object metadata fragment values.
+    Return True if it is as expected; False if not"""
     # mdFragments is a dictionary
     if prsv_object.mdFragments.get(field_name) == expected_value:
         return True
