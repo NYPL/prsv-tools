@@ -84,6 +84,8 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
 
 
 def search_within_DigArch(accesstoken, fields, parentuuid):
+    """function to search within the DigArch folder in Preservica with
+    predefined queried fields"""
     query = {"q": "", "fields": fields}
     q = json.dumps(query)
     url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''"  # noqa
