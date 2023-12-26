@@ -449,7 +449,9 @@ def valid_metadata_ioCategory(metadata_io: prsv_Information_Object) -> bool:
 
 def validate_all_contents_element_io_conditions(
     io_element: prsv_Information_Object, pkg_type: str
-):
+) -> None:
+    """function to run other functions to validate all contents element
+    Information Objects's conditions"""
     logging.info(f"validating {io_element.title}")
     validate_contents_element_title(io_element)
     validate_io_type(io_element)
