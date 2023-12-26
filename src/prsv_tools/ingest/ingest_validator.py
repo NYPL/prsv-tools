@@ -313,7 +313,11 @@ def valid_top_level_mdfrag(
     validate_mdfrag(top_level_so, "speccolID", collectionId)
 
 
-def valid_contents_mdfrags(contents_so: prsv_Structural_Object, collectionId):
+def valid_contents_mdfrags(
+    contents_so: prsv_Structural_Object, collectionId: str
+) -> None:
+    """function to run other functions to validate contents level folder
+    metadata fragment fields"""
     fa_component_id = re.search(
         r"(M[0-9]+_(ER|DI|EM)_[0-9]+)_contents", contents_so.title
     ).group(1)
