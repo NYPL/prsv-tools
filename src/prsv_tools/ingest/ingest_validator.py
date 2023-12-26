@@ -403,6 +403,8 @@ def validate_contents_element_title(
 
 
 def validate_io_type(io_element: prsv_Information_Object) -> bool:
+    """function to validate IO type, which must be ioCategory.
+    Return True if so; False if not"""
     if io_element.type == "ioCategory":
         return True
     else:
