@@ -83,7 +83,7 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     return response
 
 
-def search_within_DigArch(accesstoken, fields, parentuuid):
+def search_within_DigArch(accesstoken: str, fields, parentuuid: str):
     """function to search within the DigArch folder in Preservica with
     predefined queried fields"""
     query = {"q": "", "fields": fields}
