@@ -372,6 +372,8 @@ def valid_all_metadata_level_so_conditions(
 def get_contents_io_so(
     so: list, token: str, namespaces: dict
 ) -> Tuple[List[prsv_Information_Object], List[prsv_Structural_Object]]:
+    """function to get all the elements within the contents level SO,
+    returning a list of IOs and a list of SOs, if applicable"""
     contents_io = []
     contents_element_so = []
     for child in so.children:
