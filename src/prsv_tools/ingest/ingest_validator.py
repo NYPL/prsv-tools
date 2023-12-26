@@ -105,7 +105,11 @@ def parse_structural_object_uuid(res) -> list:
     return uuid_ls
 
 
-def ingest_has_correct_ER_number(collection_id, da_source, uuid_ls) -> bool:
+def ingest_has_correct_ER_number(
+    collection_id: str, da_source: Path, uuid_ls: list
+) -> bool:
+    """function to verify inquired collection has the correct number of packages
+    in Preservica. Return False if not."""
     pkgs = [
         x
         for x in da_source.iterdir()
