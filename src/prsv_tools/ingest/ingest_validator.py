@@ -366,6 +366,23 @@ def valid_ioCategory(io_element: prsv_Information_Object, pkg_type: str) -> bool
         return False
 
 
+def valid_metadata_ioCategory(metadata_io: prsv_Information_Object) -> bool:
+    if (
+        Path(metadata_io.title).suffix.lower() == ".tsv"
+        or Path(metadata_io.title).suffix.lower() == ".csv"
+    ):
+        if metadata_io.ioCategory == "FTK report":
+            return True
+    elif Path(metadata_io.title).suffix.lower() == ".jpg":
+        if metadata_io.ioCategory == "Carrier photograph":
+            return True
+    else:
+        logging.error(
+            f"{metadata_io.title} has incorrect ioCategory: {metadata_io.ioCategory}"
+        )
+        return False
+
+
 def validate_all_contents_element_io_conditions(
     io_element: prsv_Information_Object, pkg_type: str
 ):
@@ -384,6 +401,13 @@ def validate_all_contents_element_so_conditions(
     valid_so_type(so_element)
     valid_sectag(so_element, "open")
     valid_soCategory(so_element, pkg_type, "Element")
+
+
+def validate_all_metadata_io_conditions(metadata_io: prsv_Information_Object):
+    logging.info(f"validating {metadata_io.title}")
+    validate_io_type(metadata_io)
+    valid_sectag(metadata_io, "preservation")
+    valid_metadata_ioCategory(metadata_io)
 
 
 def main():
@@ -430,21 +454,19 @@ def main():
 
     for uuid in uuid_ls:
         top_level_so = get_so(uuid, token, namespaces, "top")
-        # pprint(top_level_so)
         pkg_type = re.search(r"(ER|EM|DI)", top_level_so.title).group(0)
         contents_f = f"{top_level_so.title}_contents"
         metadata_f = f"{top_level_so.title}_metadata"
         contents_uuid = top_level_so.children[contents_f]["uuid"]
         contents_so = get_so(contents_uuid, token, namespaces, "contents")
-        # pprint(contents_so)
         metadata_uuid = top_level_so.children[metadata_f]["uuid"]
         metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
-        # pprint(metadata_so)
 
         valid_all_top_level_so_conditions(top_level_so, pkg_type, args.collectionID)
         valid_all_contents_level_so_conditions(contents_so, pkg_type, args.collectionID)
         valid_all_metadata_level_so_conditions(metadata_so, pkg_type)
 
+        # validate objects in contents folder, both IOs and SOs
         contents_io, contents_element_so = get_contents_io_so(
             contents_so, token, namespaces
         )
@@ -457,6 +479,15 @@ def main():
 
         for so in contents_element_so:
             validate_all_contents_element_so_conditions(so, pkg_type)
+
+        # validate objects in metadata folder, None or IOs
+        if metadata_so.children:
+            for child in metadata_so.children:
+                metadata_io = get_io(
+                    metadata_so.children[child]["uuid"], token, namespaces
+                )
+                validate_all_metadata_io_conditions(metadata_io)
+
 
 
 if __name__ == "__main__":
