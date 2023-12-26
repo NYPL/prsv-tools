@@ -279,7 +279,10 @@ def valid_so_type(so: prsv_Structural_Object) -> bool:
         return False
 
 
-def valid_soCategory(so: prsv_Structural_Object, pkg_type, expected_category: str):
+def valid_soCategory(
+    so: prsv_Structural_Object, pkg_type: str, expected_category: str
+) -> bool:
+    """function to validate soCategory value. Return True if it is as expected; False if not"""
     if so.soCategory == f"{pkg_type}{expected_category}":
         return True
     else:
