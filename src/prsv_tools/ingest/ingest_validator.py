@@ -345,8 +345,10 @@ def valid_all_top_level_so_conditions(
 
 
 def valid_all_contents_level_so_conditions(
-    contents_so: prsv_Structural_Object, pkg_type, collectionId
-):
+    contents_so: prsv_Structural_Object, pkg_type: str, collectionId: str
+) -> None:
+    """function to run other functions to validate all contents level folder
+    requirements"""
     logging.info(f"validating contents level {contents_so.title}")
     validate_so_title(contents_so, r"M[0-9]+_(ER|DI|EM)_[0-9]+_contents")
     valid_sectag(contents_so, "open")
