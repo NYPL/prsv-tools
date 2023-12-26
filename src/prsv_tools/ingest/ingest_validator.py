@@ -249,7 +249,8 @@ def get_io(uuid: str, token: str, namespaces: dict) -> prsv_Information_Object:
     return prsv_Information_Object(uuid, title, type, sectag, ioCat)
 
 
-def validate_so_title(so: prsv_Structural_Object, pattern):
+def validate_so_title(so: prsv_Structural_Object, pattern: str) -> bool:
+    """function to validate title pattern of a prsv Structural Object"""
     if re.fullmatch(pattern, so.title):
         return True
     else:
