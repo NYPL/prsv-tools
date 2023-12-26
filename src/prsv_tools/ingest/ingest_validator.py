@@ -197,7 +197,8 @@ def get_fa_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
     return mdfrag_dict
 
 
-def get_so_children(token, so_uuid, namespaces):
+def get_so_children(token: str, so_uuid: str, namespaces: str) -> dict:
+    """function to get and parse children field of a prsv Structural Object"""
     children_dict = dict()
 
     def process_children_root(root):
