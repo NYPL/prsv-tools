@@ -417,6 +417,8 @@ def validate_io_type(io_element: prsv_Information_Object) -> bool:
 def valid_contents_ioCategory(
     io_element: prsv_Information_Object, pkg_type: str
 ) -> bool:
+    """function to validate contents ioCategory, which must be (DI|EM|ER)Element
+    return True if so; False if not"""
     if io_element.ioCategory == f"{pkg_type}Element":
         return True
     else:
