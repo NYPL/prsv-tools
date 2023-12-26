@@ -1,12 +1,9 @@
 import json
-import re
 import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, replace
-from pathlib import Path
 
 import pytest
-import requests
-from schema import And, Optional, Or, Regex, Schema, SchemaError, Use
+from schema import Regex, Schema
 
 import prsv_tools.ingest.ingest_validator as ingest_validator
 import prsv_tools.utility.api as prsvapi
