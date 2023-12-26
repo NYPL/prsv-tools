@@ -226,7 +226,8 @@ def get_so_children(token: str, so_uuid: str, namespaces: str) -> dict:
     return children_dict
 
 
-def get_io(uuid, token, namespaces: dict):
+def get_io(uuid: str, token: str, namespaces: dict) -> prsv_Information_Object:
+    """function to get and parse API to get an Information Object dataclass object"""
     url = f"https://nypl.preservica.com/api/entity/information-objects/{uuid}"
     res = get_api_results(token, url)
     root = ET.fromstring(res.text)
