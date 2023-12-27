@@ -38,9 +38,9 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     return response
 
 
-def parse_res_to_dict(response: requests.Response) -> dict:
+def parse_res_to_dict(response: requests.Response, token) -> dict:
     root = ET.fromstring(response.text)
-    version = prsvapi.find_apiversion(root.tag)
+    version = prsvapi.find_apiversion(token)
     ns = f"{{http://preservica.com/AdminAPI/v{version}}}"
     names = [name.text.replace(" ", "_") for name in root.iter(f"{ns}Name")]
     ids = [id.text for id in root.iter(f"{ns}ApiId")]
@@ -52,7 +52,7 @@ def parse_res_to_dict(response: requests.Response) -> dict:
 
 def fetch_and_write_content(token, url, folder, file_extension) -> None:
     content_res = get_api_results(token, url)
-    content_dict = parse_res_to_dict(content_res)
+    content_dict = parse_res_to_dict(content_res, token)
     for item_name in content_dict:
         item_content_url = f"{url}/{content_dict[item_name]}/content"
         item_res = get_api_results(token, item_content_url)
