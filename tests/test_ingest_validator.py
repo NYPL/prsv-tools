@@ -492,3 +492,41 @@ def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
         invalid_data = replace(request.getfixturevalue(fixture_name), ioCategory="FTK")
         assert not ingest_validator.valid_metadata_ioCategory(invalid_data)
 
+
+@pytest.fixture
+def er_on_fs(tmp_path):
+    er_path = tmp_path / "M23385_ER_11"
+    content_path = er_path /  "objects" / "[root].12"
+    content_path.mkdir(parents=True)
+    (content_path / "HULBERT.BAK").touch()
+    (content_path / "HULBERT").touch()
+    md_path = er_path / "metadata"
+    md_path.mkdir()
+    (md_path / "M1126_ER_10.tsv").touch()
+    (md_path / "M1126-0046p001.JPG")
+
+    return er_path
+
+
+def test_valid_content_count(valid_prsv_contents, er_on_fs):
+    assert ingest_validator.valid_content_count(valid_prsv_contents, er_on_fs)
+
+
+def test_invalid_count_uningested_file(valid_prsv_contents, er_on_fs):
+    (er_on_fs / "objects" / "uningested_file").touch()
+    assert not ingest_validator.valid_content_count(valid_prsv_contents, er_on_fs)
+
+
+def test_invalid_count_new_file(valid_prsv_contents, er_on_fs):
+    (er_on_fs / "objects" / "[root].12" / "HULBERT").unlink()
+    assert not ingest_validator.valid_content_count(valid_prsv_contents, er_on_fs)
+
+
+def test_valid_content_filenames_retained(valid_prsv_contents, er_on_fs):
+    assert ingest_validator.valid_content_filenames(valid_prsv_contents, er_on_fs)
+
+
+def test_invalid_content_filenames_changed(valid_prsv_contents, er_on_fs):
+    renamed = er_on_fs / "objects" / "[root].12" / "HULBERT"
+    renamed.rename(renamed.with_suffix(".STRIPPED_EXTENSION"))
+    assert not ingest_validator.valid_content_filenames(valid_prsv_contents, er_on_fs)
