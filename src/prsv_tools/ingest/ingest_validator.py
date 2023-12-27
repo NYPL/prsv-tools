@@ -4,7 +4,6 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from pprint import pprint
 from typing import List, Tuple
 
 import requests
@@ -30,7 +29,7 @@ def parse_args():
         "--collectionID",
         type=str,
         required=True,
-        help="the collection you'd like to check for, M\d+",
+        help="the collection you'd like to check for, M\\d+",
     )
 
     parser.add_argument(
@@ -507,8 +506,8 @@ def main():
     namespaces = {
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
         "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
-        "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
-        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}",
+        "spec_ns": "{{http://nypl.org/prsv_schemas/specCollection}}",
+        "fa_ns": "{{http://nypl.org/prsv_schemas/findingAid}}",
     }
 
     fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]

@@ -1,5 +1,4 @@
 import json
-import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, replace
 
 import pytest
@@ -20,8 +19,8 @@ version = prsvapi.find_apiversion(token)
 namespaces = {
     "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
     "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
-    "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
-    "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}",
+    "spec_ns": "{{http://nypl.org/prsv_schemas/specCollection}}",
+    "fa_ns": "{{http://nypl.org/prsv_schemas/findingAid}}",
 }
 
 fields = [{"name": "spec.specCollectionID", "values": [collectionid]}]
@@ -248,7 +247,7 @@ def test_content_searchwithin_so_endpoint():
         [Regex(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
     )
 
-    assert expected_schema.is_valid(uuid_ls) == True
+    assert expected_schema.is_valid(uuid_ls)
 
 
 def test_get_top_so(valid_prsv_top):
@@ -496,7 +495,7 @@ def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
 @pytest.fixture
 def er_on_fs(tmp_path):
     er_path = tmp_path / "M23385_ER_11"
-    content_path = er_path /  "objects" / "[root].12"
+    content_path = er_path / "objects" / "[root].12"
     content_path.mkdir(parents=True)
     (content_path / "HULBERT.BAK").touch()
     (content_path / "HULBERT").touch()
