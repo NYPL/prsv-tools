@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, replace
 import pytest
 from schema import Regex, Schema
 
-import prsv_tools.ingest.ingest_validator as ingest_validator
+import prsv_tools.ingest.validate_ingest as validate_ingest
 import prsv_tools.utility.api as prsvapi
 
 # set up
@@ -41,7 +41,7 @@ uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 @pytest.mark.parametrize("url", testendpoints)
 def test_used_endpoints_are_valid(url):
-    res = ingest_validator.get_api_results(token, url)
+    res = validate_ingest.get_api_results(token, url)
     assert res.status_code == 200
 
 
@@ -239,9 +239,9 @@ def valid_prsv_metadata_io_jpg():
 def test_content_searchwithin_so_endpoint():
     """test that the response text has the conceived structure,
     which is a non-empty list consisting of UUID(s)"""
-    response = ingest_validator.search_within_DigArch(token, fields, test_digarch_uuid)
+    response = validate_ingest.search_within_DigArch(token, fields, test_digarch_uuid)
 
-    uuid_ls = ingest_validator.parse_structural_object_uuid(response)
+    uuid_ls = validate_ingest.parse_structural_object_uuid(response)
 
     expected_schema = Schema(
         [Regex(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")]
@@ -254,7 +254,7 @@ def test_get_top_so(valid_prsv_top):
     """test that get_so function returns the correct
     data class structure for the top level SO"""
 
-    actual_api_value = ingest_validator.get_so(
+    actual_api_value = validate_ingest.get_so(
         valid_prsv_top.uuid, token, namespaces, "top"
     )
 
@@ -265,7 +265,7 @@ def test_get_contents_so(valid_prsv_contents):
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
-    actual_api_value = ingest_validator.get_so(
+    actual_api_value = validate_ingest.get_so(
         valid_prsv_contents.uuid, token, namespaces, "contents"
     )
 
@@ -276,7 +276,7 @@ def test_get_metadata_so(valid_prsv_metadata):
     """test that get_so function returns the correct
     data class structure for the contents SO"""
 
-    actual_api_value = ingest_validator.get_so(
+    actual_api_value = validate_ingest.get_so(
         valid_prsv_metadata.uuid, token, namespaces, "metadata"
     )
 
@@ -300,10 +300,10 @@ def test_validate_so_title(expected_result, fixture_name, pattern, request):
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
-        assert ingest_validator.validate_so_title(input_data, pattern)
+        assert validate_ingest.validate_so_title(input_data, pattern)
     else:
         invalid_input = replace(input_data, title="M00000")
-        assert not ingest_validator.validate_so_title(invalid_input, pattern)
+        assert not validate_ingest.validate_so_title(invalid_input, pattern)
 
 
 @pytest.mark.parametrize(
@@ -330,10 +330,10 @@ def test_valid_sectag(expected_result, fixture_name, string, request):
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
-        assert ingest_validator.valid_sectag(input_data, string)
+        assert validate_ingest.valid_sectag(input_data, string)
     else:
         invalid_input = replace(input_data, securityTag="public")
-        assert not ingest_validator.valid_sectag(invalid_input, string)
+        assert not validate_ingest.valid_sectag(invalid_input, string)
 
 
 @pytest.mark.parametrize(
@@ -354,10 +354,10 @@ def test_valid_so_type(expected_result, fixture_name, request):
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
-        assert ingest_validator.valid_so_type(input_data)
+        assert validate_ingest.valid_so_type(input_data)
     else:
         invalid_input = replace(input_data, type="ioCategory")
-        assert not ingest_validator.valid_so_type(invalid_input)
+        assert not validate_ingest.valid_so_type(invalid_input)
 
 
 @pytest.mark.parametrize(
@@ -381,12 +381,10 @@ def test_valid_soCategory(
     input_data = request.getfixturevalue(fixture_name)
 
     if expected_result:
-        assert ingest_validator.valid_soCategory(
-            input_data, pkg_type, expected_category
-        )
+        assert validate_ingest.valid_soCategory(input_data, pkg_type, expected_category)
     else:
         invalid_input = replace(input_data, soCategory="category")
-        assert not ingest_validator.valid_soCategory(
+        assert not validate_ingest.valid_soCategory(
             invalid_input, pkg_type, expected_category
         )
 
@@ -405,7 +403,7 @@ def test_validate_mdfrag(fixture_name, key, value, request):
 
     input_data = request.getfixturevalue(fixture_name)
 
-    assert ingest_validator.validate_mdfrag(input_data, key, value)
+    assert validate_ingest.validate_mdfrag(input_data, key, value)
 
 
 @pytest.mark.parametrize(
@@ -425,7 +423,7 @@ def test_validate_incorrect_mdfrag(
     invalid_data = replace(
         request.getfixturevalue(fixture_name), mdFragments={key: incorrect_value}
     )
-    assert not ingest_validator.validate_mdfrag(invalid_data, key, correct_value)
+    assert not validate_ingest.validate_mdfrag(invalid_data, key, correct_value)
 
 
 @pytest.mark.parametrize(
@@ -441,26 +439,26 @@ def test_validate_contents_element_title(expected_result, fixture_name, request)
     """test validate_contents_element_title will return expected return using different fixtures"""
     if expected_result:
         input_data = request.getfixturevalue(fixture_name)
-        assert ingest_validator.validate_contents_element_title(input_data)
+        assert validate_ingest.validate_contents_element_title(input_data)
     else:
         invalid_data = replace(request.getfixturevalue(fixture_name), title=None)
-        assert not ingest_validator.validate_contents_element_title(invalid_data)
+        assert not validate_ingest.validate_contents_element_title(invalid_data)
 
 
 def test_validate_io_type(valid_prsv_contents_information_object):
     """test validate_io_type return True with valid contents information object"""
-    assert ingest_validator.validate_io_type(valid_prsv_contents_information_object)
+    assert validate_ingest.validate_io_type(valid_prsv_contents_information_object)
 
 
 def test_invalid_io_type(valid_prsv_contents_information_object):
     """test validate_io_type return False with invalid contents information object"""
     invalid_data = replace(valid_prsv_contents_information_object, type="soCategory")
-    assert not ingest_validator.validate_io_type(invalid_data)
+    assert not validate_ingest.validate_io_type(invalid_data)
 
 
 def test_valid_contents_ioCategory(valid_prsv_contents_information_object):
     """test valid_contents_ioCategory returns True with correct input"""
-    assert ingest_validator.valid_contents_ioCategory(
+    assert validate_ingest.valid_contents_ioCategory(
         valid_prsv_contents_information_object, "ER"
     )
 
@@ -470,7 +468,7 @@ def test_invalid_contents_ioCategory(valid_prsv_contents_information_object):
     invalid_data = replace(
         valid_prsv_contents_information_object, ioCategory="DIElement"
     )
-    assert not ingest_validator.valid_contents_ioCategory(invalid_data, "ER")
+    assert not validate_ingest.valid_contents_ioCategory(invalid_data, "ER")
 
 
 @pytest.mark.parametrize(
@@ -486,10 +484,10 @@ def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
     fixtures and inputs"""
     if expected_result:
         input_data = request.getfixturevalue(fixture_name)
-        assert ingest_validator.valid_metadata_ioCategory(input_data)
+        assert validate_ingest.valid_metadata_ioCategory(input_data)
     else:
         invalid_data = replace(request.getfixturevalue(fixture_name), ioCategory="FTK")
-        assert not ingest_validator.valid_metadata_ioCategory(invalid_data)
+        assert not validate_ingest.valid_metadata_ioCategory(invalid_data)
 
 
 @pytest.fixture
@@ -508,24 +506,24 @@ def er_on_fs(tmp_path):
 
 
 def test_valid_content_count(valid_prsv_contents, er_on_fs):
-    assert ingest_validator.valid_content_count(valid_prsv_contents, er_on_fs)
+    assert validate_ingest.valid_content_count(valid_prsv_contents, er_on_fs)
 
 
 def test_invalid_count_uningested_file(valid_prsv_contents, er_on_fs):
     (er_on_fs / "objects" / "uningested_file").touch()
-    assert not ingest_validator.valid_content_count(valid_prsv_contents, er_on_fs)
+    assert not validate_ingest.valid_content_count(valid_prsv_contents, er_on_fs)
 
 
 def test_invalid_count_new_file(valid_prsv_contents, er_on_fs):
     (er_on_fs / "objects" / "[root].12" / "HULBERT").unlink()
-    assert not ingest_validator.valid_content_count(valid_prsv_contents, er_on_fs)
+    assert not validate_ingest.valid_content_count(valid_prsv_contents, er_on_fs)
 
 
 def test_valid_content_filenames_retained(valid_prsv_contents, er_on_fs):
-    assert ingest_validator.valid_content_filenames(valid_prsv_contents, er_on_fs)
+    assert validate_ingest.valid_content_filenames(valid_prsv_contents, er_on_fs)
 
 
 def test_invalid_content_filenames_changed(valid_prsv_contents, er_on_fs):
     renamed = er_on_fs / "objects" / "[root].12" / "HULBERT"
     renamed.rename(renamed.with_suffix(".STRIPPED_EXTENSION"))
-    assert not ingest_validator.valid_content_filenames(valid_prsv_contents, er_on_fs)
+    assert not validate_ingest.valid_content_filenames(valid_prsv_contents, er_on_fs)
