@@ -506,24 +506,24 @@ def er_on_fs(tmp_path):
 
 
 def test_valid_content_count(valid_prsv_contents, er_on_fs):
-    assert validate_ingest.valid_content_count(valid_prsv_contents, er_on_fs)
+    assert validate_ingest.valid_contents_count(valid_prsv_contents, er_on_fs)
 
 
 def test_invalid_count_uningested_file(valid_prsv_contents, er_on_fs):
-    (er_on_fs / "objects" / "uningested_file").touch()
-    assert not validate_ingest.valid_content_count(valid_prsv_contents, er_on_fs)
+    (er_on_fs / "contents" / "uningested_file").touch()
+    assert not validate_ingest.valid_contents_count(valid_prsv_contents, er_on_fs)
 
 
 def test_invalid_count_new_file(valid_prsv_contents, er_on_fs):
-    (er_on_fs / "objects" / "[root].12" / "HULBERT").unlink()
-    assert not validate_ingest.valid_content_count(valid_prsv_contents, er_on_fs)
+    (er_on_fs / "contents" / "[root].12" / "HULBERT").unlink()
+    assert not validate_ingest.valid_contents_count(valid_prsv_contents, er_on_fs)
 
 
 def test_valid_content_filenames_retained(valid_prsv_contents, er_on_fs):
-    assert validate_ingest.valid_content_filenames(valid_prsv_contents, er_on_fs)
+    assert validate_ingest.valid_contents_filenames(valid_prsv_contents, er_on_fs)
 
 
 def test_invalid_content_filenames_changed(valid_prsv_contents, er_on_fs):
-    renamed = er_on_fs / "objects" / "[root].12" / "HULBERT"
+    renamed = er_on_fs / "contents" / "[root].12" / "HULBERT"
     renamed.rename(renamed.with_suffix(".STRIPPED_EXTENSION"))
-    assert not validate_ingest.valid_content_filenames(valid_prsv_contents, er_on_fs)
+    assert not validate_ingest.valid_contents_filenames(valid_prsv_contents, er_on_fs)
