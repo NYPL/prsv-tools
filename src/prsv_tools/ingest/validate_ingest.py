@@ -384,7 +384,9 @@ def get_contents_io_so(
         elif so.children[child]["objType"] == "SO":
             element_so = get_so(uuid, credentials, namespaces, "contents_element")
             contents_element_so.append(element_so)
-            new_io, new_element_so = get_contents_io_so(element_so, credentials, namespaces)
+            new_io, new_element_so = get_contents_io_so(
+                element_so, credentials, namespaces
+            )
             contents_io.extend(new_io)
             contents_element_so.extend(new_element_so)
     return contents_io, contents_element_so
@@ -480,6 +482,42 @@ def validate_all_metadata_io_conditions(metadata_io: prsv_Information_Object) ->
     valid_metadata_ioCategory(metadata_io)
 
 
+def get_source_count(
+    source: Path, collection_id: str, pkg_title: str
+) -> Tuple[List, List]:
+    """function to get file list and folder list of the source
+    'objects' directory"""
+    obj_path = source / collection_id / pkg_title / "objects"
+    file_list = [x for x in obj_path.rglob("*") if x.is_file()]
+    folder_list = [y for y in obj_path.rglob("*") if y.is_dir()]
+
+    return file_list, folder_list
+
+
+def valid_contents_count(
+    contents_io: list, contents_element_so: list, source_file: list, source_folder: list
+) -> bool:
+    """function to compare prsv contents folder IO count and SO count with the source file
+    system's folder and file count"""
+    if len(contents_io) == len(source_file) and len(contents_element_so) == len(
+        source_folder
+    ):
+        logging.info(
+            f"""IOs and SOs counts of the contents folder are the same as
+                     the file system"""
+        )
+        return True
+    else:
+        logging.error(
+            f"""Contents IO and/or SO count(s) incorrect
+                          PRSV contents IO count: {len(contents_io)}
+                          Source file count: {len(source_file)}
+                          PRSV contents SO count: {len(contents_element_so)}
+                          Source folder count: {len(source_folder)}"""
+        )
+        return False
+
+
 def main():
     """
     First type of check:
@@ -535,8 +573,10 @@ def main():
             contents_so, args.credentials, namespaces
         )
 
-        logging.info(f"{contents_f} has {len(contents_io)} files in total")
-        logging.info(f"{contents_f} has {len(contents_element_so)} folders in total")
+        file_ct, folder_ct = get_source_count(
+            da_source, args.collectionID, top_level_so.title
+        )
+        valid_contents_count(contents_io, contents_element_so, file_ct, folder_ct)
 
         for io in contents_io:
             validate_all_contents_element_io_conditions(io, pkg_type)
