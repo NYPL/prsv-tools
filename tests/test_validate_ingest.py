@@ -493,14 +493,14 @@ def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
 @pytest.fixture
 def er_on_fs(tmp_path):
     er_path = tmp_path / "M23385_ER_11"
-    content_path = er_path / "objects" / "[root].12"
-    content_path.mkdir(parents=True)
-    (content_path / "HULBERT.BAK").touch()
-    (content_path / "HULBERT").touch()
+    contents_path = er_path / "contents" / "[root].12"
+    contents_path.mkdir(parents=True)
+    (contents_path / "HULBERT.BAK").touch()
+    (contents_path / "HULBERT").touch()
     md_path = er_path / "metadata"
     md_path.mkdir()
-    (md_path / "M1126_ER_10.tsv").touch()
-    (md_path / "M1126-0046p001.JPG")
+    (md_path / "M23385_ER_11.tsv").touch()
+    (md_path / "M23385-0046p001.JPG")
 
     return er_path
 
