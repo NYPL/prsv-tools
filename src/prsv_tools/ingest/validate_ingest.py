@@ -510,9 +510,7 @@ def valid_contents_count(
 ) -> bool:
     """function to compare prsv contents folder IO count and SO count with the source file
     system's folder and file count"""
-    if contents_io_ct == source_file_ct and len(contents_element_so_ct) == len(
-        source_folder_ct
-    ):
+    if contents_io_ct == source_file_ct and contents_element_so_ct == source_folder_ct:
         logging.info(
             f"""IOs and SOs counts of the contents folder are the same as
                      the file system"""
