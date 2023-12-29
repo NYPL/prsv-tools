@@ -239,7 +239,9 @@ def valid_prsv_metadata_io_jpg():
 def test_content_searchwithin_so_endpoint():
     """test that the response text has the conceived structure,
     which is a non-empty list consisting of UUID(s)"""
-    response = validate_ingest.search_within_DigArch(credentials, fields, test_digarch_uuid)
+    response = validate_ingest.search_within_DigArch(
+        credentials, fields, test_digarch_uuid
+    )
 
     uuid_ls = validate_ingest.parse_structural_object_uuid(response)
 
@@ -488,6 +490,21 @@ def test_valid_metadata_ioCategory(expected_result, fixture_name, request):
     else:
         invalid_data = replace(request.getfixturevalue(fixture_name), ioCategory="FTK")
         assert not validate_ingest.valid_metadata_ioCategory(invalid_data)
+
+
+def test_get_contents_io_so_count(
+    valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list
+):
+    """test that get_contents_io_so_count returns expected integers,
+    which are the number of items of the two list fixtures"""
+    io_num, so_num = validate_ingest.get_contents_io_so_count(
+        valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list
+    )
+
+    if (io_num, so_num) == (2, 1):
+        assert True
+    else:
+        assert False
 
 
 @pytest.fixture
