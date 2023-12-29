@@ -11,7 +11,7 @@ import prsv_tools.utility.api as prsvapi
 
 test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
 credentials = "test-ingest"
-collectionid = "M1126"
+collectionid = "M23385"
 test_er_uuid = "ae7a1ea1-9a75-4348-807a-9923b1f22ad0"
 test_contents_uuid = "9885feb6-3340-4a02-8585-e0f75f55eb92"
 test_metadata_uuid = "5df3566c-36f0-4721-9e5e-bc1c824b5910"
@@ -508,9 +508,10 @@ def test_get_contents_io_so_count(
 
 
 @pytest.fixture
-def er_on_fs(tmp_path):
-    er_path = tmp_path / "M23385_ER_11"
-    contents_path = er_path / "contents" / "[root].12"
+def source_er(tmp_path):
+    source_path = tmp_path
+    er_path = source_path / "M23385" / "M23385_ER_11"
+    contents_path = er_path / "objects" / "[root].12"
     contents_path.mkdir(parents=True)
     (contents_path / "HULBERT.BAK").touch()
     (contents_path / "HULBERT").touch()
@@ -519,7 +520,20 @@ def er_on_fs(tmp_path):
     (md_path / "M23385_ER_11.tsv").touch()
     (md_path / "M23385-0046p001.JPG")
 
-    return er_path
+    return source_path
+
+
+def test_get_source_file_folder_count(source_er):
+    """test that get_source_file_folder_count returns expected
+    intergers of the source_er fixture file and folder counts"""
+    source_file, source_folder = validate_ingest.get_source_file_folder_count(
+        source_er, collectionid, "M23385_ER_11"
+    )
+    print(source_file, source_folder)
+    if (source_file, source_folder) == (2, 1):
+        assert True
+    else:
+        assert False
 
 
 def test_valid_content_count(valid_prsv_contents, er_on_fs):
