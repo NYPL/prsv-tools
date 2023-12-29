@@ -536,8 +536,19 @@ def test_get_source_file_folder_count(source_er):
         assert False
 
 
-def test_valid_content_count(valid_prsv_contents, er_on_fs):
-    assert validate_ingest.valid_contents_count(valid_prsv_contents, er_on_fs)
+def test_valid_contents_count(
+    valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list, source_er
+):
+    prsv_io, prsv_so = validate_ingest.get_contents_io_so_count(
+        valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list
+    )
+    source_file, source_folder = validate_ingest.get_source_file_folder_count(
+        source_er, collectionid, "M23385_ER_11"
+    )
+
+    assert validate_ingest.valid_contents_count(
+        prsv_io, prsv_so, source_file, source_folder
+    )
 
 
 def test_invalid_count_uningested_file(valid_prsv_contents, er_on_fs):
