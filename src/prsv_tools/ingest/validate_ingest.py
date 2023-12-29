@@ -555,8 +555,8 @@ def main():
     namespaces = {
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
         "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
-        "spec_ns": "{{http://nypl.org/prsv_schemas/specCollection}}",
-        "fa_ns": "{{http://nypl.org/prsv_schemas/findingAid}}",
+        "spec_ns": "{http://nypl.org/prsv_schemas/specCollection}",
+        "fa_ns": "{http://nypl.org/prsv_schemas/findingAid}",
     }
 
     fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
