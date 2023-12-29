@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "--source",
         type=str,
-        required=False,
+        required=True,
         help="the source directory you want to compare to, usually ICA",
     )
 
@@ -482,7 +482,15 @@ def validate_all_metadata_io_conditions(metadata_io: prsv_Information_Object) ->
     valid_metadata_ioCategory(metadata_io)
 
 
-def get_source_count(
+def get_contents_io_so_count(
+    contents_io: list, contents_element_so: list
+) -> Tuple[int, int]:
+    """function to get the count of IOs in the PRSV contents SO
+    and the count of SOs in the PRSV contents SO"""
+    return len(contents_io), len(contents_element_so)
+
+
+def get_source_file_folder_count(
     source: Path, collection_id: str, pkg_title: str
 ) -> Tuple[List, List]:
     """function to get file list and folder list of the source
@@ -491,16 +499,19 @@ def get_source_count(
     file_list = [x for x in obj_path.rglob("*") if x.is_file()]
     folder_list = [y for y in obj_path.rglob("*") if y.is_dir()]
 
-    return file_list, folder_list
+    return len(file_list), len(folder_list)
 
 
 def valid_contents_count(
-    contents_io: list, contents_element_so: list, source_file: list, source_folder: list
+    contents_io_ct: int,
+    contents_element_so_ct: int,
+    source_file_ct: int,
+    source_folder_ct: int,
 ) -> bool:
     """function to compare prsv contents folder IO count and SO count with the source file
     system's folder and file count"""
-    if len(contents_io) == len(source_file) and len(contents_element_so) == len(
-        source_folder
+    if contents_io_ct == source_file_ct and len(contents_element_so_ct) == len(
+        source_folder_ct
     ):
         logging.info(
             f"""IOs and SOs counts of the contents folder are the same as
@@ -510,10 +521,10 @@ def valid_contents_count(
     else:
         logging.error(
             f"""Contents IO and/or SO count(s) incorrect
-                          PRSV contents IO count: {len(contents_io)}
-                          Source file count: {len(source_file)}
-                          PRSV contents SO count: {len(contents_element_so)}
-                          Source folder count: {len(source_folder)}"""
+                          PRSV contents IO count: {contents_io_ct}
+                          Source file count: {source_file_ct}
+                          PRSV contents SO count: {contents_element_so_ct}
+                          Source folder count: {source_folder_ct}"""
         )
         return False
 
@@ -572,11 +583,14 @@ def main():
         contents_io, contents_element_so = get_contents_io_so(
             contents_so, args.credentials, namespaces
         )
+        contents_io_ct, contents_element_so_ct = get_contents_io_so_count(
+            contents_io, contents_element_so
+        )
 
-        file_ct, folder_ct = get_source_count(
+        file_ct, folder_ct = get_source_file_folder_count(
             da_source, args.collectionID, top_level_so.title
         )
-        valid_contents_count(contents_io, contents_element_so, file_ct, folder_ct)
+        valid_contents_count(contents_io_ct, contents_element_so_ct, file_ct, folder_ct)
 
         for io in contents_io:
             validate_all_contents_element_io_conditions(io, pkg_type)
