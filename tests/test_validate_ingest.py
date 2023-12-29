@@ -10,12 +10,12 @@ import prsv_tools.utility.api as prsvapi
 # set up
 
 test_digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
-token = prsvapi.get_token("test-ingest")
+credentials = "test-ingest"
 collectionid = "M1126"
 test_er_uuid = "ae7a1ea1-9a75-4348-807a-9923b1f22ad0"
 test_contents_uuid = "9885feb6-3340-4a02-8585-e0f75f55eb92"
 test_metadata_uuid = "5df3566c-36f0-4721-9e5e-bc1c824b5910"
-version = prsvapi.find_apiversion(token)
+version = prsvapi.find_apiversion(credentials)
 namespaces = {
     "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
     "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
@@ -41,7 +41,7 @@ uuid_pattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 @pytest.mark.parametrize("url", testendpoints)
 def test_used_endpoints_are_valid(url):
-    res = validate_ingest.get_api_results(token, url)
+    res = validate_ingest.get_api_results(credentials, url)
     assert res.status_code == 200
 
 
@@ -239,7 +239,7 @@ def valid_prsv_metadata_io_jpg():
 def test_content_searchwithin_so_endpoint():
     """test that the response text has the conceived structure,
     which is a non-empty list consisting of UUID(s)"""
-    response = validate_ingest.search_within_DigArch(token, fields, test_digarch_uuid)
+    response = validate_ingest.search_within_DigArch(credentials, fields, test_digarch_uuid)
 
     uuid_ls = validate_ingest.parse_structural_object_uuid(response)
 
@@ -255,7 +255,7 @@ def test_get_top_so(valid_prsv_top):
     data class structure for the top level SO"""
 
     actual_api_value = validate_ingest.get_so(
-        valid_prsv_top.uuid, token, namespaces, "top"
+        valid_prsv_top.uuid, credentials, namespaces, "top"
     )
 
     assert asdict(valid_prsv_top) == asdict(actual_api_value)
@@ -266,7 +266,7 @@ def test_get_contents_so(valid_prsv_contents):
     data class structure for the contents SO"""
 
     actual_api_value = validate_ingest.get_so(
-        valid_prsv_contents.uuid, token, namespaces, "contents"
+        valid_prsv_contents.uuid, credentials, namespaces, "contents"
     )
 
     assert asdict(valid_prsv_contents) == asdict(actual_api_value)
@@ -277,7 +277,7 @@ def test_get_metadata_so(valid_prsv_metadata):
     data class structure for the contents SO"""
 
     actual_api_value = validate_ingest.get_so(
-        valid_prsv_metadata.uuid, token, namespaces, "metadata"
+        valid_prsv_metadata.uuid, credentials, namespaces, "metadata"
     )
 
     assert asdict(valid_prsv_metadata) == asdict(actual_api_value)
