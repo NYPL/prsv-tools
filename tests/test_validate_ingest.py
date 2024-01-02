@@ -525,11 +525,11 @@ def source_er(tmp_path):
 
 def test_get_source_file_folder_count(source_er):
     """test that get_source_file_folder_count returns expected
-    intergers of the source_er fixture file and folder counts"""
+    integers of the source_er fixture file and folder counts"""
     source_file, source_folder = validate_ingest.get_source_file_folder_count(
         source_er, collectionid, "M23385_ER_11"
     )
-    print(source_file, source_folder)
+
     if (source_file, source_folder) == (2, 1):
         assert True
     else:
