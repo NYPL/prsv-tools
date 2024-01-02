@@ -540,6 +540,8 @@ def test_get_source_file_folder_count(source_er):
 def test_valid_contents_count(
     valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list, source_er
 ):
+    """test that valid_contents_count returns True when the IO count and source file
+    count are the same, and when the SO count and source folder count are the same"""
     prsv_io, prsv_so = validate_ingest.get_contents_io_so_count(
         valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list
     )
@@ -548,6 +550,23 @@ def test_valid_contents_count(
     )
 
     assert validate_ingest.valid_contents_count(
+        prsv_io, prsv_so, source_file, source_folder
+    )
+
+
+def test_invalid_contents_count(
+    valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list, source_er
+):
+    """test that function returns False if there are uningested file(s)"""
+    uningested_list = [valid_prsv_contents_io_element_list[0]]
+    prsv_io, prsv_so = validate_ingest.get_contents_io_so_count(
+        uningested_list, valid_prsv_contents_so_element_list
+    )
+    source_file, source_folder = validate_ingest.get_source_file_folder_count(
+        source_er, collectionid, "M23385_ER_11"
+    )
+
+    assert not validate_ingest.valid_contents_count(
         prsv_io, prsv_so, source_file, source_folder
     )
 
