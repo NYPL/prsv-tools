@@ -536,6 +536,7 @@ def test_get_source_file_folder_count(source_er):
         assert False
 
 
+# integration test
 def test_valid_contents_count(
     valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list, source_er
 ):
