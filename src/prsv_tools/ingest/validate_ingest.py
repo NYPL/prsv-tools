@@ -36,7 +36,7 @@ def parse_args():
         "--source",
         type=str,
         required=True,
-        help="the source directory you want to compare to, usually ICA",
+        help="the source directory you want to compare to, usually ICA path to 'faComponents'",
     )
 
     return parser.parse_args()
@@ -112,9 +112,10 @@ def ingest_has_correct_ER_number(
 ) -> bool:
     """function to verify inquired collection has the correct number of packages
     in Preservica. Return False if not."""
+    col_folder = da_source / collection_id
     pkgs = [
         x
-        for x in da_source.iterdir()
+        for x in col_folder.iterdir()
         if x.is_dir()
         and x.name.startswith(collection_id)
         and not x.name.endswith("photographs")
@@ -123,7 +124,11 @@ def ingest_has_correct_ER_number(
     found = len(uuid_ls)
 
     if expected == found:
-        logging.info(f"{collection_id} has correct number of packages in Preservica")
+        logging.info(
+            f"""{collection_id} has correct number of packages in Preservica
+                 PRSV has {found}
+                 source has {expected}"""
+        )
         return True
     else:
         logging.error(
