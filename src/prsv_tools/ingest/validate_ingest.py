@@ -115,7 +115,9 @@ def ingest_has_correct_ER_number(
     pkgs = [
         x
         for x in da_source.iterdir()
-        if x.is_dir() and x.name.startswith(collection_id)
+        if x.is_dir()
+        and x.name.startswith(collection_id)
+        and not x.name.endswith("photographs")
     ]
     expected = len(pkgs)
     found = len(uuid_ls)
@@ -124,7 +126,11 @@ def ingest_has_correct_ER_number(
         logging.info(f"{collection_id} has correct number of packages in Preservica")
         return True
     else:
-        logging.error(f"{collection_id} has incorrect number of packages in Preservica")
+        logging.error(
+            f"""{collection_id} has incorrect number of packages in Preservica
+                      PRSV has {found}
+                      source has {expected}"""
+        )
         return False
 
 
