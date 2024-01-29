@@ -37,6 +37,7 @@ lint_er = 'prsv_tools.ingest.lint_er:main'
 flatten_er_metadata = 'prsv_tools.ingest.flatten_er_metadata:main'
 get_schemas = 'prsv_tools.manage.get_schemas:main'
 validate_ingest = 'prsv_tools.ingest.ingest_validator:main'
+generate_prsv_token = 'prsv_tools.utility.generate_token:main'
 
 [tool.mypy]
 exclude = [
