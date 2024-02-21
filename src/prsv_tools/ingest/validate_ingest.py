@@ -507,7 +507,8 @@ def get_source_file_folder_count(
     """function to get file list and folder list of the source
     'objects' directory"""
     obj_path = source / collection_id / pkg_title / "objects"
-    file_list = [x for x in obj_path.rglob("*") if x.is_file()]
+    file_list = [x for x in obj_path.rglob("*") if x.is_file()
+                 and not x.name.startswith(".")]
     folder_list = [y for y in obj_path.rglob("*") if y.is_dir()]
 
     return len(file_list), len(folder_list)
