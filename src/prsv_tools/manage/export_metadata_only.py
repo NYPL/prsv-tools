@@ -42,7 +42,7 @@ def post_so_api(uuid: str, accesstoken: str) -> requests.Response:
                                 + "<IncludeContent>NoContent</IncludeContent>" \
                                 + "<IncludeMetadata>Metadata</IncludeMetadata>" \
                                 + "<IncludedGenerations>All</IncludedGenerations>" \
-                                + "<IncludeParentHierarchy>false</IncludeParentHierarchy>" \
+                                + "<IncludeParentHierarchy>true</IncludeParentHierarchy>" \
                                 + "</ExportAction>"
     # make the API call
     post_response = requests.post(export_so_url, headers=export_headers, data=xml_str)
@@ -80,7 +80,7 @@ def main():
 
     # generate token
     accesstoken = prsvapi.get_token(args.credentials)
-    so_uuid = "85fa0068-f63b-49fc-8310-e0e11944c45a"
+    so_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
 
     post_response = post_so_api(so_uuid, accesstoken)
 
@@ -112,6 +112,7 @@ def main():
                 save_file = open(f"{so_uuid}.zip", "wb")  # wb: write binary
                 save_file.write(get_export_request.content)
                 save_file.close()
+                break
             else:
                 logging.error(f"Get export request unsuccessful: {get_export_request.status_code}")
 
