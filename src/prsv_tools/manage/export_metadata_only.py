@@ -80,7 +80,11 @@ def main():
 
     # generate token
     accesstoken = prsvapi.get_token(args.credentials)
-    so_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
+
+    if "test" in args.credentials:
+        digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
+    else:
+        digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
 
     post_response = post_so_api(so_uuid, accesstoken)
 
