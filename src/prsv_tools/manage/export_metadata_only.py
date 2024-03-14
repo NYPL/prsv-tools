@@ -3,6 +3,7 @@ import logging
 import re
 import sys
 import time
+import xml.etree.ElementTree as ET
 
 import requests
 
@@ -35,7 +36,8 @@ def parse_args():
         "-cid",
         required=False,
         help="""Provide collection ID, e.g. M1234, to export
-        all collection packages metadata""",
+        all collection packages metadata. Can take multiple ids, separate
+        with space""",
     )
     parser.add_argument(
         "--package_id",
@@ -94,6 +96,21 @@ def get_packages_uuids(
         ],
     }
     return search_preservica_api(accesstoken, query_params, parentuuid)
+
+
+def get_pkg_title(accesstoken: str, pkg_uuid: str, credentials: str) -> str:
+    get_so_url = f"https://nypl.preservica.com/api/entity/structural-objects/{pkg_uuid}"
+    get_pkg_headers = {
+        "Preservica-Access-Token": accesstoken,
+        "Content-Type": "application/xml;charset=UTF-8",
+    }
+    res = requests.get(get_so_url, headers=get_pkg_headers)
+
+    root = ET.fromstring(res.text)
+    version = prsvapi.find_apiversion(credentials)
+    title = root.find(f".//{{http://preservica.com/XIP/v{version}}}Title").text
+
+    return title
 
 
 def post_so_api(uuid: str, accesstoken: str) -> requests.Response:
@@ -161,24 +178,35 @@ def main():
     else:
         digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
 
+    pkg_dict = dict()
+
     if args.collection_id:
-        res = get_collection_uuids(accesstoken, args.collection_id, digarch_uuid)
-        so_uuid_ls = parse_structural_object_uuid(res)
+        col_id_ls = args.collection_id.split()
+        for col_id in col_id_ls:
+            res = get_collection_uuids(accesstoken, col_id, digarch_uuid)
+            so_uuids = parse_structural_object_uuid(res)
+
+            for uuid in so_uuids:
+                pkg_title = get_pkg_title(accesstoken, uuid, args.credentials)
+                pkg_dict[pkg_title] = uuid
+            print(pkg_dict)
     if args.package_id:
         pkg_id_ls = args.package_id.split()
-        so_uuid_ls = list()
         for pkg_id in pkg_id_ls:
             res = get_packages_uuids(accesstoken, pkg_id, digarch_uuid)
-            id = parse_structural_object_uuid(res)
-            so_uuid_ls.extend(id)
+            uuid = parse_structural_object_uuid(res)
+            for id in uuid:
+                pkg_title = get_pkg_title(accesstoken, id, args.credentials)
+                pkg_dict[pkg_title] = uuid[0]
 
-    print(so_uuid_ls)
 
-    for so_uuid in so_uuid_ls:
-        post_response = post_so_api(so_uuid, accesstoken)
+    for pkg in pkg_dict:
+        accesstoken_a = prsvapi.get_token(args.credentials)
+        post_response = post_so_api(pkg_dict[pkg], accesstoken_a)
 
         # checking for API status code
         if post_response.status_code == 202:
+            logging.info(f"Now working on {pkg}")
             logging.info(f"Progress token: {post_response.text}")
             progresstoken = post_response.text
             time.sleep(10)
@@ -191,7 +219,7 @@ def main():
         # checking for API status code for 15 times. with 5 secs interval
         for _ in range(15):
             time.sleep(5)
-            get_progress_response = get_progress_api(progresstoken, accesstoken)
+            get_progress_response = get_progress_api(progresstoken, accesstoken_a)
             if get_progress_response.status_code != 200:
                 logging.error(
                     f"""GET progress request unsuccessful:
@@ -201,7 +229,9 @@ def main():
             else:
                 logging.info(f"Progress completed. Will proceed to download")
                 time.sleep(60)
-                get_export_request = get_export_download_api(progresstoken, accesstoken)
+                get_export_request = get_export_download_api(
+                    progresstoken, accesstoken_a
+                )
                 # checking for API status code
                 if get_export_request.status_code == 200:
                     logging.info(
@@ -209,7 +239,7 @@ def main():
                     )
                     # save the file
                     save_file = open(
-                        f"{so_uuid}.zip", "wb"
+                        f"{pkg}.zip", "wb"
                     )  # wb: write binary /// how to get package title instead of uuid?
                     save_file.write(get_export_request.content)
                     save_file.close()
