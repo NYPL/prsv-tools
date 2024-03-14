@@ -240,7 +240,7 @@ def main():
                     # save the file
                     save_file = open(
                         f"{pkg}.zip", "wb"
-                    )  # wb: write binary /// how to get package title instead of uuid?
+                    )  # wb: write binary
                     save_file.write(get_export_request.content)
                     save_file.close()
                     break
