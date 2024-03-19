@@ -80,11 +80,12 @@ def add_columns(df):
 def get_summary_info(df):
     """Get summary information with specific columns"""
     summary_info = (
-        df.groupby(["Object Type", "IO Type"])
+        df.groupby(["Ingest Month", "Object Type", "IO Type"])
         .agg({"File Size": "sum", "File Name": "count"})
         .reset_index()
     )
     summary_info.columns = [
+        "Ingest Month",
         "Object Type",
         "IO Type",
         "Total File Size",
