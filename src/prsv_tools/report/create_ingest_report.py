@@ -1,6 +1,7 @@
 import argparse
 import re
 from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 
@@ -39,7 +40,9 @@ def combine_excel(folder: Path):
         if x.is_file()
         and x.suffix.lower() == ".xlsx"
         and not x.name.startswith(".")
+        and not x.name.startswith("~$")
     ]
+    print(file_ls)
     df = pd.DataFrame()
     for excel in file_ls:
         df_new = pd.read_excel(excel, index_col=0)
@@ -57,10 +60,19 @@ def determine_io_type(file_name):
         return "Asset"
 
 
+def determine_ingest_month(ingest_date):
+    """Extract year-month information from the IngestDate column"""
+    dt_obj = datetime.fromisoformat(ingest_date)
+    year_month_str = f"{dt_obj.year}-{dt_obj.strftime('%m')}"
+
+    return year_month_str
+
+
 def add_columns(df):
     """Add IO Type column and Object Type column"""
     df["IO Type"] = df["File Name"].apply(determine_io_type)
     df["Object Type"] = "DigArch"
+    df["Ingest Month"] = df["IngestDate"].apply(determine_ingest_month)
 
     return df
 
