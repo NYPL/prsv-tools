@@ -50,15 +50,17 @@ def package_has_valid_name(package: Path) -> bool:
 
 
 def package_has_valid_subfolder_names(package: Path) -> bool:
-    """Second level folders must have objects and metadata folder"""
-    expected = set(["objects", "metadata"])
+    """Second level folders must have objects and metadata folder
+    It could also include an 'access' folder"""
+    expected_a = set(["objects", "metadata"])
+    expected_b = set(["objects", "metadata", "access"])
     found = set([x.name for x in package.iterdir()])
 
-    if expected == found:
+    if found in [expected_a, expected_b]:
         return True
     else:
         LOGGER.error(
-            f"{package.name} subfolders should have objects and metadata, found {found}"
+            f"{package.name} subfolders should have objects and metadata and/or access, found {found}"
         )
         return False
 
@@ -66,7 +68,7 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
 def objects_folder_has_no_access_folder(package: Path) -> bool:
     """An access folder within the objects folder indicates it is an older package,
     and the files within the access folder was created by the Library,
-    and should not be ingested"""
+    and should be worked on before being ingested"""
     access_dir = package / "objects" / "access"
 
     if access_dir.is_dir():
@@ -189,6 +191,36 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
     else:
         return True
 
+def access_files_match_with_objects(package: Path) -> bool:
+    """Matching files in access folder with ones in objects folder"""
+    access_dir = package / "access"
+    objects_dir = package / "objects"
+
+    if not access_dir.exists():
+        LOGGER.info(f"{package.name} does not have access folder. It will be skipped")
+        return True
+    else:
+        access_fn = [ f.name for f in access_dir.rglob("*") if f.is_file() ] # accessfile.wpd.txt
+        access_fn_to_match = list()
+        objects_fn = [ f.name for f in objects_dir.rglob("*") if f.is_file() ]
+
+        for fn in access_fn:
+            match = re.match(r"(.+)\.+", fn)
+            access_fn_to_match.append(match.group(1))
+
+        issue_ls = list()
+
+        for matchfn in access_fn_to_match:
+            if not matchfn in objects_fn:
+                issue_ls.append(matchfn)
+
+        if issue_ls:
+            LOGGER.warning(f"""These files have matching issues:
+                           {issue_ls}""")
+            return False
+        else:
+            return True
+
 
 def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
     """Run all linting tests against a package"""
@@ -197,6 +229,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
     less_strict_tests = [
         metadata_folder_has_one_or_less_file,
         package_has_no_hidden_file,
+        access_files_match_with_objects
     ]
 
     for test in less_strict_tests:
