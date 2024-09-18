@@ -69,3 +69,6 @@ def find_apiversion(token: str) -> str:
         return version_search.group(1)
     else:
         return ""
+
+def main():
+    token = get_token("prod-ingest")
