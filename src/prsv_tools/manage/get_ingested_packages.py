@@ -1,6 +1,5 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
-import csv
 
 import requests
 
@@ -33,8 +32,6 @@ def parse_args():
         help="""Optional. Provide filter to search for specific children""",
     )
 
-
-
     return parser.parse_args()
 
 
@@ -47,18 +44,16 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
     return response
 
 
-def get_all_category_children(token: str, category_id: str, filter = None) -> list[str]:
+def get_all_category_children(token: str, category_id: str, filter=None) -> list[str]:
     version = prsvapi.find_apiversion(token)
-    ns1 = f"{{http://preservica.com/EntityAPI/v{version}}}"
-    ns = {'': f"{{http://preservica.com/EntityAPI/v{version}}}"}
+    ns = {"": f"{{http://preservica.com/EntityAPI/v{version}}}"}
 
     start = 0
     url = f"https://nypl.preservica.com/api/entity/structural-objects/86531e4f-3370-4944-9b70-6b64873226fa/children?start={start}&max=1"
     response = get_api_results(token, url)
 
-
     root = ET.fromstring(response.text)
-    end = int(root.find(f".//{ns1}TotalResults").text)
+    end = int(root.find(".//TotalResults", namespaces=ns).text)
     print(end)
     children = []
     while start < end:
@@ -66,7 +61,7 @@ def get_all_category_children(token: str, category_id: str, filter = None) -> li
         url = f"https://nypl.preservica.com/api/entity/structural-objects/86531e4f-3370-4944-9b70-6b64873226fa/children?start={start+1}&max=1000"
         response = get_api_results(token, url)
         root = ET.fromstring(response.text)
-        children_results = root.findall(f".//{ns1}Child")
+        children_results = root.findall(f".//Child", namespaces=ns)
         for child in children_results:
             if filter and child.get("title").startswith(filter):
                 children_2 = [child.get("ref"), child.get("title")]
@@ -76,22 +71,21 @@ def get_all_category_children(token: str, category_id: str, filter = None) -> li
             children.append(children_2)
         start += 1000
 
-
     return children
+
 
 def get_all_category_grandchildren(token: str, children: list[str]) -> list[str]:
     version = prsvapi.find_apiversion(token)
-    ns1 = f"{{http://preservica.com/EntityAPI/v{version}}}"
-    ns = {'': f"{{http://preservica.com/EntityAPI/v{version}}}"}
+    ns = {"": f"{{http://preservica.com/EntityAPI/v{version}}}"}
     good = []
     for child in children:
         url = f"https://nypl.preservica.com/api/entity/structural-objects/{child[0]}/children?start=1&max=2"
         response = get_api_results(token, url)
         if response.status_code != 200:
-            token = prsvapi.get_token('prod-ingest')
+            token = prsvapi.get_token("prod-ingest")
             response = get_api_results(token, url)
         root = ET.fromstring(response.text)
-        grandchild_maybe = root.find(f".//{ns1}Child")
+        grandchild_maybe = root.find(".//Child", namespaces=ns)
         if grandchild_maybe is None:
             print(f"{child[1]} was a bad ingest?")
             continue
@@ -99,10 +93,10 @@ def get_all_category_grandchildren(token: str, children: list[str]) -> list[str]
         url2 = f"https://nypl.preservica.com/api/entity/structural-objects/{grandchild}/children"
         response2 = get_api_results(token, url2)
         if response2.status_code != 200:
-            token = prsvapi.get_token('prod-ingest')
+            token = prsvapi.get_token("prod-ingest")
             response2 = get_api_results(token, url2)
         root2 = ET.fromstring(response2.text)
-        total_ = root2.find(f".//{ns1}TotalResults")
+        total_ = root2.find(".//TotalResults", namespaces=ns)
         if total_ is None:
             print(f"{child[1]} was a bad ingest?")
             continue
@@ -135,7 +129,7 @@ def main():
         "DigAMI": "183a74b5-7247-4fb2-8184-959366bc0cbc",
         "DigArch": "e80315bc-42f5-44da-807f-446f78621c08",
         "BDAMI": "3e70b062-6e58-4dcd-84e8-e24194f3467d",
-        "DigImages": "e544e461-3007-4de0-832d-381ec034424b"
+        "DigImages": "e544e461-3007-4de0-832d-381ec034424b",
     }
 
     token = prsvapi.get_token(args.credentials)

@@ -62,6 +62,7 @@ def good_package(tmp_path: Path):
 
     return pkg
 
+
 @pytest.fixture
 def good_package_access(tmp_path: Path):
     pkg = tmp_path.joinpath("M12345_ER_0002")
@@ -85,6 +86,7 @@ def good_package_access(tmp_path: Path):
     metadata_filepath.write_bytes(b"some bytes for metadata")
 
     return pkg
+
 
 def test_top_folder_valid_name(good_package):
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
@@ -330,11 +332,13 @@ def test_package_has_zero_bytes_file(good_package):
 
     assert not result
 
+
 def test_access_files_match_with_objects(good_package_access):
     """Matching files in access folder with ones in objects folder"""
     result = lint_er.access_files_match_with_objects(good_package_access)
 
     assert result
+
 
 def test_access_files_not_match_with_objects(good_package_access):
     """Test that package fails function when there are file not matching with
@@ -346,6 +350,7 @@ def test_access_files_not_match_with_objects(good_package_access):
     result = lint_er.access_files_match_with_objects(bad_package_access)
 
     assert not result
+
 
 def test_valid_package(good_package):
     """Test that package returns 'valid' when all tests are passed"""

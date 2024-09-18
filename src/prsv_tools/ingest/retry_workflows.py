@@ -1,12 +1,10 @@
-import xml.etree.ElementTree as ET
 import logging
-from pathlib import Path
+import xml.etree.ElementTree as ET
 
 import requests
 
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.utility.cli as prsvcli
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,18 +33,24 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
 
 
 def check_for_stalled_workflows(token: str) -> bool:
-    response = get_api_results(token, "https://nypl.preservica.com/sdb/rest/workflow/instances?state=Failed&type=Ingest&start=0&max=100")
+    response = get_api_results(
+        token,
+        "https://nypl.preservica.com/sdb/rest/workflow/instances?state=Failed&type=Ingest&start=0&max=100",
+    )
     root = ET.fromstring(response.text)
     ns = {"": "http://workflow.preservica.com"}
-    if int(root.find(f"Count", namespaces=ns).text) > 0:
-        hung_workflows = [instance for instance in root.iter(f"WorkflowInstance", namespaces=ns)]
+    if int(root.find("Count", namespaces=ns).text) > 0:
+        hung_workflows = [
+            instance for instance in root.iter("WorkflowInstance", namespaces=ns)
+        ]
         for workflow in hung_workflows:
             context = workflow.find("WorkflowContextName").text
-            started = workflow.find("Started").text,
+            started = (workflow.find("Started").text,)
             step = workflow.find("CurrentStepName").text
             group_id = workflow.find("WorkflowGroupID").text
-            LOGGER.info(f"Stalled workflow found: {context} started at {started} in group {group_id} at step {step}")
-
+            LOGGER.info(
+                f"Stalled workflow found: {context} started at {started} in group {group_id} at step {step}"
+            )
 
             LOGGER.info()
         return True
@@ -55,7 +59,9 @@ def check_for_stalled_workflows(token: str) -> bool:
 
 
 def retry_stalled_workflows(token: str) -> None:
-    response = get_api_results(token, "https://nypl.preservica.com/sdb/rest/workflow/instances/retry")
+    response = get_api_results(
+        token, "https://nypl.preservica.com/sdb/rest/workflow/instances/retry"
+    )
     print(response.text)
     return None
 
@@ -71,7 +77,7 @@ def main():
 
     if stalled:
         print("Stalled workflows found")
-        #retry_stalled_workflows(token, stalled)
+        # retry_stalled_workflows(token, stalled)
 
 
 if __name__ == "__main__":

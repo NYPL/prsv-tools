@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-
 import prsv_tools.utility.cli as prsvcli
 
 LOGGER = logging.getLogger(__name__)
@@ -20,10 +19,7 @@ def _configure_logging(log_folder: Path):
         format="%(asctime)s - %(levelname)8s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         encoding="utf-8",
-        handlers=[
-            logging.FileHandler(log_fpath, mode="w"),
-            logging.StreamHandler()
-        ]
+        handlers=[logging.FileHandler(log_fpath, mode="w"), logging.StreamHandler()],
     )
 
 
@@ -67,7 +63,9 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
 
 def data_folder_has_valid_subfolders(package: Path) -> bool:
     """Third level folders must have objects and metadata folder"""
-    expected = set(["PreservationMasters", "Mezzanines", "EditMasters", "ServiceCopies", "Images"])
+    expected = set(
+        ["PreservationMasters", "Mezzanines", "EditMasters", "ServiceCopies", "Images"]
+    )
     found = set([x.name for x in (package / "data").iterdir() if x.is_dir()])
 
     if found <= expected:
@@ -159,13 +157,17 @@ def tag_file_is_expected_types(package: Path) -> bool:
     expected_types = [".framemd5", ".gz", ".ssa", ".scc", ".vtt", ".srt", ".txt"]
     for file in md_file_ls:
         if file.suffix.lower() == ".gz":
-            parts = file.stem.split('.')
-            if not "mkv" in parts and not "dv" in parts:
-                LOGGER.warning(f"{package.name} has a gz file of an untracked category: {file.name}")
+            parts = file.stem.split(".")
+            if "mkv" not in parts and "dv" not in parts:
+                LOGGER.warning(
+                    f"{package.name} has a gz file of an untracked category: {file.name}"
+                )
                 expected = False
 
         if file.suffix.lower() == ".txt" and not file.name.endswith("timecodes.txt"):
-            LOGGER.warning(f"{package.name} has a txt file of an untracked category: {file.name}")
+            LOGGER.warning(
+                f"{package.name} has a txt file of an untracked category: {file.name}"
+            )
             expected = False
 
         if not file.suffix.lower() in expected_types:
@@ -182,16 +184,18 @@ def data_folder_has_no_uncompressed_formats(package: Path) -> bool:
     """no wav or mov files should be ingested, transcode first"""
     data_path = package / "data"
     uncompressed_files = [
-        x
-        for x in data_path.rglob('*')
-        if x.suffix.lower() in [".mov", ".wav"]
+        x for x in data_path.rglob("*") if x.suffix.lower() in [".mov", ".wav"]
     ]
 
     # filter out mezzanines
-    uncompressed_files = [x for x in uncompressed_files if not str(x).endswith("mz.mov")]
+    uncompressed_files = [
+        x for x in uncompressed_files if not str(x).endswith("mz.mov")
+    ]
 
     if uncompressed_files:
-        LOGGER.error(f"{package.name} has uncompressed format files, {uncompressed_files}.")
+        LOGGER.error(
+            f"{package.name} has uncompressed format files, {uncompressed_files}."
+        )
         return False
     else:
         return True
@@ -200,11 +204,7 @@ def data_folder_has_no_uncompressed_formats(package: Path) -> bool:
 def data_folder_has_no_part_files(package: Path) -> bool:
     """no media file should be a 'part' file, e.g. div_id_v##..p##_"""
     data_path = package / "data"
-    part_files = [
-        x
-        for x in data_path.rglob("*")
-        if re.search(r"p\d\d", x.name)
-    ]
+    part_files = [x for x in data_path.rglob("*") if re.search(r"p\d\d", x.name)]
 
     if part_files:
         LOGGER.error(f"{package.name} has part files, {part_files}.")
@@ -212,7 +212,8 @@ def data_folder_has_no_part_files(package: Path) -> bool:
     else:
         return True
 
-#TODO
+
+# TODO
 def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
     metadata_path = package / "metadata"
@@ -241,7 +242,9 @@ def data_folders_have_at_least_two_files(package: Path) -> bool:
         data_filepaths = []
         data_filepaths = [x for x in folder_path.rglob("*") if x.is_file()]
         if len(data_filepaths) < 2:
-            LOGGER.error(f"{package.name} {folder_path.name} does not have 2 or more files: {data_filepaths}")
+            LOGGER.error(
+                f"{package.name} {folder_path.name} does not have 2 or more files: {data_filepaths}"
+            )
             return False
     return True
 
@@ -301,7 +304,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         data_folder_has_no_empty_folder,
         tags_folder_is_flat,
         tag_file_is_expected_types,
-        #metadata_FTK_file_has_valid_filename,
+        # metadata_FTK_file_has_valid_filename,
         data_folder_has_no_uncompressed_formats,
         data_folder_has_no_part_files,
         data_folders_have_at_least_two_files,

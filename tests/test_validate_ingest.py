@@ -501,10 +501,7 @@ def test_get_contents_io_so_count(
         valid_prsv_contents_io_element_list, valid_prsv_contents_so_element_list
     )
 
-    if (io_num, so_num) == (2, 1):
-        assert True
-    else:
-        assert False
+    assert (io_num, so_num) == (2, 1)
 
 
 @pytest.fixture
@@ -530,10 +527,7 @@ def test_get_source_file_folder_count(source_er):
         source_er, collectionid, "M23385_ER_11"
     )
 
-    if (source_file, source_folder) == (2, 1):
-        assert True
-    else:
-        assert False
+    assert (source_file, source_folder) == (2, 1)
 
 
 # integration test

@@ -507,8 +507,9 @@ def get_source_file_folder_count(
     """function to get file list and folder list of the source
     'objects' directory"""
     obj_path = source / collection_id / pkg_title / "objects"
-    file_list = [x for x in obj_path.rglob("*") if x.is_file()
-                 and not x.name.startswith(".")]
+    file_list = [
+        x for x in obj_path.rglob("*") if x.is_file() and not x.name.startswith(".")
+    ]
     folder_list = [y for y in obj_path.rglob("*") if y.is_dir()]
 
     return len(file_list), len(folder_list)
@@ -524,7 +525,7 @@ def valid_contents_count(
     system's folder and file count"""
     if contents_io_ct == source_file_ct and contents_element_so_ct == source_folder_ct:
         logging.info(
-            f"""IOs and SOs counts of the contents folder are the same as
+            """IOs and SOs counts of the contents folder are the same as
                      the file system"""
         )
         return True

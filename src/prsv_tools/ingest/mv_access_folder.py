@@ -9,6 +9,7 @@ import prsv_tools.utility.cli as prsvcli
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
+
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
 
@@ -19,6 +20,7 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def get_access_path(package: Path) -> Path | None:
     """Get the 'access' folder path under 'objects' folder"""
     expected_path = package / "objects" / "access"
@@ -26,8 +28,9 @@ def get_access_path(package: Path) -> Path | None:
     if expected_path.is_dir():
         return expected_path
     else:
-        LOGGER.error(f"access folder does not exist")
+        LOGGER.error("access folder does not exist")
         return None
+
 
 def mv_access_path(package: Path, access_path: Path):
     """Move access folder one level up, alongside with objects and metadata"""
@@ -35,6 +38,7 @@ def mv_access_path(package: Path, access_path: Path):
 
     LOGGER.info(f"Now moving {access_path} to be {target}")
     access_path.rename(target)
+
 
 def main():
     """

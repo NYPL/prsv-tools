@@ -7,6 +7,7 @@ import pytest
 
 import prsv_tools.ingest.mv_access_folder as mv_access_folder
 
+
 # Unit tests
 # Argument tests
 def test_package_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -32,6 +33,7 @@ def test_directory_argument(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     args = mv_access_folder.parse_args()
 
     assert child_dir in args.packages
+
 
 # moving access folder tests
 @pytest.fixture
@@ -60,6 +62,7 @@ def test_get_access_path(package_with_access):
 
     assert result
 
+
 def test_no_access_path(package_with_access):
     """Test that get_access_path returns None when
     the access folder does not exist"""
@@ -71,6 +74,7 @@ def test_no_access_path(package_with_access):
     access_path = mv_access_folder.get_access_path(no_access_package)
 
     assert not access_path
+
 
 def test_mv_access_path(package_with_access):
     """Test that mv_access_path does move the access folder

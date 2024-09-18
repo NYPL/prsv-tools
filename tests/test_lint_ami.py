@@ -59,7 +59,14 @@ def good_package(tmp_path: Path):
     sc_filepath = sc_folder.joinpath("mym_123456_v01_sc.mp4")
     scjson_filepath = sc_folder.joinpath("mym_123456_v01_sc.json")
 
-    for file in [pm_filepath, pmjson_filepath, sc_filepath, scjson_filepath, (pkg / "bagit.txt"), (pkg / "manifest-md5.txt")]:
+    for file in [
+        pm_filepath,
+        pmjson_filepath,
+        sc_filepath,
+        scjson_filepath,
+        (pkg / "bagit.txt"),
+        (pkg / "manifest-md5.txt"),
+    ]:
         file.write_bytes(b"some bytes for object")
 
     f_metadata = pkg.joinpath("tags")
@@ -134,7 +141,7 @@ def test_data_folder_has_sc_folder(good_package: Path):
     assert result
 
 
-def test_data_folder_has_sc_folder(good_package: Path):
+def test_data_folder_has_no_sc_folder(good_package: Path):
     """Test that package fails when it does not include a servicecopies folder"""
     bad_package = good_package
 
@@ -296,6 +303,7 @@ def test_data_has_partfiles(good_package: Path):
     result = lint_ami.data_folder_has_no_part_files(good_package)
 
     assert not result
+
 
 def test_data_subfolders_have_file(good_package: Path):
     """Return True when data subfolder has one or more files"""

@@ -70,5 +70,6 @@ def find_apiversion(credential_set: str) -> str:
     else:
         return ""
 
+
 def main():
-    token = get_token("prod-ingest")
+    get_token("prod-ingest")

@@ -199,7 +199,6 @@ def main():
                 pkg_title = get_pkg_title(accesstoken, id, args.credentials)
                 pkg_dict[pkg_title] = uuid[0]
 
-
     for pkg in pkg_dict:
         accesstoken_a = prsvapi.get_token(args.credentials)
         post_response = post_so_api(pkg_dict[pkg], accesstoken_a)
@@ -227,7 +226,7 @@ def main():
                 )
                 return
             else:
-                logging.info(f"Progress completed. Will proceed to download")
+                logging.info("Progress completed. Will proceed to download")
                 time.sleep(60)
                 get_export_request = get_export_download_api(
                     progresstoken, accesstoken_a
@@ -235,12 +234,10 @@ def main():
                 # checking for API status code
                 if get_export_request.status_code == 200:
                     logging.info(
-                        f"The exported content is in the process of being downloaded"
+                        "The exported content is in the process of being downloaded"
                     )
                     # save the file
-                    save_file = open(
-                        f"{pkg}.zip", "wb"
-                    )  # wb: write binary
+                    save_file = open(f"{pkg}.zip", "wb")  # wb: write binary
                     save_file.write(get_export_request.content)
                     save_file.close()
                     break
