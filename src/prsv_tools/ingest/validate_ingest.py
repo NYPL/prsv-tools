@@ -4,7 +4,6 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from pprint import pprint
 from typing import List, Tuple
 
 import requests
@@ -30,14 +29,14 @@ def parse_args():
         "--collectionID",
         type=str,
         required=True,
-        help="the collection you'd like to check for, M\d+",
+        help="the collection you'd like to check for, M\\d+",
     )
 
     parser.add_argument(
         "--source",
         type=str,
-        required=False,
-        help="the source directory you want to compare to, usually ICA",
+        required=True,
+        help="the source directory you want to compare to, usually ICA path to 'faComponents'",
     )
 
     return parser.parse_args()
@@ -73,8 +72,9 @@ class prsv_Information_Object:
     ioCategory: str
 
 
-def get_api_results(accesstoken: str, url: str) -> requests.Response:
+def get_api_results(credentials: str, url: str) -> requests.Response:
     """function to get api results"""
+    accesstoken = prsvapi.get_token(credentials)
     headers = {
         "Preservica-Access-Token": accesstoken,
         "Content-Type": "application/xml",
@@ -84,14 +84,14 @@ def get_api_results(accesstoken: str, url: str) -> requests.Response:
 
 
 def search_within_DigArch(
-    accesstoken: str, fields, parentuuid: str
+    credentials: str, fields, parentuuid: str
 ) -> requests.Response:
     """function to search within the DigArch folder in Preservica with
     predefined queried fields"""
     query = {"q": "", "fields": fields}
     q = json.dumps(query)
     url = f"https://nypl.preservica.com/api/content/search-within?q={q}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''"  # noqa
-    res = get_api_results(accesstoken, url)
+    res = get_api_results(credentials, url)
 
     return res
 
@@ -112,28 +112,39 @@ def ingest_has_correct_ER_number(
 ) -> bool:
     """function to verify inquired collection has the correct number of packages
     in Preservica. Return False if not."""
+    col_folder = da_source / collection_id
     pkgs = [
         x
-        for x in da_source.iterdir()
-        if x.is_dir() and x.name.startswith(collection_id)
+        for x in col_folder.iterdir()
+        if x.is_dir()
+        and x.name.startswith(collection_id)
+        and not x.name.endswith("photographs")
     ]
     expected = len(pkgs)
     found = len(uuid_ls)
 
     if expected == found:
-        logging.info(f"{collection_id} has correct number of packages in Preservica")
+        logging.info(
+            f"""{collection_id} has correct number of packages in Preservica
+                 PRSV has {found}
+                 source has {expected}"""
+        )
         return True
     else:
-        logging.error(f"{collection_id} has incorrect number of packages in Preservica")
+        logging.error(
+            f"""{collection_id} has incorrect number of packages in Preservica
+                      PRSV has {found}
+                      source has {expected}"""
+        )
         return False
 
 
 def get_so(
-    uuid: str, token: str, namespaces: dict, so_type: str
+    uuid: str, credentials: str, namespaces: dict, so_type: str
 ) -> prsv_Structural_Object:
     """function to parse API result and return a prsv_Structural_Object data class object"""
     url = f"https://nypl.preservica.com/api/entity/structural-objects/{uuid}"
-    res = get_api_results(token, url)
+    res = get_api_results(credentials, url)
     root = ET.fromstring(res.text)
 
     uuid = root.find(f".//{namespaces['xip_ns']}Ref").text
@@ -144,7 +155,7 @@ def get_so(
 
     identifiers_url = root.find(f".//{namespaces['entity_ns']}Identifiers").text
 
-    identifiers_res = get_api_results(token, identifiers_url)
+    identifiers_res = get_api_results(credentials, identifiers_url)
     id_root = ET.fromstring(identifiers_res.text)
 
     type = id_root.find(f".//{namespaces['xip_ns']}Type").text
@@ -156,20 +167,20 @@ def get_so(
         metadata_url = root.find(f".//{namespaces['entity_ns']}Fragment").text
 
     if so_type == "top":
-        md = get_spec_mdfrag(token, metadata_url, namespaces)
+        md = get_spec_mdfrag(credentials, metadata_url, namespaces)
     elif so_type == "contents":
-        md = get_fa_mdfrag(token, metadata_url, namespaces)
+        md = get_fa_mdfrag(credentials, metadata_url, namespaces)
 
-    children = get_so_children(token, uuid, namespaces)
+    children = get_so_children(credentials, uuid, namespaces)
 
     return prsv_Structural_Object(uuid, title, type, sectag, soCat, md, children)
 
 
-def get_spec_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
+def get_spec_mdfrag(credentials: str, metadata_url: str, namespaces: dict) -> dict:
     """function to get and parse API result for SPEC metadata and return a dictionary"""
     mdfrag_dict = dict()
 
-    mfrag_res = get_api_results(token, metadata_url)
+    mfrag_res = get_api_results(credentials, metadata_url)
     mfrag_root = ET.fromstring(mfrag_res.text)
 
     speccolid_elem = mfrag_root.find(f".//{namespaces['spec_ns']}specCollectionId")
@@ -178,12 +189,12 @@ def get_spec_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
     return mdfrag_dict
 
 
-def get_fa_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
+def get_fa_mdfrag(credentials: str, metadata_url: str, namespaces: dict) -> dict:
     """function to get and parse API result for Finding Aids metadata and
     return a dictionary"""
     mdfrag_dict = dict()
 
-    mfrag_res = get_api_results(token, metadata_url)
+    mfrag_res = get_api_results(credentials, metadata_url)
     mfrag_root = ET.fromstring(mfrag_res.text)
 
     fa_component_id = mfrag_root.find(f".//{namespaces['fa_ns']}faComponentId")
@@ -197,7 +208,7 @@ def get_fa_mdfrag(token: str, metadata_url: str, namespaces: dict) -> dict:
     return mdfrag_dict
 
 
-def get_so_children(token: str, so_uuid: str, namespaces: dict) -> dict:
+def get_so_children(credentials: str, so_uuid: str, namespaces: dict) -> dict:
     """function to get and parse children field of a prsv Structural Object"""
     children_dict = dict()
 
@@ -211,7 +222,7 @@ def get_so_children(token: str, so_uuid: str, namespaces: dict) -> dict:
 
     children_url = f"https://nypl.preservica.com/api/entity/structural-objects/{so_uuid}/children?start=0&max=1000"  # noqa
 
-    children_res = get_api_results(token, children_url)
+    children_res = get_api_results(credentials, children_url)
     children_root = ET.fromstring(children_res.text)
     process_children_root(children_root)
 
@@ -219,17 +230,17 @@ def get_so_children(token: str, so_uuid: str, namespaces: dict) -> dict:
         next_children = children_root.findall(f".//{namespaces['entity_ns']}Next")
         for next_child in next_children:
             next_url = next_child.text
-            next_res = get_api_results(token, next_url)
+            next_res = get_api_results(credentials, next_url)
             next_root = ET.fromstring(next_res.text)
             process_children_root(next_root)
 
     return children_dict
 
 
-def get_io(uuid: str, token: str, namespaces: dict) -> prsv_Information_Object:
+def get_io(uuid: str, credentials: str, namespaces: dict) -> prsv_Information_Object:
     """function to get and parse API to get an Information Object dataclass object"""
     url = f"https://nypl.preservica.com/api/entity/information-objects/{uuid}"
-    res = get_api_results(token, url)
+    res = get_api_results(credentials, url)
     root = ET.fromstring(res.text)
 
     uuid = root.find(f".//{namespaces['xip_ns']}Ref").text
@@ -240,7 +251,7 @@ def get_io(uuid: str, token: str, namespaces: dict) -> prsv_Information_Object:
 
     identifiers_url = root.find(f".//{namespaces['entity_ns']}Identifiers").text
 
-    identifiers_res = get_api_results(token, identifiers_url)
+    identifiers_res = get_api_results(credentials, identifiers_url)
     id_root = ET.fromstring(identifiers_res.text)
 
     type = id_root.find(f".//{namespaces['xip_ns']}Type").text
@@ -370,7 +381,7 @@ def valid_all_metadata_level_so_conditions(
 
 
 def get_contents_io_so(
-    so: list, token: str, namespaces: dict
+    so: list, credentials: str, namespaces: dict
 ) -> Tuple[List[prsv_Information_Object], List[prsv_Structural_Object]]:
     """function to get all the elements within the contents level SO,
     returning a list of IOs and a list of SOs, if applicable"""
@@ -379,12 +390,14 @@ def get_contents_io_so(
     for child in so.children:
         uuid = so.children[child]["uuid"]
         if so.children[child]["objType"] == "IO":
-            io = get_io(uuid, token, namespaces)
+            io = get_io(uuid, credentials, namespaces)
             contents_io.append(io)
         elif so.children[child]["objType"] == "SO":
-            element_so = get_so(uuid, token, namespaces, "contents_element")
+            element_so = get_so(uuid, credentials, namespaces, "contents_element")
             contents_element_so.append(element_so)
-            new_io, new_element_so = get_contents_io_so(element_so, token, namespaces)
+            new_io, new_element_so = get_contents_io_so(
+                element_so, credentials, namespaces
+            )
             contents_io.extend(new_io)
             contents_element_so.extend(new_element_so)
     return contents_io, contents_element_so
@@ -480,6 +493,52 @@ def validate_all_metadata_io_conditions(metadata_io: prsv_Information_Object) ->
     valid_metadata_ioCategory(metadata_io)
 
 
+def get_contents_io_so_count(
+    contents_io: list, contents_element_so: list
+) -> Tuple[int, int]:
+    """function to get the count of IOs in the PRSV contents SO
+    and the count of SOs in the PRSV contents SO"""
+    return len(contents_io), len(contents_element_so)
+
+
+def get_source_file_folder_count(
+    source: Path, collection_id: str, pkg_title: str
+) -> Tuple[List, List]:
+    """function to get file list and folder list of the source
+    'objects' directory"""
+    obj_path = source / collection_id / pkg_title / "objects"
+    file_list = [x for x in obj_path.rglob("*") if x.is_file()
+                 and not x.name.startswith(".")]
+    folder_list = [y for y in obj_path.rglob("*") if y.is_dir()]
+
+    return len(file_list), len(folder_list)
+
+
+def valid_contents_count(
+    contents_io_ct: int,
+    contents_element_so_ct: int,
+    source_file_ct: int,
+    source_folder_ct: int,
+) -> bool:
+    """function to compare prsv contents folder IO count and SO count with the source file
+    system's folder and file count"""
+    if contents_io_ct == source_file_ct and contents_element_so_ct == source_folder_ct:
+        logging.info(
+            f"""IOs and SOs counts of the contents folder are the same as
+                     the file system"""
+        )
+        return True
+    else:
+        logging.error(
+            f"""Contents IO and/or SO count(s) incorrect
+                          PRSV contents IO count: {contents_io_ct}
+                          Source file count: {source_file_ct}
+                          PRSV contents SO count: {contents_element_so_ct}
+                          Source folder count: {source_folder_ct}"""
+        )
+        return False
+
+
 def main():
     """
     First type of check:
@@ -493,39 +552,38 @@ def main():
     """
     args = parse_args()
 
-    token = prsvapi.get_token(args.credentials)
     if "test" in args.credentials:
         parentuuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
-        version = prsvapi.find_apiversion(token)
+        version = prsvapi.find_apiversion(args.credentials)
         da_source = Path(args.source)
 
     else:
         parentuuid = "e80315bc-42f5-44da-807f-446f78621c08"
-        version = prsvapi.find_apiversion(token)
+        version = prsvapi.find_apiversion(args.credentials)
         da_source = Path(args.source)
 
     namespaces = {
         "xip_ns": f"{{http://preservica.com/XIP/v{version}}}",
         "entity_ns": f"{{http://preservica.com/EntityAPI/v{version}}}",
-        "spec_ns": f"{{http://nypl.org/prsv_schemas/specCollection}}",
-        "fa_ns": f"{{http://nypl.org/prsv_schemas/findingAid}}",
+        "spec_ns": "{http://nypl.org/prsv_schemas/specCollection}",
+        "fa_ns": "{http://nypl.org/prsv_schemas/findingAid}",
     }
 
     fields_top = [{"name": "spec.specCollectionID", "values": [args.collectionID]}]
-    res_uuid = search_within_DigArch(token, fields_top, parentuuid)
+    res_uuid = search_within_DigArch(args.credentials, fields_top, parentuuid)
     uuid_ls = parse_structural_object_uuid(res_uuid)
 
     ingest_has_correct_ER_number(args.collectionID, da_source, uuid_ls)
 
     for uuid in uuid_ls:
-        top_level_so = get_so(uuid, token, namespaces, "top")
+        top_level_so = get_so(uuid, args.credentials, namespaces, "top")
         pkg_type = re.search(r"(ER|EM|DI)", top_level_so.title).group(0)
         contents_f = f"{top_level_so.title}_contents"
         metadata_f = f"{top_level_so.title}_metadata"
         contents_uuid = top_level_so.children[contents_f]["uuid"]
-        contents_so = get_so(contents_uuid, token, namespaces, "contents")
+        contents_so = get_so(contents_uuid, args.credentials, namespaces, "contents")
         metadata_uuid = top_level_so.children[metadata_f]["uuid"]
-        metadata_so = get_so(metadata_uuid, token, namespaces, "metadata")
+        metadata_so = get_so(metadata_uuid, args.credentials, namespaces, "metadata")
 
         valid_all_top_level_so_conditions(top_level_so, pkg_type, args.collectionID)
         valid_all_contents_level_so_conditions(contents_so, pkg_type, args.collectionID)
@@ -533,11 +591,16 @@ def main():
 
         # validate objects in contents folder, both IOs and SOs
         contents_io, contents_element_so = get_contents_io_so(
-            contents_so, token, namespaces
+            contents_so, args.credentials, namespaces
+        )
+        contents_io_ct, contents_element_so_ct = get_contents_io_so_count(
+            contents_io, contents_element_so
         )
 
-        logging.info(f"{contents_f} has {len(contents_io)} files in total")
-        logging.info(f"{contents_f} has {len(contents_element_so)} folders in total")
+        file_ct, folder_ct = get_source_file_folder_count(
+            da_source, args.collectionID, top_level_so.title
+        )
+        valid_contents_count(contents_io_ct, contents_element_so_ct, file_ct, folder_ct)
 
         for io in contents_io:
             validate_all_contents_element_io_conditions(io, pkg_type)
@@ -549,7 +612,7 @@ def main():
         if metadata_so.children:
             for child in metadata_so.children:
                 metadata_io = get_io(
-                    metadata_so.children[child]["uuid"], token, namespaces
+                    metadata_so.children[child]["uuid"], args.credentials, namespaces
                 )
                 validate_all_metadata_io_conditions(metadata_io)
 

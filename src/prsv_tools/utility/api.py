@@ -54,9 +54,9 @@ def create_token(credential_set: str, token_file: Path) -> str:
     return data["token"]
 
 
-def find_apiversion(token: str) -> str:
+def find_apiversion(credential_set: str) -> str:
     schemas_url = "https://nypl.preservica.com/api/admin/schemas"
-
+    token = get_token(credential_set)
     headers = {
         "Preservica-Access-Token": token,
         "Content-Type": "application/xml",
