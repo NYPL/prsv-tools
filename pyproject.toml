@@ -35,9 +35,12 @@ pytest-mock = "^3.12.0"
 
 [tool.poetry.scripts]
 lint_er = 'prsv_tools.ingest.lint_er:main'
-flatten_er_metadata = 'prsv_tools.ingest.flatten_er_metadata:main'
+lint_ami = 'prsv_tools.ingest.lint_ami:main'
+flatten_er_metadata = 'prsv_tools.ingest.flatten_er_metadata_folder:main'
 get_schemas = 'prsv_tools.manage.get_schemas:main'
 validate_ingest = 'prsv_tools.ingest.ingest_validator:main'
+creds = 'prsv_tools.utility.api:main'
+retry_workflows = 'prsv_tools.ingest.retry_workflows:main'
 
 [tool.mypy]
 exclude = [
