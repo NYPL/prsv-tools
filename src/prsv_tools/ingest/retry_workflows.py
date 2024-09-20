@@ -9,7 +9,12 @@ import prsv_tools.utility.cli as prsvcli
 LOGGER = logging.getLogger(__name__)
 
 
-def parse_args():
+def configure_logging() -> None:
+    LOGGER.addHandler(logging.StreamHandler())
+    LOGGER.setLevel(logging.INFO)
+
+
+def parse_args() -> prsvcli.argparse.Namespace:
     parser = prsvcli.Parser()
 
     parser.add_argument(
@@ -33,8 +38,9 @@ def retry_stalled_workflows(token: str) -> None:
 
     root = ET.fromstring(response.text)
     ns = {"": "http://workflow.preservica.com"}
-    restart_count = root.find("SuccessfulNumber", namespaces=ns).text
-    failed_count = root.find("FailedNumber", namespaces=ns).text
+    restart_count = int(root.find("SuccessfulNumber", namespaces=ns).text)
+    failed_count = int(root.find("FailedNumber", namespaces=ns).text)
+
     LOGGER.info(
         f"Retried {restart_count + failed_count} worfklows: {restart_count} succeeded, {failed_count} failed"
     )
@@ -42,7 +48,9 @@ def retry_stalled_workflows(token: str) -> None:
     return None
 
 
-def main():
+def main() -> None:
+    configure_logging()
+
     args = parse_args()
 
     token = prsvapi.get_token(args.credentials)
