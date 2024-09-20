@@ -61,7 +61,7 @@ def get_all_category_children(token: str, category_id: str, filter=None) -> list
         url = f"https://nypl.preservica.com/api/entity/structural-objects/86531e4f-3370-4944-9b70-6b64873226fa/children?start={start+1}&max=1000"
         response = get_api_results(token, url)
         root = ET.fromstring(response.text)
-        children_results = root.findall(f".//Child", namespaces=ns)
+        children_results = root.findall(".//Child", namespaces=ns)
         for child in children_results:
             if filter and child.get("title").startswith(filter):
                 children_2 = [child.get("ref"), child.get("title")]

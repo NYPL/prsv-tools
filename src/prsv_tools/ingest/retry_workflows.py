@@ -62,7 +62,15 @@ def retry_stalled_workflows(token: str) -> None:
     response = get_api_results(
         token, "https://nypl.preservica.com/sdb/rest/workflow/instances/retry"
     )
-    print(response.text)
+
+    root = ET.fromstring(response.text)
+    ns = {"": "http://workflow.preservica.com"}
+    restart_count = root.find("SuccessfulNumber", namespaces=ns).text
+    failed_count = root.find("FailedNumber", namespaces=ns).text
+    LOGGER.info(
+        f"Retried {restart_count + failed_count} worfklows: {restart_count} succeeded, {failed_count} failed"
+    )
+
     return None
 
 
@@ -71,13 +79,9 @@ def main():
 
     token = prsvapi.get_token(args.credentials)
 
-    # check for stalled workflows
-    stalled = check_for_stalled_workflows(token)
-    print(stalled)
+    retry_stalled_workflows(token)
 
-    if stalled:
-        print("Stalled workflows found")
-        # retry_stalled_workflows(token, stalled)
+    return None
 
 
 if __name__ == "__main__":
