@@ -27,7 +27,7 @@ class Credentials(configparser.ConfigParser):
     def get_credential_sets(self) -> list[str]:
         return self.sections()
 
-    def get_credentials(self, set: str) -> (str, str):
+    def get_credentials(self, set: str): #-> (str, str):
         if set not in self.sections():
             raise PrsvCredentialException(f"{set} is not a defined credential set")
 

@@ -72,4 +72,4 @@ def find_apiversion(credential_set: str) -> str:
 
 
 def main():
-    get_token("prod-ingest")
+    get_token()
