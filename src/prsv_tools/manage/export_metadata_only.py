@@ -3,7 +3,7 @@ import logging
 import re
 import sys
 import time
-import datetime
+from datetime import datetime, timedelta
 import os
 from functools import partial
 import xml.etree.ElementTree as ET
@@ -60,13 +60,19 @@ def parse_args():
         "--ami_ingest_start_date",
         "-sd",
         required=False,
-        help="""provide starting month and date of packages in the following format: YYYY-MM-DD""",
+        help="""provide starting month and date of ingest for packages in the following format: YYYY-MM-DD""",
     )
     parser.add_argument(
         "--ami_ingest_end_date",
         "-ed",
         required=False,
-        help="""provide ending month and date of packages in the following format: YYYY-MM-DD""",
+        help="""provide ending month and date of ingest for packages in the following format: YYYY-MM-DD""",
+    )
+    parser.add_argument(
+        "--daily_ami",
+        required=False,
+        action='store_true',
+        help="""uses today and yesterday's date as parameters, takes no argument""",
     )
     return parser.parse_args()
 
@@ -162,6 +168,22 @@ def get_amifromdate_uuids(
     }
     return search_preservica_api(accesstoken, query_params, parentuuid)
 
+def get_daily_ami_uuids(
+        accesstoken: str, end_date, parentuuid: str
+) -> requests.Response:
+    """get AMI uuids from the last day"""
+    today = datetime.now()
+    today_formatted = today.strftime("%Y-%m-%d")
+    yesterday = today - timedelta(days=1)
+    yesterday_formatted = yesterday.strftime("%Y-%m-%d")
+    query_params = {
+        "q": "",
+        "fields": [
+            {"name": "xip.created", "values": [f"{yesterday_formatted} - {today_formatted}"]}, 
+            {"name": "xip.identifier", "values": ["DigitizedAMIContainer"]}
+        ]
+    }
+    return search_preservica_api(accesstoken, query_params, parentuuid)
 
 def get_pkg_title(accesstoken: str, pkg_uuid: str, credentials: str) -> str:
     get_so_url = f"https://nypl.preservica.com/api/entity/structural-objects/{pkg_uuid}"
@@ -328,7 +350,7 @@ def main():
                 pkg_title = get_pkg_title(accesstoken, id, args.credentials)
                 pkg_dict[pkg_title] = uuid[0]
     if args.amipackage_id:
-        res = get_amipackages_uuids(accesstoken, args.amipackage_id, ami_uuid) #switch to parent uuid
+        res = get_amipackages_uuids(accesstoken, args.amipackage_id, ami_uuid) 
         logging.info(res)
         uuids = parse_structural_object_uuid(res)
         logging.info(uuids)
@@ -337,7 +359,7 @@ def main():
             logging.info(pkg_title)
             pkg_dict[pkg_title] = id
     if args.ami_ingest_start_date and args.ami_ingest_end_date:
-        res = get_amibydate_uuids(accesstoken, args.ami_ingest_start_date, args.ami_ingest_end_date, ami_uuid) #switch to parent uuid
+        res = get_amibydate_uuids(accesstoken, args.ami_ingest_start_date, args.ami_ingest_end_date, ami_uuid) 
         logging.info(res)
         uuids = parse_structural_object_uuid(res)
         logging.info(uuids)
@@ -346,7 +368,16 @@ def main():
             logging.info(pkg_title)
             pkg_dict[pkg_title] = id
     if args.ami_ingest_end_date:
-        res = get_amifromdate_uuids(accesstoken, args.ami_ingest_end_date, ami_uuid) #switch to parent uuid
+        res = get_amifromdate_uuids(accesstoken, args.ami_ingest_end_date, ami_uuid)
+        logging.info(res)
+        uuids = parse_structural_object_uuid(res)
+        logging.info(uuids)
+        for id in uuids:
+            pkg_title = get_pkg_title(accesstoken, id, args.credentials)
+            logging.info(pkg_title)
+            pkg_dict[pkg_title] = id
+    if args.daily_ami:
+        res = get_daily_ami_uuids(accesstoken, args.ami_ingest_end_date, ami_uuid)
         logging.info(res)
         uuids = parse_structural_object_uuid(res)
         logging.info(uuids)
