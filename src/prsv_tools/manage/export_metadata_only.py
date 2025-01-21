@@ -231,6 +231,8 @@ def api_status(pkg_uuid, credentials: str):
     pkg_dir_path = container_path / f"{pkg_id[:3]}"
     pkg_filepath = pkg_dir_path / f"{pkg_id}.zip"
 
+    progress_token_path = Path("/containers/failed_metadata_exports")
+
     # checking if metadata export folder/files exists, else make new folder
     if pkg_dir_path.is_dir():
         for file in pkg_dir_path.iterdir():
@@ -253,10 +255,16 @@ def api_status(pkg_uuid, credentials: str):
         sys.exit(0)
 
     # checking for API status code for 15 times. with 5 secs interval
-    for _ in range(5): #change this to keep running until all packages pass
+    for _ in range(5): # change to keep running until all packages pass
         time.sleep(15)
         get_progress_response = get_progress_api(progresstoken, accesstoken_a)
         logging.info(get_progress_response.text)
+
+        # create file recording pkg ID & progress token
+        progress_token_file = open(progress_token_path, "w")
+        progress_token_file.write(f"{pkg_id} :: {progresstoken}")
+        progress_token_file.close()
+
         if get_progress_response.status_code != 200:
             logging.error(
                 f"""GET progress request unsuccessful for {pkg_id}:
@@ -278,6 +286,9 @@ def api_status(pkg_uuid, credentials: str):
                 save_file = open(pkg_filepath, "wb")
                 save_file.write(get_export_request.content)
                 save_file.close()
+                # progress token file removed if export is successful
+                if Path.is_file(progress_token_file):
+                    os.remove(progress_token_file)
                 break
             else:
                 logging.error(
