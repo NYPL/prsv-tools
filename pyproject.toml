@@ -41,6 +41,8 @@ get_schemas = 'prsv_tools.manage.get_schemas:main'
 validate_ingest = 'prsv_tools.ingest.ingest_validator:main'
 creds = 'prsv_tools.utility.api:main'
 retry_workflows = 'prsv_tools.ingest.retry_workflows:main'
+export_metadata_only = 'prsv_tools.manage.export_metadata_only:main'
+
 
 [tool.mypy]
 exclude = [
