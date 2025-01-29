@@ -49,15 +49,14 @@ def compare_downloads(failed_pkgs: dict):
     """compares pkg ids in failed pkgs dict to successfully exported files, returns true failed exports"""
     #pull in dict, separate into lists, compare against current downloads
     container_path = Path("/containers/metadata_exports")
-    progress_token_path = Path(f"/containers/failed_metadata_exports/")
+    failed_path = Path(f"/containers/failed_metadata_exports/")
     failed_pkgs = failed_file_exists()
     
     for file in container_path.iterdir():
         for key, value in failed_pkgs:
             if key == file.stem:
                 # if file is already downloaded, delete failed record
-                failed_file = progress_token_path / f"{key}.{value}"
-                failed_file.touch()
+                failed_file = failed_path / f"{key}.{value}"
                 failed_file.unlink(missing_ok=True)
                 # remove not-failed item from dict
                 failed_pkgs.pop(key)
