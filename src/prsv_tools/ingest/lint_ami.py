@@ -356,7 +356,8 @@ def main():
         The following {len(needs_review)} packages need review.
         They may be passed without change after review: {needs_review}"""
         )
-
+    
+    return invalid, needs_review
 
 if __name__ == "__main__":
     main()
