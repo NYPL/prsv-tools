@@ -20,6 +20,7 @@ lxml = "^4.9.3"
 requests = "^2.31.0"
 bagit = "^1.8.1"
 schema = "^0.7.5"
+xlsxwriter = "^3.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -41,6 +42,7 @@ get_schemas = 'prsv_tools.manage.get_schemas:main'
 validate_ingest = 'prsv_tools.ingest.ingest_validator:main'
 creds = 'prsv_tools.utility.api:main'
 retry_workflows = 'prsv_tools.ingest.retry_workflows:main'
+unpack_reports = 'prsv_tools.manage.unpack_reports:main'
 
 [tool.mypy]
 exclude = [
