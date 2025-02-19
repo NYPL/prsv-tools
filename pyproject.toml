@@ -21,6 +21,7 @@ requests = "^2.31.0"
 bagit = "^1.8.1"
 schema = "^0.7.5"
 xlsxwriter = "^3.2.2"
+pandas = "^2.2.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

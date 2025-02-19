@@ -39,6 +39,8 @@ import lxml.etree
 import logging
 import lxml.etree
 from xlsxwriter import Workbook
+import pandas as pd
+# from multiprocessing import Pool
 
 
 #csvtoxlsx
@@ -47,11 +49,12 @@ import csv
 
 
 #  working folders
-parent_folder = Path("/Users/emileebuytkins/containers/metadata_exports/")
-source_folder = parent_folder / "Export_Source"
-working_folder = parent_folder / "Export_Working"
-target_folder = parent_folder / "Export_Target"
-log_folder = parent_folder / "Export_Log"
+parent_folder = Path("/containers/metadata_exports/")
+root_folder = Path("/containers/")
+source_folder = root_folder / "Export_Source"
+working_folder = root_folder / "Export_Working"
+target_folder = root_folder / "Export_Target"
+log_folder = root_folder / "Export_Log"
 Page_Folder = "Individual Pages"
 
 
@@ -157,50 +160,60 @@ def fProcessPackages(source_folder: Path ,working_folder: Path, target_folder: P
         for pkg in packages.iterdir():
             # accounts for top-level folder being unzipped
             source_dir = Path(source_folder / packages / pkg)
-            # skip hidden files
-            if str(pkg.name).startswith("."):
-                continue
-            if source_dir.is_dir():
-                # print("fProcessPackages : source directory contains folders but should only contain zips")
-                logging.info(" : fProcessPackages : source directory contains folders")
-                sys.exit()
-            else:
-                if pkg.is_file():
-                    # package_ext = pkg.suffix()
-                    # package_no_ext = pkg.stem()
-                    if pkg.suffix == ".zip":
-                        logging.info(f" : fProcessPackages : Processing : {pkg}")
-                        # define output file
-                        outputfile_name = f"{pkg.stem}_Info_{fTime()}.csv"
-                        xlsx_outputfile_name = f"{pkg.stem}_Info_{fTime()}.xlsx"
-                        if Path(target_folder / pkg.stem[:3]).is_dir():
-                            outputfile_path = Path(target_folder/ pkg.stem[:3]/ outputfile_name)
-                            xlsx_outputfile_path = Path(target_folder, pkg.stem[:3], xlsx_outputfile_name)
-                        else: 
-                            Path(target_folder / pkg.stem[:3]).mkdir()
-                            outputfile_path = Path(target_folder/ pkg.stem[:3]/ outputfile_name)
-                            xlsx_outputfile_path = Path(target_folder, pkg.stem[:3], xlsx_outputfile_name)
-                        
-                        outputfile = open(outputfile_path, "w", encoding = 'utf-8')                    
-                        outputfile.write("Local_Path|IO Ref|IO Title|Identifier|Parent Ref|CO Ref|CO Title|CO Parent|Representation Type|Generation|File Path|File Name|File Size|SHA512|SHA512ChecksumVal|SHA256|SHA256ChecksumVal|SHA1|SHA1ChecksumVal|MD5|MD5ChecksumVal|Formats|IngestDate|IngestUser|IngestWFName|IngestWFInstanceID" + "\n")
+            #check if file exists 
+            #define output 
+            outputfile_name = f"{pkg.stem}_Info.csv"
+            xlsx_outputfile_name = f"{pkg.stem}_Info.xlsx"
+            if Path(target_folder / pkg.stem[:3]).is_dir():
+                outputfile_path = Path(target_folder/ pkg.stem[:3]/ outputfile_name)
+                xlsx_outputfile_path = Path(target_folder, pkg.stem[:3], xlsx_outputfile_name)
+            else: 
+                Path(target_folder / pkg.stem[:3]).mkdir()
+                outputfile_path = Path(target_folder/ pkg.stem[:3]/ outputfile_name)
+                xlsx_outputfile_path = Path(target_folder, pkg.stem[:3], xlsx_outputfile_name)
 
-                        package_source = Path(source_folder, packages, pkg)
-                        package_working = Path(working_folder)
-                        shutil.copy2(package_source,package_working)
-
-                        fUnzipExport(working_folder)
-
-                        fQueryXIP(working_folder)
-                        fDumpdict()
-                        outputfile.close()
-                        fConvertCSVtoXLSX(outputfile_path, xlsx_outputfile_path)
-                    else:
-                        logging.info(f" : fProcessPackages : Non zipped files will not be processed : {pkg}")
             if xlsx_outputfile_path.is_file():
-                    outputfile_path.touch()
-                    outputfile_path.unlink()
+                continue
             else:
-                logging.error(f"{xlsx_outputfile_name} does not exist, CSV will not be deleted.")
+
+                # skip hidden files
+                if str(pkg.name).startswith("."):
+                    continue
+                if source_dir.is_dir():
+                    # print("fProcessPackages : source directory contains folders but should only contain zips")
+                    logging.info(" : fProcessPackages : source directory contains folders")
+                    sys.exit()
+                else:
+                    if pkg.is_file():
+                        # package_ext = pkg.suffix()
+                        # package_no_ext = pkg.stem()
+                        if pkg.suffix == ".zip":
+                            logging.info(f" : fProcessPackages : Processing : {pkg}")
+
+                            outputfile = open(outputfile_path, "w", encoding = 'utf-8')                    
+                            # outputfile.write("Local_Path|IO Ref|IO Title|Identifier|Parent Ref|CO Ref|CO Title|CO Parent|Representation Type|Generation|File Path|File Name|File Size|SHA512|SHA512ChecksumVal|SHA256|SHA256ChecksumVal|SHA1|SHA1ChecksumVal|MD5|MD5ChecksumVal|Formats|IngestDate|IngestUser|IngestWFName|IngestWFInstanceID" + "\n", )
+                            output_headers = ["Local_Path", "IO Ref", "IO Title", "Identifier", "Parent Ref", "CO Ref", "CO Title", "CO Parent", "Representation Type", "Generation", "File Path", "File Name", "File Size", "SHA512", "SHA512ChecksumVal", "SHA256", "SHA256ChecksumVal", "SHA1", "SHA1ChecksumVal", "MD5", "MD5ChecksumVal", "Formats", "IngestDate", "IngestUser", "IngestWFName", "IngestWFInstanceID"]
+                            csv_writer = csv.writer(outputfile)
+                            csv_writer.writerow(output_headers)
+
+                            package_source = Path(source_folder, packages, pkg)
+                            package_working = Path(working_folder)
+                            shutil.copy2(package_source,package_working)
+
+                            fUnzipExport(working_folder)
+
+                            fQueryXIP(working_folder)
+                            fDumpdict()
+                            outputfile.close()
+
+                            # fConvertCSVtoXLSX(outputfile_path, xlsx_outputfile_path)
+                            # if xlsx_outputfile_path.is_file():
+                            #     outputfile_path.touch()
+                            #     outputfile_path.unlink()
+                            # else:
+                            #     logging.error(f"{xlsx_outputfile_name} does not exist, CSV will not be deleted.")
+                        else:
+                            logging.info(f" : fProcessPackages : Non zipped files will not be processed : {pkg}")
 
 
 def fUnzipExport(working_folder):
@@ -231,7 +244,12 @@ def fDumpdict():
     array_dictCO = list(dictCO.keys())
     for aa in range(len(array_dictCO)):
         # print(f"CO array {array_dictCO[aa]}")
-        outputfile.write(f"{dictCO[array_dictCO[aa]]} \n")
+        # outputfile.write(f"{dictCO[array_dictCO[aa]]} \n")
+        str_output = str(dictCO[array_dictCO[aa]])
+        split_output = str_output.split(sep="|")
+        csv_writer = csv.writer(outputfile)
+        csv_writer.writerow(split_output)
+
 
 
 def fDeleteZip(zipper: Path):
@@ -239,7 +257,7 @@ def fDeleteZip(zipper: Path):
         try:
             zipper.unlink()
             # print(f"     Deleting zip : {zipper}")
-            logging.info(f" : fDeleteZip : zip deleted {zipper}")
+            # logging.info(f" : fDeleteZip : zip deleted {zipper}")
         except OSError as oser1:
             logging.info(f" : fDeleteZip : delete failed for {zipper}{oser1}")
     else:
@@ -249,7 +267,7 @@ def fDeleteZip(zipper: Path):
 def fParseXIP(path):
     #  modify this section as necessary
     # print(f"path {path}")
-    logging.info(f"fParseXIP : {path}")
+    # logging.info(f"fParseXIP : {path}")
     xml = open(path, "r",  encoding = 'utf-8')
     xml_string = xml.read()
     
@@ -331,7 +349,7 @@ def fParseXIP(path):
         
         for CORef in CORef_val:
             dict_XIP_CORef[CORef] = CORef
-            logging.info(f"fParseXIP : CORef {CORef}")
+            # logging.info(f"fParseXIP : CORef {CORef}")
         COTitle_val = COentry.xpath('./XIP:Title/text()', namespaces=NSMAP)
         for COTitle in COTitle_val:
             dict_XIP_COTitle[CORef] = COTitle
@@ -376,7 +394,7 @@ def fParseXIP(path):
 
         BSBitstream = ""
         BSBitstream = f"{BSPhysicalLocation_val}/{BSFileName_val}"
-        logging.info(f"BSBitstream : {BSBitstream}")
+        # logging.info(f"BSBitstream : {BSBitstream}")
         # print(f"BSBitstream {BSBitstream}")
         
         BSRepresentation_Type = BSBitstream.split(os.sep)[0].split("_")[1]
@@ -389,29 +407,29 @@ def fParseXIP(path):
         dict_BSFileSize[BSBitstream] = BSFileSize_val
         
         Fixity_data = BSentry.xpath('./XIP:Fixities/XIP:Fixity', namespaces = NSMAP)
-        logging.info(f"Fixity_data {Fixity_data}")
+        # logging.info(f"Fixity_data {Fixity_data}")
         # print(type(Fixity_data))
         fd_loop = 0
         for FD in range (len(Fixity_data)):
-            logging.info(f"FD_loop : {fd_loop}")
+            # logging.info(f"FD_loop : {fd_loop}")
             BS_Fixity_alg_val = ""
             BS_Fixity_val = ""
             
             FDentry = Fixity_data[FD]
             
             BS_Fixity_alg_val  = FDentry.xpath('./XIP:FixityAlgorithmRef/text()', namespaces = NSMAP)[0]
-            logging.info(f"BSBitstream : {BSBitstream}")
-            logging.info(f"BS_Fixity_alg_val {BS_Fixity_alg_val}")
-            logging.info(f"BS_Fixity_alg_val type {type(BS_Fixity_alg_val)}")
-            logging.info(f"BS_Fixity_alg_val len{len(BS_Fixity_alg_val)}")
+            # logging.info(f"BSBitstream : {BSBitstream}")
+            # logging.info(f"BS_Fixity_alg_val {BS_Fixity_alg_val}")
+            # logging.info(f"BS_Fixity_alg_val type {type(BS_Fixity_alg_val)}")
+            # logging.info(f"BS_Fixity_alg_val len{len(BS_Fixity_alg_val)}")
             # print(len(BS_Fixity_alg_val))
             
             
             BS_Fixity_val  = FDentry.xpath('./XIP:FixityValue/text()', namespaces = NSMAP)[0]
-            logging.info(f"BSBitstream : {BSBitstream}")
-            logging.info(f"BS_Fixity_val {BS_Fixity_val}")
-            logging.info(f"BS_Fixity_val {type(BS_Fixity_val)}")
-            logging.info(f"BS_Fixity_val {len(BS_Fixity_val)}")
+            # logging.info(f"BSBitstream : {BSBitstream}")
+            # logging.info(f"BS_Fixity_val {BS_Fixity_val}")
+            # logging.info(f"BS_Fixity_val {type(BS_Fixity_val)}")
+            # logging.info(f"BS_Fixity_val {len(BS_Fixity_val)}")
             
             
             if BS_Fixity_alg_val == 'MD5':
@@ -450,7 +468,7 @@ def fParseXIP(path):
 def fParseXIP_old(path):
     #  modify this section as necessary
     # print(f"path {path}")
-    logging.info(f"fParseXIP : {path}")
+    # logging.info(f"fParseXIP : {path}")
     xml = open(path, "r",  encoding = 'utf-8')
     xml_string = xml.read()
     
@@ -503,7 +521,7 @@ def fParseXIP_old(path):
         
         for CORef in CORef_val:
             dict_XIP_CORef[CORef] = CORef
-            logging.info(f"fParseXIP : CORef {CORef}")
+            # logging.info(f"fParseXIP : CORef {CORef}")
         COTitle_val = COentry.xpath('./XIP:Title/text()', namespaces=NSMAP)
         for COTitle in COTitle_val:
             dict_XIP_COTitle[CORef] = COTitle
@@ -540,36 +558,36 @@ def fParseXIP_old(path):
 
         BSBitstream = ""
         BSBitstream = f"{BSPhysicalLocation_val}/{BSFileName_val}"
-        logging.info(f"BSBitstream : {BSBitstream}")
+        # logging.info(f"BSBitstream : {BSBitstream}")
         # print(f"BSBitstream {BSBitstream}")
         
         dict_BSFileName[BSBitstream] = BSFileName_val
         dict_BSFileSize[BSBitstream] = BSFileSize_val
         
         Fixity_data = BSentry.xpath('./XIP:Fixities/XIP:Fixity', namespaces = NSMAP)
-        logging.info(f"Fixity_data {Fixity_data}")
+        # logging.info(f"Fixity_data {Fixity_data}")
         # print(type(Fixity_data))
         fd_loop = 0
         for FD in range (len(Fixity_data)):
-            logging.info(f"FD_loop : {fd_loop}")
+            # logging.info(f"FD_loop : {fd_loop}")
             BS_Fixity_alg_val = ""
             BS_Fixity_val = ""
             
             FDentry = Fixity_data[FD]
             
             BS_Fixity_alg_val  = FDentry.xpath('./XIP:FixityAlgorithmRef/text()', namespaces = NSMAP)[0]
-            logging.info(f"BSBitstream : {BSBitstream}")
-            logging.info(f"BS_Fixity_alg_val {BS_Fixity_alg_val}")
-            logging.info(f"BS_Fixity_alg_val type {type(BS_Fixity_alg_val)}")
-            logging.info(f"BS_Fixity_alg_val len{len(BS_Fixity_alg_val)}")
+            # logging.info(f"BSBitstream : {BSBitstream}")
+            # logging.info(f"BS_Fixity_alg_val {BS_Fixity_alg_val}")
+            # logging.info(f"BS_Fixity_alg_val type {type(BS_Fixity_alg_val)}")
+            # logging.info(f"BS_Fixity_alg_val len{len(BS_Fixity_alg_val)}")
             # print(len(BS_Fixity_alg_val))
             
             
             BS_Fixity_val  = FDentry.xpath('./XIP:FixityValue/text()', namespaces = NSMAP)[0]
-            logging.info(f"BSBitstream : {BSBitstream}")
-            logging.info(f"BS_Fixity_val {BS_Fixity_val}")
-            logging.info(f"BS_Fixity_val {type(BS_Fixity_val)}")
-            logging.info(f"BS_Fixity_val {len(BS_Fixity_val)}")
+            # logging.info(f"BSBitstream : {BSBitstream}")
+            # logging.info(f"BS_Fixity_val {BS_Fixity_val}")
+            # logging.info(f"BS_Fixity_val {type(BS_Fixity_val)}")
+            # logging.info(f"BS_Fixity_val {len(BS_Fixity_val)}")
             
             
             if BS_Fixity_alg_val == 'MD5':
@@ -668,6 +686,7 @@ def fReset_Lists_Dicts():
 #runtime
 ###############################################################
 def main():
+
     return fProcessPackages(source_folder,working_folder, target_folder)
 
 if __name__ == '__main__':
