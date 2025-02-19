@@ -203,7 +203,7 @@ def fProcessPackages(source_folder: Path ,working_folder: Path, target_folder: P
                             fUnzipExport(working_folder)
 
                             fQueryXIP(working_folder)
-                            fDumpdict()
+                            fDumpdict(pkg.stem)
                             outputfile.close()
 
                             # fConvertCSVtoXLSX(outputfile_path, xlsx_outputfile_path)
@@ -240,16 +240,17 @@ def fQueryXIP(working_folder):
         fParseXIP(path)
 
 
-def fDumpdict():
+def fDumpdict(pkg_id):
     array_dictCO = list(dictCO.keys())
     for aa in range(len(array_dictCO)):
         # print(f"CO array {array_dictCO[aa]}")
         # outputfile.write(f"{dictCO[array_dictCO[aa]]} \n")
         str_output = str(dictCO[array_dictCO[aa]])
         split_output = str_output.split(sep="|")
-        csv_writer = csv.writer(outputfile)
-        csv_writer.writerow(split_output)
-
+        for item in split_output:
+            if pkg_id in item[2]:
+                csv_writer = csv.writer(outputfile)
+                csv_writer.writerow(split_output)
 
 
 def fDeleteZip(zipper: Path):
