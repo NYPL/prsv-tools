@@ -248,9 +248,10 @@ def fDumpdict(pkg_id):
         str_output = str(dictCO[array_dictCO[aa]])
         split_output = str_output.split(sep="|")
         for item in split_output:
-            if pkg_id in item[2]:
+            if pkg_id in item:
                 csv_writer = csv.writer(outputfile)
                 csv_writer.writerow(split_output)
+                break
 
 
 def fDeleteZip(zipper: Path):
