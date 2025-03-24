@@ -12,14 +12,15 @@ import prsv_tools.utility.cli as prsvcli
 # logger
 LOGGER = logging.getLogger(__name__)
 
+report_name = ""
+
 def _configure_logging(log_folder: Path):
     log_fn = datetime.now().strftime("lint_%Y_%m_%d_%H_%M.log")
     log_fpath = log_folder / log_fn
 
     logging.basicConfig(
         level=logging.WARNING,
-        format="%(asctime)s - %(levelname)8s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        format='%(levelname)s:%(message)s',
         encoding="utf-8",
         handlers=[logging.FileHandler(log_fpath, mode="w"), logging.StreamHandler()],
     )
@@ -42,7 +43,7 @@ def parse_args() -> argparse.Namespace:
         "--directory",
         "-d",
         type=prsvcli.extant_dir,
-        requierd=False,
+        required=False,
         help="Path to directory of reports to be validated, e.g. 'path/to/dir/of/csvs'",
     )
 
@@ -63,7 +64,7 @@ def metadata_contents_SO(report: pd.DataFrame) -> bool:
         # bool for rows ending in _contents
         row_contents = str(row_pos).__contains__("_contents")
         # bool for rows ending in _metadata
-        row_metadata = str(row_pos).__contains__("_met0adata")
+        row_metadata = str(row_pos).__contains__("_metadata")
         # if dataframe has _contents AND _metadata = true
 
         if row_contents or row_metadata:
@@ -75,10 +76,10 @@ def metadata_contents_SO(report: pd.DataFrame) -> bool:
                 continue
 
     if contents == 0:
-        LOGGER.error(f"{row_pos[-15:-9]} is missing _contents SO")
+        LOGGER.error(f"{report_name} is missing _contents SO")
         return False
     elif metadata ==0:
-        LOGGER.error(f"{row_pos[-15:-9]} is missing _metadata SO")
+        LOGGER.error(f"{report_name} is missing _metadata SO")
         return False
     else:
         return True
@@ -98,7 +99,6 @@ def contents_IO_count(report: pd.DataFrame) -> bool:
     # iterate through each row in dataframe
     for i in range(len(report.index)):
         path_pos = report['Local_Path'].values[i]
-        report_name = str(path_pos[-15:-9])
         # get IO Ref ID
         row_pos = report['IO Ref'].values[i]
         # check if row is for _contents
@@ -122,7 +122,6 @@ def metadata_unqiue_names(report: pd.DataFrame) -> bool:
     for i in range(len(report.index)):
         row_pos = report.values[i]
         path_pos = report['Local_Path'].values[i]
-        report_name = str(path_pos[-15:-9])
         # bool for rows ending in _metadata
         row_metadata = str(row_pos).__contains__("_metadata")
         if row_metadata:
@@ -153,7 +152,6 @@ def contents_unique_names(report) -> bool:
     for i in range(len(report.index)):
         row_pos = report.values[i]
         path_pos = report['Local_Path'].values[i]
-        report_name = str(path_pos[-15:-9])
         # bool for rows ending in _contents
         row_contents = str(row_pos).__contains__("_contents")
         if row_contents:
@@ -183,6 +181,7 @@ def metadata_bitstream_count(report: pd.DataFrame) -> bool:
     if len(md5_check) == len(report.index):
         return True
     else:
+        logging.warning(f"{report_name} doe snot have unqiue checksum values / bitstreams")
         return False
 
 def contents_media_IO(report: pd.DataFrame) -> bool:
@@ -219,11 +218,15 @@ def contents_expected_names(report: pd.DataFrame) -> bool:
         else:
             # io title pattern (ie. '338770_media')
             io_title_pattern = re.compile(r"^[0-9]+_media$")
+            io_alt_title_pattern = re.compile(r"^[0-9]+_cue$")
             # file name pattern (ie. 'myd_338770_v01_pm.mkv')
             fn_pattern = re.compile(r"myd_[0-9]+_v[0-9]+_[A-Za-z]+\.[A-Za-z0-9]+")
             # file name pattern (ie. 'myh_336536_v01f01_sc.mp4')
             fn_alt_pattern = re.compile(r"my[A-Za-z]_[0-9]+_v[0-9]+[A-Za-z][0-9]+_[A-Za-z]+\.[A-Za-z0-9]+")
+            fn_alt2_pattern = re.compile(r"[A-Za-z]+_[0-9]+_[A-Za-z0-9]+_[A-Za-z0-9]+\.[A-Za-z0-9]+")
             if io_title_pattern.fullmatch(io_title):
+                io_result = True
+            elif io_alt_title_pattern.fullmatch(io_title):
                 io_result = True
             else:
                 io_result = False
@@ -231,6 +234,8 @@ def contents_expected_names(report: pd.DataFrame) -> bool:
             if fn_pattern.fullmatch(file_name):
                 fn_result = True
             elif fn_alt_pattern.fullmatch(file_name):
+                fn_result = True
+            elif fn_alt2_pattern.fullmatch(file_name):
                 fn_result = True
             else:
                 fn_result = False
@@ -247,7 +252,6 @@ def metadata_media_json(report: pd.DataFrame) -> bool:
     """AMI Package_media must have matching json in _metadata"""
     media_files = set()
     metadata_files = set()
-    report_name = ""
 
     for i in range(len(report.index)):
         # get IO Title
@@ -256,7 +260,6 @@ def metadata_media_json(report: pd.DataFrame) -> bool:
         path_pos = report['Local_Path'].values[i]
         # get File Name
         fn_pos = report['File Name'].values[i]
-        report_name = str(path_pos[-15:-9])
         #check for _media in IO Title
         media_info = str(row_pos).__contains__("_media")
         # check for _contents in Local Path
@@ -292,7 +295,7 @@ def so_category_id():
     pass
 
 # validate reports
-def validate_reports(report: pd.DataFrame, report_name):
+def validate_reports(report: pd.DataFrame):
     """Create a list of reports that are valid & invalid"""
     result = "valid"
 
@@ -305,8 +308,18 @@ def validate_reports(report: pd.DataFrame, report_name):
     #     if not test(report):
     #         invalid.append(report_name)
     #         LOGGER.error(f"{report_name} failed {test} [OPTIONAL].")
-
-    req_tests = [
+    er_pattern = re.compile(r"M[0-9]+_ER_[0-9]+")
+    if re.search(er_pattern, report_name):
+        req_tests = [
+            metadata_contents_SO,
+            # metadata_IO_count,
+            contents_IO_count,
+            metadata_unqiue_names,
+            contents_unique_names,
+            metadata_bitstream_count,
+        ]
+    else:
+        req_tests = [
         metadata_contents_SO,
         # metadata_IO_count,
         contents_IO_count,
@@ -316,7 +329,7 @@ def validate_reports(report: pd.DataFrame, report_name):
         contents_media_IO,
         contents_expected_names,
         metadata_media_json,
-    ]
+        ]
 
     for test in req_tests:
         if not test(report):
@@ -329,24 +342,48 @@ def sort_result(report: Path):
     invalid = list()
     
     read_report = pd.read_csv(report)
-    result = validate_reports(read_report, report.name)
+    result = validate_reports(read_report)
     if result == "invalid":
-        invalid.append(report.name)
+        invalid.append(report)
     elif result == "valid":
-        valid.append(report.name)
+        valid.append(report)
+
+    if len(invalid) == 0:
+        print(f"{report_name} is a valid report.")
+    else:
+        print(f"{report_name} is invalid.")
 
     return valid, invalid
 
 def main():
     args = parse_args()
-    _configure_logging(args.log_folder)
+    _configure_logging(Path("/Users/emileebuytkins/containers/logs/"))
+
+    global report_name
+    source_dir = Path('/Users/emileebuytkins/containers/combined_reports/')
 
     if args.report:
-        sort_result(args.report)
-    if args.directory:
+        report = args.report
+        report_name = Path(report).name
+        sort_result(report)
+    elif args.directory:
         report_dir = Path(args.directory)
         for report in sorted(report_dir.iterdir()):
+            report_name = Path(report).name
             sort_result(report)
+    else:
+        # for dir in sorted(source_dir.iterdir()):
+        #     if dir.name.startswith("."):
+        #         continue
+        #     elif dir.is_dir():
+        #         print(f"\n    Validating: {dir.name}\n")
+
+        for report in source_dir.iterdir():
+            if report.is_file():
+                if not report.name.startswith("."):
+                    report_name = Path(report).name
+                    sort_result(report)
+
 
 
 if __name__ == '__main__':

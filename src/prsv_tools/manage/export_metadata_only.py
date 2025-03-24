@@ -3,7 +3,12 @@ import logging
 import re
 import sys
 import time
+from datetime import datetime, timedelta
+import os
+from functools import partial
 import xml.etree.ElementTree as ET
+from pathlib import Path
+from multiprocessing import Pool
 
 import requests
 
@@ -12,6 +17,7 @@ import prsv_tools.utility.cli as prsvcli
 
 logging.basicConfig(level=logging.INFO)
 
+container_path = Path("")
 
 def parse_args():
     parser = prsvcli.Parser()
@@ -46,7 +52,29 @@ def parse_args():
         help="""Provide package ID, e.g. M1234_ER_1, to export
         the package's metadata. Can take multiple ids, separated with space""",
     )
-
+    parser.add_argument(
+        "--amipackage_id",
+        required=False,
+        help="""provided 6 digit package ID, e.g. 123000, only first three will be used"""
+    )
+    parser.add_argument(
+        "--ami_ingest_start_date",
+        "-sd",
+        required=False,
+        help="""provide starting month and date of ingest for packages in the following format: YYYY-MM-DD""",
+    )
+    parser.add_argument(
+        "--ami_ingest_end_date",
+        "-ed",
+        required=False,
+        help="""provide ending month and date of ingest for packages in the following format: YYYY-MM-DD""",
+    )
+    parser.add_argument(
+        "--daily_ami",
+        required=False,
+        action='store_true',
+        help="""uses today and yesterday's date as parameters, takes no argument""",
+    )
     return parser.parse_args()
 
 
@@ -65,12 +93,16 @@ def search_preservica_api(
     accesstoken: str, query_params: dict, parentuuid: str
 ) -> requests.Response:
     query = json.dumps(query_params)
+    #search_url = f"https://nypl.preservica.com/api/content/search?q={query}&start=0&max=-1&metadata=''"
+    #search-within
     search_url = f"https://nypl.preservica.com/api/content/search-within?q={query}&parenthierarchy={parentuuid}&start=0&max=-1&metadata=''"
     search_headers = {
         "Preservica-Access-Token": accesstoken,
         "Content-Type": "application/xml;charset=UTF-8",
     }
+    logging.info("")
     search_response = requests.get(search_url, headers=search_headers)
+    logging.info("")
     return search_response
 
 
@@ -98,6 +130,62 @@ def get_packages_uuids(
     return search_preservica_api(accesstoken, query_params, parentuuid)
 
 
+def get_amipackages_uuids(
+        accesstoken: str, pkg_id: str, parentuuid: str
+) -> requests.Response:
+    """get AMI uuids based on first 3 digits of AMI ID"""
+    query_params = {
+        "q": "%",
+        "fields": [
+            {"name": "xip.title", "values": [f"{pkg_id[:3]}*"]},
+            {"name": "xip.identifier", "values": ["DigitizedAMIContainer"]}
+        ]
+    }
+    return search_preservica_api(accesstoken, query_params, parentuuid)
+
+def get_amibydate_uuids(
+        accesstoken: str, start_date, end_date, parentuuid: str 
+) -> requests.Response:
+    """get AMI uuids based on a date range"""
+    query_params = {
+        "q": "",
+        "fields": [
+            {"name": "xip.created", "values": [f"{start_date} - {end_date}"]}, 
+            {"name": "xip.identifier", "values": ["DigitizedAMIContainer"]}
+        ]
+    }
+    return search_preservica_api(accesstoken, query_params, parentuuid)
+
+def get_amifromdate_uuids(
+        accesstoken: str, end_date, parentuuid: str 
+) -> requests.Response:
+    """get AMI uuids before a specific date"""
+    query_params = {
+        "q": "",
+        "fields": [
+            {"name": "xip.created", "values": [f"2023-01-01 - {end_date}"]}, 
+            {"name": "xip.identifier", "values": ["DigitizedAMIContainer"]}
+        ]
+    }
+    return search_preservica_api(accesstoken, query_params, parentuuid)
+
+def get_daily_ami_uuids(
+        accesstoken: str, end_date, parentuuid: str
+) -> requests.Response:
+    """get AMI uuids from the last day"""
+    today = datetime.now()
+    today_formatted = today.strftime("%Y-%m-%d")
+    yesterday = today - timedelta(days=1)
+    yesterday_formatted = yesterday.strftime("%Y-%m-%d")
+    query_params = {
+        "q": "",
+        "fields": [
+            {"name": "xip.created", "values": [f"{yesterday_formatted} - {today_formatted}"]}, 
+            {"name": "xip.identifier", "values": ["DigitizedAMIContainer"]}
+        ]
+    }
+    return search_preservica_api(accesstoken, query_params, parentuuid)
+
 def get_pkg_title(accesstoken: str, pkg_uuid: str, credentials: str) -> str:
     get_so_url = f"https://nypl.preservica.com/api/entity/structural-objects/{pkg_uuid}"
     get_pkg_headers = {
@@ -112,7 +200,6 @@ def get_pkg_title(accesstoken: str, pkg_uuid: str, credentials: str) -> str:
 
     return title
 
-
 def post_so_api(uuid: str, accesstoken: str) -> requests.Response:
     """Make a POST request to the export Structural Object endpoint"""
     export_so_url = (
@@ -124,9 +211,9 @@ def post_so_api(uuid: str, accesstoken: str) -> requests.Response:
     }
 
     xml_str = (
-        '<ExportAction xmlns="http://preservica.com/EntityAPI/v7.0" xmlns:xip="http://preservica.com/XIP/v7.0">'
+        '<ExportAction xmlns="http://preservica.com/EntityAPI/v7.5" xmlns:xip="http://preservica.com/XIP/v7.5">'
         + "<IncludeContent>NoContent</IncludeContent>"
-        + "<IncludeMetadata>Metadata</IncludeMetadata>"
+        + "<IncludeMetadata>MetadataWithEvents</IncludeMetadata>"
         + "<IncludedGenerations>All</IncludedGenerations>"
         + "<IncludeParentHierarchy>false</IncludeParentHierarchy>"
         + "</ExportAction>"
@@ -135,6 +222,84 @@ def post_so_api(uuid: str, accesstoken: str) -> requests.Response:
     post_response = requests.post(export_so_url, headers=export_headers, data=xml_str)
 
     return post_response
+
+def api_status(pkg_uuid, credentials):
+    global container_path
+    accesstoken_a = prsvapi.get_token(credentials)
+
+    container_path = Path("/Users/emileebuytkins/containers/metadata_exports")
+
+    print(pkg_uuid)
+    pkg_id = get_pkg_title(accesstoken_a, pkg_uuid, credentials)
+    # for manual ER reports, add pkg_title to api_status params
+    # pkg_id = pkg_title
+
+    pkg_dir_path = container_path / f"{pkg_id[:3]}"
+    pkg_filepath = pkg_dir_path / f"{pkg_id}.zip"
+    pkg_dir_path.mkdir(parents=True, exist_ok=True)
+
+    failed_exports_path = Path("/Users/emileebuytkins/containers/failed_metadata_exports/")
+
+    if pkg_filepath.exists():
+        return
+    
+    # checking if metadata export folder/files exists, else make new folder
+    
+    else:
+        failed_exports_path.mkdir(parents=True, exist_ok=True)
+        post_response = post_so_api(pkg_uuid, accesstoken_a)
+        #time.sleep(5)
+        # checking for API status code
+        if post_response.status_code == 202:
+            logging.info(f"Now working on {pkg_id}") 
+            logging.info(f"Progress token: {post_response.text}")
+            progresstoken = post_response.text
+            
+            # create file recording pkg ID & progress token
+            progress_token_path = Path(failed_exports_path / f"{pkg_id}.{progresstoken}")
+            progress_token_path.touch()
+            
+            time.sleep(1)
+        else:
+            logging.error(
+                f"POST request unsuccessful for {pkg_id}: code {post_response.status_code}"
+            )
+            sys.exit(0)
+
+        for _ in range(1500): # keep running until all packages pass, accommodates larger packages
+            time.sleep(5)
+            get_progress_response = get_progress_api(progresstoken, accesstoken_a)
+            logging.info(get_progress_response.text)
+
+            if get_progress_response.status_code != 200:
+                logging.error(
+                    f"""GET progress request unsuccessful for {pkg_id}:
+                            code {get_progress_response.status_code}"""
+                )
+                return
+            else:
+                logging.info(f"Progress completed. Will proceed to download {pkg_id}")
+                time.sleep(2)
+                get_export_request = get_export_download_api(
+                    progresstoken, accesstoken_a
+                )
+                # checking for API status code
+                if get_export_request.status_code == 200:
+                    logging.info(
+                        f"The exported content for {pkg_id} is in the process of being downloaded as of {datetime.now()}"
+                    )
+                    # save the file
+                    save_file = open(pkg_filepath, "wb")
+                    save_file.write(get_export_request.content)
+                    save_file.close()
+                    # progress token file removed if export is successful
+                    progress_token_path.unlink(missing_ok=True)
+                    # compare_downloads()
+                    break
+                else:
+                    logging.error(
+                        f"Get export request unsuccessful for {pkg_id}: {get_export_request.status_code}"
+                    )
 
 
 def get_progress_api(progresstoken, accesstoken) -> requests.Response:
@@ -166,6 +331,45 @@ def get_export_download_api(progresstoken, accesstoken):
 
     return get_progress_response
 
+def failed_file_exists():
+    """creates dict from files in failed exports path"""
+    failed_pkg_id = list()
+    failed_progress_token = list()
+    failed_pkgs = dict()
+
+    failed_path = Path("/Users/emileebuytkins/containers/failed_metadata_exports")
+
+    #create dict from pkg id and progress token in failed file name
+    for file in failed_path.iterdir():
+        failed_pkg_id.append(file.stem)
+        failed_progress_token.append(file.suffix[1:])
+    for i in range(len(failed_pkg_id)):
+        failed_pkgs[failed_pkg_id[i]] = failed_progress_token[i]
+        # logging.info(f"PKG ID: {failed_pkg_id[i]} | Progress Token: {failed_progress_token[i]}")
+
+    return failed_pkgs
+
+def compare_downloads():
+    """compares pkg ids in failed pkgs dict to successfully exported files, returns true failed exports"""
+    #pull in dict, separate into lists, compare against current downloads
+    container_path = Path("/Users/emileebuytkins/containers/metadata_exports")
+    failed_path = Path(f"/Users/emileebuytkins/containers/failed_metadata_exports/")
+    failed_pkgs = failed_file_exists()
+    prepped_pkgs = set()
+
+    for file in container_path.iterdir():
+        for key, value in failed_pkgs.items():
+            if key == file.stem:
+                # if file is already downloaded, delete failed record
+                failed_file = failed_path / f"{key}.{value}"
+                failed_file.unlink(missing_ok=True)
+                # remove not-failed item from dict
+                failed_pkgs.pop(key)
+            else:
+                prepped_pkgs.add(key)
+
+    return prepped_pkgs
+
 
 def main():
     args = parse_args()
@@ -175,10 +379,13 @@ def main():
 
     if "test" in args.credentials:
         digarch_uuid = "c0b9b47a-5552-4277-874e-092b3cc53af6"
+       # ami_uuid = 
     else:
         digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08"
+        ami_uuid = "183a74b5-7247-4fb2-8184-959366bc0cbc"
 
     pkg_dict = dict()
+    uuids = list()
 
     if args.collection_id:
         col_id_ls = args.collection_id.split()
@@ -190,6 +397,7 @@ def main():
                 pkg_title = get_pkg_title(accesstoken, uuid, args.credentials)
                 pkg_dict[pkg_title] = uuid
             print(pkg_dict)
+
     if args.package_id:
         pkg_id_ls = args.package_id.split()
         for pkg_id in pkg_id_ls:
@@ -199,52 +407,73 @@ def main():
                 pkg_title = get_pkg_title(accesstoken, id, args.credentials)
                 pkg_dict[pkg_title] = uuid[0]
 
-    for pkg in pkg_dict:
-        accesstoken_a = prsvapi.get_token(args.credentials)
-        post_response = post_so_api(pkg_dict[pkg], accesstoken_a)
+    if args.amipackage_id:
+        num = int(args.amipackage_id)
+        # lowered upper limit to condense processing time (temp)
+        for n in range(num, (num+1), 1000):
+            logging.info(f"{n}")
+            res = get_amipackages_uuids(accesstoken, str(n), ami_uuid) 
+            logging.info(res)
+            uuids = parse_structural_object_uuid(res)
+            # logging.info(uuids)
+            for id in uuids:
+                pkg_title = get_pkg_title(accesstoken, id, args.credentials)
+                logging.info(pkg_title)
+                pkg_dict[pkg_title] = id
 
-        # checking for API status code
-        if post_response.status_code == 202:
-            logging.info(f"Now working on {pkg}")
-            logging.info(f"Progress token: {post_response.text}")
-            progresstoken = post_response.text
-            time.sleep(10)
-        else:
-            logging.error(
-                f"POST request unsuccessful: code {post_response.status_code}"
-            )
-            sys.exit(0)
+    if args.ami_ingest_start_date and args.ami_ingest_end_date:
+        res = get_amibydate_uuids(accesstoken, args.ami_ingest_start_date, args.ami_ingest_end_date, ami_uuid) 
+        logging.info(res)
+        uuids = parse_structural_object_uuid(res)
+        logging.info(uuids)
+        for id in uuids:
+            pkg_title = get_pkg_title(accesstoken, id, args.credentials)
+            logging.info(pkg_title)
+            pkg_dict[pkg_title] = id
 
-        # checking for API status code for 15 times. with 5 secs interval
-        for _ in range(15):
-            time.sleep(5)
-            get_progress_response = get_progress_api(progresstoken, accesstoken_a)
-            if get_progress_response.status_code != 200:
-                logging.error(
-                    f"""GET progress request unsuccessful:
-                            code {get_progress_response.status_code}"""
-                )
-                return
-            else:
-                logging.info("Progress completed. Will proceed to download")
-                time.sleep(60)
-                get_export_request = get_export_download_api(
-                    progresstoken, accesstoken_a
-                )
-                # checking for API status code
-                if get_export_request.status_code == 200:
-                    logging.info(
-                        "The exported content is in the process of being downloaded"
-                    )
-                    # save the file
-                    save_file = open(f"{pkg}.zip", "wb")  # wb: write binary
-                    save_file.write(get_export_request.content)
-                    save_file.close()
-                    break
-                else:
-                    logging.error(
-                        f"Get export request unsuccessful: {get_export_request.status_code}"
-                    )
+    if args.ami_ingest_end_date:
+        res = get_amifromdate_uuids(accesstoken, args.ami_ingest_end_date, ami_uuid)
+        logging.info(res)
+        uuids = parse_structural_object_uuid(res)
+        logging.info(uuids)
+        for id in uuids:
+            pkg_title = get_pkg_title(accesstoken, id, args.credentials)
+            logging.info(pkg_title)
+            pkg_dict[pkg_title] = id
+
+    if args.daily_ami:
+        res = get_daily_ami_uuids(accesstoken, args.ami_ingest_end_date, ami_uuid)
+        logging.info(res)
+        uuids = parse_structural_object_uuid(res)
+        logging.info(uuids)
+        for id in uuids:
+            pkg_title = get_pkg_title(accesstoken, id, args.credentials)
+            logging.info(pkg_title)
+            pkg_dict[pkg_title] = id
+
+    # if args.retry:
+    #     # failed files exist
+    #     # failed_files = failed_file_exists()
+    #     # compared to downloaded files
+    #     compared_files = compare_downloads()
+    #     for file in compared_files:
+            
+    #         logging.info({file})
+    #         res = get_amipackages_uuids(accesstoken, file, ami_uuid)
+    #         uuids.extend(parse_structural_object_uuid(res))
+
+    #establish Pool & OS CPU count, using 'x' fewer CPUs than OS total in Pool
+    cpu = os.cpu_count()
+    status_process = Pool(processes=(cpu-2))
+    #apply the list of uuids to api_status(), credentials is a permanent param
+    api_status_f = partial(api_status, credentials=args.credentials)
+    status_result = status_process.map(api_status_f, uuids)
+    #close & join Pool
+    status_process.close()
+    status_process.join()
+
+    return status_result
+
 
 
 if __name__ == "__main__":

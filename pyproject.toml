@@ -45,6 +45,8 @@ creds = 'prsv_tools.utility.api:main'
 retry_workflows = 'prsv_tools.ingest.retry_workflows:main'
 export_metadata_only = 'prsv_tools.manage.export_metadata_only:main'
 unpack_reports = 'prsv_tools.manage.unpack_reports:main'
+validate_reports = 'prsv_tools.manage.validate_reports:main'
+compile_reports = 'prsv_tools.manage.compile_reports:main'
 
 [tool.mypy]
 exclude = [

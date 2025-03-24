@@ -35,11 +35,14 @@ import os
 import shutil
 from shutil import unpack_archive
 from pathlib import Path
-import lxml.etree
 import logging
 import lxml.etree
 from xlsxwriter import Workbook
 import pandas as pd
+import fnmatch
+from multiprocessing import Pool
+from functools import partial
+from zipfile import ZipFile
 # from multiprocessing import Pool
 
 
@@ -49,8 +52,8 @@ import csv
 
 
 #  working folders
-parent_folder = Path("/containers/metadata_exports/")
-root_folder = Path("/containers/")
+parent_folder = Path("/Users/emileebuytkins/containers/metadata_exports/")
+root_folder = Path("/Users/emileebuytkins/containers/")
 source_folder = root_folder / "Export_Source"
 working_folder = root_folder / "Export_Working"
 target_folder = root_folder / "Export_Target"
@@ -144,114 +147,116 @@ dict_NS = {}
 ###############################################################
 #  custom functions
 ###############################################################
-def fProcessPackages(source_folder: Path ,working_folder: Path, target_folder: Path):
+
+def fProcessPackages():
     global outputfile
-    
     #process one export .zip at a time
-    for packages in parent_folder.iterdir():
+    for packages in sorted(parent_folder.iterdir()):
         # skip hidden files
-        if str(packages.name).startswith("."):
+        if str(packages.name).startswith("."): # or not str(packages.name).startswith("m"):
             continue
+
         # sanitise working_folder
         fCleanUp(working_folder)
         
         dictCO.clear()
 
-        for pkg in packages.iterdir():
+        for pkg in sorted(packages.iterdir()):
             # accounts for top-level folder being unzipped
             source_dir = Path(source_folder / packages / pkg)
             #check if file exists 
             #define output 
+            if pkg.stem.startswith("M"):
+                pkg_name = pkg.name.split("_")[0]
+                continue
+            else:
+                pkg_name = pkg.stem[:3]
+            
             outputfile_name = f"{pkg.stem}_Info.csv"
-            xlsx_outputfile_name = f"{pkg.stem}_Info.xlsx"
-            if Path(target_folder / pkg.stem[:3]).is_dir():
-                outputfile_path = Path(target_folder/ pkg.stem[:3]/ outputfile_name)
-                xlsx_outputfile_path = Path(target_folder, pkg.stem[:3], xlsx_outputfile_name)
-            else: 
-                Path(target_folder / pkg.stem[:3]).mkdir()
-                outputfile_path = Path(target_folder/ pkg.stem[:3]/ outputfile_name)
-                xlsx_outputfile_path = Path(target_folder, pkg.stem[:3], xlsx_outputfile_name)
+            # xlsx_outputfile_name = f"{pkg.stem}_Info.xlsx"
 
-            if xlsx_outputfile_path.is_file():
+            Path(target_folder / pkg_name).mkdir(parents=True, exist_ok=True)
+            outputfile_path = Path(target_folder/ pkg_name/ outputfile_name)
+            # xlsx_outputfile_path = Path(target_folder, parent_folder.name, xlsx_outputfile_name)
+
+            if outputfile_path.exists() or str(pkg.name).startswith("."):
                 continue
             else:
 
                 # skip hidden files
-                if str(pkg.name).startswith("."):
-                    continue
+                # if str(pkg.name).startswith("."):
+                #     continue
                 if source_dir.is_dir():
                     # print("fProcessPackages : source directory contains folders but should only contain zips")
-                    logging.info(" : fProcessPackages : source directory contains folders")
+                    logging.error(f" : fProcessPackages : source directory {source_dir} contains folders")
                     sys.exit()
                 else:
-                    if pkg.is_file():
+                    if pkg.is_file() and pkg.suffix == ".zip":
                         # package_ext = pkg.suffix()
                         # package_no_ext = pkg.stem()
-                        if pkg.suffix == ".zip":
-                            logging.info(f" : fProcessPackages : Processing : {pkg}")
 
-                            outputfile = open(outputfile_path, "w", encoding = 'utf-8')                    
-                            # outputfile.write("Local_Path|IO Ref|IO Title|Identifier|Parent Ref|CO Ref|CO Title|CO Parent|Representation Type|Generation|File Path|File Name|File Size|SHA512|SHA512ChecksumVal|SHA256|SHA256ChecksumVal|SHA1|SHA1ChecksumVal|MD5|MD5ChecksumVal|Formats|IngestDate|IngestUser|IngestWFName|IngestWFInstanceID" + "\n", )
-                            output_headers = ["Local_Path", "IO Ref", "IO Title", "Identifier", "Parent Ref", "CO Ref", "CO Title", "CO Parent", "Representation Type", "Generation", "File Path", "File Name", "File Size", "SHA512", "SHA512ChecksumVal", "SHA256", "SHA256ChecksumVal", "SHA1", "SHA1ChecksumVal", "MD5", "MD5ChecksumVal", "Formats", "IngestDate", "IngestUser", "IngestWFName", "IngestWFInstanceID"]
-                            csv_writer = csv.writer(outputfile)
-                            csv_writer.writerow(output_headers)
+                        logging.info(f" : fProcessPackages : Processing : {pkg}")
 
-                            package_source = Path(source_folder, packages, pkg)
-                            package_working = Path(working_folder)
-                            shutil.copy2(package_source,package_working)
+                        outputfile = open(outputfile_path, "w", encoding = 'utf-8')                    
+                        # outputfile.write("Local_Path|IO Ref|IO Title|Identifier|Parent Ref|CO Ref|CO Title|CO Parent|Representation Type|Generation|File Path|File Name|File Size|SHA512|SHA512ChecksumVal|SHA256|SHA256ChecksumVal|SHA1|SHA1ChecksumVal|MD5|MD5ChecksumVal|Formats|IngestDate|IngestUser|IngestWFName|IngestWFInstanceID" + "\n", )
+                        output_headers = ["Local_Path", "IO Ref", "IO Title", "Identifier", "Parent Ref", "CO Ref", "CO Title", "CO Parent", "Representation Type", "Generation", "File Path", "File Name", "File Size", "SHA512", "SHA512ChecksumVal", "SHA256", "SHA256ChecksumVal", "SHA1", "SHA1ChecksumVal", "MD5", "MD5ChecksumVal", "Formats", "IngestDate", "IngestUser", "IngestWFName", "IngestWFInstanceID"]
+                        csv_writer = csv.writer(outputfile)
+                        csv_writer.writerow(output_headers)
 
-                            fUnzipExport(working_folder)
+                        package_source = Path(source_folder, packages, pkg)
+                        package_working = Path(working_folder)
+                        shutil.copy2(package_source,package_working)
 
-                            fQueryXIP(working_folder)
-                            fDumpdict(pkg.stem)
-                            outputfile.close()
+                        fUnzipExport()
 
-                            # fConvertCSVtoXLSX(outputfile_path, xlsx_outputfile_path)
-                            # if xlsx_outputfile_path.is_file():
-                            #     outputfile_path.touch()
-                            #     outputfile_path.unlink()
-                            # else:
-                            #     logging.error(f"{xlsx_outputfile_name} does not exist, CSV will not be deleted.")
-                        else:
-                            logging.info(f" : fProcessPackages : Non zipped files will not be processed : {pkg}")
+                        fQueryXIP(pkg.stem)
+                        fDumpdict(pkg.stem)
+                        outputfile.close()
+
+                        # fConvertCSVtoXLSX(outputfile_path, xlsx_outputfile_path)
+                        # if xlsx_outputfile_path.is_file():
+                        #     outputfile_path.touch()
+                        #     outputfile_path.unlink()
+                        # else:
+                        #     logging.error(f"{xlsx_outputfile_name} does not exist, CSV will not be deleted.")
+                    elif not pkg.suffix == ".zip":
+                        logging.info(f" : fProcessPackages : Non zipped files will not be processed : {pkg}")
 
 
-def fUnzipExport(working_folder):
-    zip_files = Path(working_folder).rglob("*.zip")
-    while True:
-        try:
-            path = next(zip_files)
-        except StopIteration:
-            break # no more files
-        except PermissionError:
-            logging.exception("permission error")
-        else:
-            # print("     Unzipping : " + str(path))
-            extract_dir = path.with_name(path.stem)
-            unpack_archive(path, extract_dir, 'zip')
-            list_unpacked_export_zips.append(path)
-    
+def fUnzipExport():
+
+    zip_files = Path(working_folder).rglob('*.zip')
+
+    for path in zip_files:
+        # print(str(path))
+        if path.is_dir():
+            continue
+        extract_dir = path.with_name(path.stem)
+        ZipFile(path).extractall(extract_dir)
+        list_unpacked_export_zips.append(path)
+
     for zipper in list_unpacked_export_zips:
         fDeleteZip(zipper)
+        
 
 
-def fQueryXIP(working_folder):
+def fQueryXIP(pkg_id):
+
     for path in Path(working_folder).rglob('*.xip'):
-        fParseXIP(path)
+        if pkg_id in str(path):
+            fParseXIP(path)
 
 
 def fDumpdict(pkg_id):
-    array_dictCO = list(dictCO.keys())
-    for aa in range(len(array_dictCO)):
-        # print(f"CO array {array_dictCO[aa]}")
-        # outputfile.write(f"{dictCO[array_dictCO[aa]]} \n")
-        str_output = str(dictCO[array_dictCO[aa]])
-        split_output = str_output.split(sep="|")
-        for item in split_output:
-            if pkg_id in item:
-                csv_writer = csv.writer(outputfile)
-                csv_writer.writerow(split_output)
-                break
+    # expected_rows = 0
+
+    for key, value in dictCO.items():
+        if pkg_id in value:
+            str_output = str(value)
+            split_output = str_output.split(sep="|")
+            csv_writer = csv.writer(outputfile)
+            csv_writer.writerow(split_output)
+    # print(f"Expected # of rows: {expected_rows}")
 
 
 def fDeleteZip(zipper: Path):
@@ -331,17 +336,17 @@ def fParseXIP(path):
         ADWfInstID_val = ADentry.xpath('./XIP:WorkflowInstanceId/text()', namespaces = NSMAP)[0]
             
 
-
     Ident_data = tree.xpath('//XIP:XIP/XIP:Identifier', namespaces = NSMAP)
     for Ident in range(len(Ident_data)):
         Ident_entry = Ident_data[Ident]
         Id_Type = Ident_entry.xpath('./XIP:Type/text()', namespaces=NSMAP)
         Id_Value = Ident_entry.xpath('./XIP:Value/text()', namespaces=NSMAP)
         Id_Entity = Ident_entry.xpath('./XIP:Entity/text()', namespaces=NSMAP)
-        if Id_Type.lower() == "seedurl":
-            dict_XIP_Identifier[Id_Entity] = Id_Value
-        else:
-            dict_XIP_Identifier[Id_Entity] = ""
+        # if Id_Type.lower() == "seedurl":
+        for i in range(len(Id_Entity)):
+            dict_XIP_Identifier[Id_Entity[i]] = Id_Value[i]
+        # else:
+        #     dict_XIP_Identifier[Id_Entity] = ""
             
 
     CO_data = tree.xpath('//XIP:XIP/XIP:ContentObject', namespaces = NSMAP)
@@ -382,7 +387,7 @@ def fParseXIP(path):
         
 
     Bitstream_data = tree.xpath('//XIP:XIP/XIP:Bitstream', namespaces = NSMAP)
-    # print(f"Bitstream_data {Bitstream_data}")
+    # logging.info(f"Bitstream_data {Bitstream_data}")
     # print(len(Bitstream_data))
     for BS in range (len(Bitstream_data)):
         BSentry = Bitstream_data[BS]
@@ -461,7 +466,10 @@ def fParseXIP(path):
         GenFormats_from_dict = dict_XIP_GenFormats.get(dict_BSFileName_key, "NA")
         #         path             IORef      IO Title     IO Identifier                             IO Parent     CO Ref           CO Title                                     CO Parent                                     Representation Type                                       Generation                                        Full file path            File Name                                       File Size                                                                                                                                                                                                                                                                                                                       Audit
         listCO = [str(short_path), XIP_IORef, XIP_IOTitle, dict_XIP_Identifier.get(XIP_IORef, "NA"), XIP_IOParent, CORef_from_dict, dict_XIP_COTitle.get(CORef_from_dict, "NA"), dict_XIP_COParent.get(CORef_from_dict, "NA"), dict_BSRepresentationType.get(dict_BSFileName_key, "NA"), dict_BSGeneration.get(dict_BSFileName_key, "NA"), str(dict_BSFileName_key), dict_BSFileName.get(dict_BSFileName_key, "NA"), dict_BSFileSize.get(dict_BSFileName_key, "NA"), "SHA512", dict_BSFileName_SHA512.get(dict_BSFileName_key, "NA"), "SHA256", dict_BSFileName_SHA256.get(dict_BSFileName_key, "NA"), "SHA1", dict_BSFileName_SHA1.get(dict_BSFileName_key, "NA"), "MD5", dict_BSFileName_MD5.get(dict_BSFileName_key, "NA"), GenFormats_from_dict, ADDate_val, ADUser_val, ADWfName_val, ADWfInstID_val]
+        # print(listCO)
         dictCO[dict_BSFileName_key] = "|".join(listCO)
+        # print(dictCO[dict_BSFileName_key])
+        
        
        
        
@@ -689,7 +697,7 @@ def fReset_Lists_Dicts():
 ###############################################################
 def main():
 
-    return fProcessPackages(source_folder,working_folder, target_folder)
+    return fProcessPackages()
 
 if __name__ == '__main__':
     main()
