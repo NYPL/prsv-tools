@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def package_has_valid_name(package: Path) -> bool:
-    """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
+    """Top level folder name has to conform to """
     folder_name = package.name
     match = re.fullmatch(r"\d{6,7}", folder_name)
     if match:
@@ -199,12 +199,10 @@ def data_folder_has_no_part_files(package: Path) -> bool:
 def data_folder_uses_streams(package: Path) -> bool:
     """streams should be flagged to check service file"""
     data_path = package / "data"
-    high_region_counts = [
-        x for x in data_path.rglob("*") if re.search(r"s\d\d", x.name)
-    ]
+    stream_files = [x for x in data_path.rglob("*") if re.search(r"s\d\d", x.name)]
 
-    if high_region_counts:
-        LOGGER.warning(f"{package.name} has streams, {high_region_counts}.")
+    if stream_files:
+        LOGGER.warning(f"{package.name} has streams, {stream_files}.")
         return False
     else:
         return True
@@ -216,28 +214,13 @@ def region_files_used_correctly(package: Path) -> bool:
     high_region_counts = [
         x for x in data_path.rglob("*") if re.search(r"r(0[3-9]|[1-9]\d)", x.name)
     ]
+    high_region_counts = [x for x in data_path.rglob("*") if re.search(r"r(0[3-9]|[1-9]\d)", x.name)]
 
     if high_region_counts:
-        LOGGER.error(f"{package.name} has more than 3 regions, {high_region_counts}.")
+        LOGGER.error(f"{package.name} has more than 2 regions, {high_region_counts}.")
         return False
     else:
         return True
-
-
-def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
-    """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
-    metadata_path = package / "metadata"
-    ctsv_file_ls = [
-        x
-        for x in metadata_path.iterdir()
-        if x.is_file() and x.suffix.lower() in [".csv", ".tsv"]
-    ]
-    for ctsv in ctsv_file_ls:
-        if re.fullmatch(r"M\d+_(ER|DI|EM)_\d+", ctsv.stem):
-            return True
-        else:
-            LOGGER.error(f"{package.name} has nonconforming FTK file, {ctsv.name}.")
-            return False
 
 
 def data_folders_have_at_least_two_files(package: Path) -> bool:
@@ -313,6 +296,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         # metadata_FTK_file_has_valid_filename,
         data_folder_has_no_uncompressed_formats,
         data_folder_has_no_part_files,
+        data_folder_uses_streams,
         data_folders_have_at_least_two_files,
         package_is_a_bag,
         package_has_no_zero_bytes_file,
