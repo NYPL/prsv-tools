@@ -13,7 +13,6 @@ LOGGER = logging.getLogger(__name__)
 def _configure_logging(log_folder: Path):
     log_fn = datetime.now().strftime("lint_%Y_%m_%d_%H_%M.log")
     log_fpath = log_folder / log_fn
-
     logging.basicConfig(
         level=logging.WARNING,
         format="%(asctime)s - %(levelname)8s - %(message)s",
@@ -25,13 +24,10 @@ def _configure_logging(log_folder: Path):
 
 def parse_args() -> argparse.Namespace:
     """Validate and return command-line args"""
-
     parser = prsvcli.Parser()
-
     parser.add_package()
     parser.add_packagedirectory()
     parser.add_logdirectory()
-
     return parser.parse_args()
 
 
@@ -39,7 +35,6 @@ def package_has_valid_name(package: Path) -> bool:
     """Top level folder name has to conform to M###_(ER|DI|EM)_####"""
     folder_name = package.name
     match = re.fullmatch(r"\d{6,7}", folder_name)
-
     if match:
         return True
     else:
@@ -51,7 +46,6 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
     """Second level folders must have data and may have tags folder"""
     expected = set(["data", "tags"])
     found = set([x.name for x in package.iterdir() if x.is_dir()])
-
     if found <= expected and "data" in found:
         return True
     else:
@@ -67,7 +61,6 @@ def data_folder_has_valid_subfolders(package: Path) -> bool:
         ["PreservationMasters", "Mezzanines", "EditMasters", "ServiceCopies", "Images"]
     )
     found = set([x.name for x in (package / "data").iterdir() if x.is_dir()])
-
     if found <= expected:
         return True
     else:
@@ -95,7 +88,6 @@ def data_folder_has_no_empty_folder(package: Path) -> bool:
         if i.is_dir() and not any(i.iterdir()):
             LOGGER.error(f"{package.name} has empty folder in this package: {i.name}")
             return False
-
     return True
 
 
@@ -103,14 +95,12 @@ def data_files_are_expected_types(package: Path) -> bool:
     """The data folder can only have media files, json, and carrier photograph(s)"""
     data_path = package / "data"
     data_file_ls = [x for x in data_path.iterdir() if x.is_file()]
-
     expected = True
     expected_types = [".mkv", ".flac", ".json", ".jpeg", ".jpg", ".dv", ".mov"]
     for file in data_file_ls:
         if not file.suffix.lower() in expected_types:
             LOGGER.error(f"{package.name} has unexpected file {file.name}")
             expected = False
-
     if not expected:
         return False
     else:
@@ -152,7 +142,6 @@ def tag_file_is_expected_types(package: Path) -> bool:
         md_file_ls = [x for x in tags_path.iterdir() if x.is_file()]
     else:
         return True
-
     expected = True
     expected_types = [".framemd5", ".gz", ".ssa", ".scc", ".vtt", ".srt", ".txt"]
     for file in md_file_ls:
@@ -163,17 +152,14 @@ def tag_file_is_expected_types(package: Path) -> bool:
                     f"{package.name} has a gz file of an untracked category: {file.name}"
                 )
                 expected = False
-
         if file.suffix.lower() == ".txt" and not file.name.endswith("timecodes.txt"):
             LOGGER.warning(
                 f"{package.name} has a txt file of an untracked category: {file.name}"
             )
             expected = False
-
         if not file.suffix.lower() in expected_types:
             LOGGER.error(f"{package.name} has unexpected file {file.name}")
             expected = False
-
     if not expected:
         return False
     else:
@@ -186,12 +172,10 @@ def data_folder_has_no_uncompressed_formats(package: Path) -> bool:
     uncompressed_files = [
         x for x in data_path.rglob("*") if x.suffix.lower() in [".mov", ".wav"]
     ]
-
     # filter out mezzanines
     uncompressed_files = [
         x for x in uncompressed_files if not str(x).endswith("mz.mov")
     ]
-
     if uncompressed_files:
         LOGGER.error(
             f"{package.name} has uncompressed format files, {uncompressed_files}."
@@ -205,7 +189,6 @@ def data_folder_has_no_part_files(package: Path) -> bool:
     """no media file should be a 'part' file, e.g. div_id_v##..p##_"""
     data_path = package / "data"
     part_files = [x for x in data_path.rglob("*") if re.search(r"p\d\d", x.name)]
-
     if part_files:
         LOGGER.error(f"{package.name} has part files, {part_files}.")
         return False
@@ -213,7 +196,34 @@ def data_folder_has_no_part_files(package: Path) -> bool:
         return True
 
 
-# TODO
+def data_folder_uses_streams(package: Path) -> bool:
+    """streams should be flagged to check service file"""
+    data_path = package / "data"
+    high_region_counts = [
+        x for x in data_path.rglob("*") if re.search(r"s\d\d", x.name)
+    ]
+
+    if high_region_counts:
+        LOGGER.warning(f"{package.name} has streams, {high_region_counts}.")
+        return False
+    else:
+        return True
+
+
+def region_files_used_correctly(package: Path) -> bool:
+    """media files shouldn't use region for stream"""
+    data_path = package / "data"
+    high_region_counts = [
+        x for x in data_path.rglob("*") if re.search(r"r(0[3-9]|[1-9]\d)", x.name)
+    ]
+
+    if high_region_counts:
+        LOGGER.error(f"{package.name} has more than 3 regions, {high_region_counts}.")
+        return False
+    else:
+        return True
+
+
 def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
     metadata_path = package / "metadata"
@@ -222,7 +232,6 @@ def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
         for x in metadata_path.iterdir()
         if x.is_file() and x.suffix.lower() in [".csv", ".tsv"]
     ]
-
     for ctsv in ctsv_file_ls:
         if re.fullmatch(r"M\d+_(ER|DI|EM)_\d+", ctsv.stem):
             return True
@@ -235,7 +244,6 @@ def data_folders_have_at_least_two_files(package: Path) -> bool:
     """The data folders must have two or more files, which can be in folder(s)"""
     objects_path = package / "data"
     data_folders = [x for x in objects_path.iterdir() if x.is_dir()]
-
     for folder_path in data_folders:
         if folder_path.name in ["Images", "ServiceCopies"]:
             continue
@@ -286,16 +294,14 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
 def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
     """Run all linting tests against a package"""
     result = "valid"
-
     less_strict_tests = [
         tags_folder_has_one_to_four_files,
         package_has_no_hidden_file,
+        region_files_used_correctly,
     ]
-
     for test in less_strict_tests:
         if not test(package):
             result = "needs review"
-
     strict_tests = [
         package_has_valid_name,
         package_has_valid_subfolder_names,
@@ -311,53 +317,53 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         package_is_a_bag,
         package_has_no_zero_bytes_file,
     ]
-
     for test in strict_tests:
         if not test(package):
             result = "invalid"
-
     return result
+
+
+def lint_packages(packages: Path):
+    valid = []
+    invalid = []
+    needs_review = []
+    for package in sorted(packages):
+        result = lint_package(package)
+        LOGGER.info(f"{result}, {package}")
+        if result == "valid":
+            valid.append(package)
+        elif result == "invalid":
+            invalid.append(package)
+        else:
+            needs_review.append(package)
+
+    return invalid, needs_review, valid
 
 
 def main():
     args = parse_args()
     _configure_logging(args.log_folder)
 
-    valid = []
-    invalid = []
-    needs_review = []
+    invalid, needs_review, valid = lint_packages(args.packages)
 
-    counter = 0
-
-    for package in sorted(args.packages):
-        counter += 1
-        result = lint_package(package)
-        print(result, package)
-        if result == "valid":
-            valid.append(package.name)
-        elif result == "invalid":
-            invalid.append(package.name)
-        else:
-            needs_review.append(package.name)
-    print(f"\nTotal packages ran: {counter}")
+    # print(f"\nTotal packages ran: {counter}")
     if valid:
         print(
             f"""
-        The following {len(valid)} packages are valid: {valid}"""
+        The following {len(valid)} packages are valid: {", ".join([x.name for x in valid])}"""
         )
     if invalid:
         print(
             f"""
-        The following {len(invalid)} packages are invalid: {invalid}"""
+        The following {len(invalid)} packages are invalid: {", ".join([x.name for x in invalid])}"""
         )
     if needs_review:
         print(
             f"""
         The following {len(needs_review)} packages need review.
-        They may be passed without change after review: {needs_review}"""
+        They may be passed without change after review: {", ".join([x.name for x in needs_review])}"""
         )
-    
-    return invalid, needs_review
+
 
 if __name__ == "__main__":
     main()
