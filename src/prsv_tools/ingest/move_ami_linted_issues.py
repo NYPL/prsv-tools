@@ -166,10 +166,9 @@ def main():
         result = move_ifs(pkg, args.destination)
         logging.info(f"{pkg} : INVALID, has been moved to {result[1]}.")
 
-    if pkg not in invalid and pkg in needs_review:
+    for pkg in needs_review:
         result = move_ifs(pkg, args.destination)
         logging.info(f"{pkg} : NEEDS REVIEW, has been moved to {result[1]}.")
-
 
 if __name__ == "__main__":
     main()
