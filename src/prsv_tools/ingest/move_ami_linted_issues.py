@@ -14,7 +14,10 @@ def parse_args() -> argparse.Namespace:
 
     parser = prsvcli.Parser()
 
+    # --package
     parser.add_package()
+
+    # --directory
     parser.add_packagedirectory()
 
     parser.add_argument(
@@ -153,6 +156,20 @@ def move_ifs(package: Path, destination: Path):
     else:
         logging.error(f"{package} has not been moved.")
 
+def delete_empty_dir(dir_path: Path):
+    if not dir_path.is_dir():
+        logging.warning(f"{dir_path.name} is not a directory, will not delete.")
+        return
+    
+    if not any(dir_path.iterdir()):
+        try:
+            dir_path.rmdir()
+            print(f"'{dir_path}' was empty and has been deleted.")
+        except OSError as e:
+            print(f"Error deleting '{dir_path}': {e}")
+    else:
+        print(f"'{dir_path}' is not empty.")
+
 
 def main():
     args = parse_args()
@@ -169,6 +186,16 @@ def main():
     for pkg in needs_review:
         result = move_ifs(pkg, args.destination)
         logging.info(f"{pkg} : NEEDS REVIEW, has been moved to {result[1]}.")
+    
+    for pkg in args.packages:
+        parent_dir = Path(pkg).parent
+        delete_input = input(f"Delete directory '{parent_dir.name}'? y or n: ")
+        if delete_input == "y":
+            delete_empty_dir(parent_dir)
+            return
+        else:
+            return
+
 
 if __name__ == "__main__":
     main()
