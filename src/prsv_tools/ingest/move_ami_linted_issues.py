@@ -161,7 +161,7 @@ def delete_empty_dir(dir_path: Path):
         logging.warning(f"{dir_path.name} is not a directory, will not delete.")
         return
     
-    if not any(dir_path.iterdir()):
+    if not any(dir_path.iterdir()): 
         try:
             dir_path.rmdir()
             print(f"'{dir_path}' was empty and has been deleted.")
@@ -189,11 +189,15 @@ def main():
     
     for pkg in args.packages:
         parent_dir = Path(pkg).parent
-        delete_input = input(f"Delete directory '{parent_dir.name}'? y or n: ")
-        if delete_input == "y":
-            delete_empty_dir(parent_dir)
-            return
+        if not any(parent_dir.iterdir()):
+            delete_input = input(f"Delete empty directory '{parent_dir.name}'? y or n: ")
+            if delete_input == "y":
+                delete_empty_dir(parent_dir)
+                return
+            else:
+                return
         else:
+            logging.info(f"{parent_dir} has {len(valid)} valid packages.")
             return
 
 

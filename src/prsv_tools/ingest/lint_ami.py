@@ -1,6 +1,7 @@
 import argparse
 import logging
 import re
+import glob
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -248,7 +249,8 @@ def data_folders_have_at_least_two_files(package: Path) -> bool:
         if folder_path.name in ["Images", "ServiceCopies"]:
             continue
         data_filepaths = []
-        data_filepaths = [x for x in folder_path.rglob("*") if x.is_file()]
+        # data_filepaths = [x for x in folder_path.rglob("*") if x.is_file()]
+        data_filepaths = glob.glob(str(folder_path / '**/*'), recursive=True) # using glob.glob for symlinks, returns strings not paths
         if len(data_filepaths) < 2:
             LOGGER.error(
                 f"{package.name} {folder_path.name} does not have 2 or more files: {data_filepaths}"
