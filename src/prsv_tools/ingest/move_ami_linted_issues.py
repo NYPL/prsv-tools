@@ -10,195 +10,110 @@ logging.basicConfig(level=logging.INFO)
 
 
 def parse_args() -> argparse.Namespace:
-    """Validate and return command-line args"""
-
     parser = prsvcli.Parser()
-
-    # --package
     parser.add_package()
-
-    # --directory
     parser.add_packagedirectory()
-
     parser.add_argument(
         "--destination",
         type=prsvcli.extant_dir,
         help="path to a destination directory",
     )
-
     return parser.parse_args()
 
 
-def set_dir(base_dir: Path, package: Path, new_folder_name: str):
-    if not base_dir.exists():
-        logging.error(f"{package.name} not moved - target path does not exists.")
+def set_dir(package: Path, base_dir: Path, new_folder_name: str):
+    if not base_dir or not base_dir.exists():
+        logging.error(f"{package.name} not moved - '{base_dir}' does not exist.")
         return
+
     new_dir = base_dir / new_folder_name / package.name[:3]
 
     try:
         new_dir.mkdir(parents=True, exist_ok=True)
-        shutil.move(package, new_dir)
-        print(package, new_dir)
-        logging.info(f"{package.name} has been moved to {new_dir}.")
+        shutil.move(str(package), new_dir)
+        logging.info(f"MOVED: '{package.name}' to '{new_dir}' due to issue: {new_folder_name}")
     except PermissionError:
-        logging.error(f"{package.name} not moved - permission error.")
-    except shutil.Error:
-        logging.error(
-            f"{package.name} not moved - file already exists in destination path."
-        )
+        logging.error(f"'{package.name}' not moved - permission error.")
+    except shutil.Error as e:
+        logging.error(f"'{package.name}' not moved - {e}")
 
 
-def move_ifs(package: Path, destination: Path):
-    base_dir = destination
-    new_folder_name = ""
-    # pkg != valid sc subfolder
-    if prsvlintami.data_folder_has_valid_servicecopies_subfolder(package) == False:
-        new_folder_name = "create_scs"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
+def get_package_status_and_reason(package: Path) -> tuple[str, str | None]:
+    if not prsvlintami.data_folder_has_valid_servicecopies_subfolder(package):
+        return "INVALID", "create_scs"
+    if not prsvlintami.package_has_valid_name(package):
+        return "INVALID", "no_valid_name"
+    if not prsvlintami.package_has_valid_subfolder_names(package):
+        return "INVALID", "need_valid_subfolder_name"
+    if not prsvlintami.data_folder_has_valid_subfolders(package):
+        return "INVALID", "need_valid_subfolders"
+    if not prsvlintami.data_folder_has_no_empty_folder(package):
+        return "INVALID", "empty_folders"
+    if not prsvlintami.data_files_are_expected_types(package):
+        return "INVALID", "unexpected_file_types"
+    if not prsvlintami.tags_folder_is_flat(package):
+        return "INVALID", "tags_subfolder"
+    if not prsvlintami.tag_file_is_expected_types(package):
+        return "INVALID", "tags_unexpected_file_types"
+    if not prsvlintami.data_folder_has_no_uncompressed_formats(package):
+        return "INVALID", "uncompressed_files"
+    if not prsvlintami.data_folder_has_no_part_files(package):
+        return "INVALID", "has_parts"
+    if not prsvlintami.data_folders_have_at_least_two_files(package):
+        return "INVALID", "invalid_file_count"
+    if not prsvlintami.package_is_a_bag(package):
+        return "INVALID", "not_bagged"
+    if not prsvlintami.package_has_no_zero_bytes_file(package):
+        return "INVALID", "0byte_files"
+    if not prsvlintami.region_files_used_correctly(package):
+        return "INVALID", "multiple_regions"
 
-    # pkg != valid name
-    elif prsvlintami.package_has_valid_name(package) == False:
-        new_folder_name = "no_valid_name"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
 
-    # pkg != valid subfolder name
-    elif prsvlintami.package_has_valid_subfolder_names(package) == False:
-        new_folder_name = "need_valid_subfolder_name"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
+    if not prsvlintami.tags_folder_has_one_to_four_files(package):
+        return "NEEDS_REVIEW", "tags_invalid_file_count"
+    if not prsvlintami.data_folder_uses_streams(package):
+        return "NEEDS_REVIEW", "has_streams"
+    if not prsvlintami.package_has_no_hidden_file(package):
+        return "NEEDS_REVIEW", "has_hidden_files"
 
-    # pkg != valid subfolders
-    elif prsvlintami.data_folder_has_valid_subfolders(package) == False:
-        new_folder_name = "need_valid_subfolders"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
+    return "VALID", None
 
-    # has empty folders
-    elif prsvlintami.data_folder_has_no_empty_folder(package) == False:
-        new_folder_name = "empty_folders"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # unexpected file types
-    elif prsvlintami.data_files_are_expected_types(package) == False:
-        new_folder_name = "unexpected_file_types"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # tags does not have subfolders
-    elif prsvlintami.tags_folder_is_flat(package) == False:
-        new_folder_name = "tags_subfolder"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # tags folder != 0-3 files \\less strict
-    elif prsvlintami.tags_folder_has_one_to_four_files(package) == False:
-        new_folder_name = "tags_invalid_file_count"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # tags != expected file types
-    elif prsvlintami.tag_file_is_expected_types(package) == False:
-        new_folder_name = "tags_unexpected_file_types"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # uncompressed wavs/movs
-    elif prsvlintami.data_folder_has_no_uncompressed_formats(package) == False:
-        new_folder_name = "uncompressed_files"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # has parts
-    elif prsvlintami.data_folder_has_no_part_files(package) == False:
-        new_folder_name = "has_parts"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # pkg folder(s) have invalid file count
-    elif prsvlintami.data_folders_have_at_least_two_files(package) == False:
-        new_folder_name = "invalid_file_count"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # not bagged
-    elif prsvlintami.package_is_a_bag(package) == False:
-        new_folder_name = "not_bagged"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # has 0byte files
-    elif prsvlintami.package_has_no_zero_bytes_file(package) == False:
-        new_folder_name = "0byte_files"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # has multiple regions
-    elif prsvlintami.region_files_used_correctly(package) == False:
-        new_folder_name = "multiple_regions"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # has streams \\less strict
-    elif prsvlintami.data_folder_uses_streams(package) == False:
-        new_folder_name = "has_streams"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    # has hidden files \\less strict
-    elif prsvlintami.package_has_no_hidden_file(package) == False:
-        new_folder_name = "has_hidden_files"
-        result = set_dir(base_dir, package, new_folder_name)
-        return result, new_folder_name
-
-    else:
-        logging.error(f"{package} has not been moved.")
 
 def delete_empty_dir(dir_path: Path):
     if not dir_path.is_dir():
-        logging.warning(f"{dir_path.name} is not a directory, will not delete.")
+        logging.warning(f"'{dir_path.name}' is not a directory, will not delete.")
         return
-    
-    if not any(dir_path.iterdir()): 
+
+    if not any(dir_path.iterdir()):
         try:
-            dir_path.rmdir()
-            print(f"'{dir_path}' was empty and has been deleted.")
+            delete_input = input(f"Directory '{dir_path}' is empty. Delete it? (y/n): ").lower()
+            if delete_input == "y":
+                dir_path.rmdir()
+                print(f"Empty directory '{dir_path}' has been deleted.")
         except OSError as e:
             print(f"Error deleting '{dir_path}': {e}")
     else:
-        print(f"'{dir_path}' is not empty.")
+        logging.info(f"Directory '{dir_path}' is not empty and will not be deleted.")
 
 
 def main():
     args = parse_args()
-
-    invalid, needs_review, valid = prsvlintami.lint_packages(args.packages)
-
-    for pkg in valid:
-        logging.info(f"{pkg} : VALID, has not been moved.")
-
-    for pkg in invalid:
-        result = move_ifs(pkg, args.destination)
-        logging.info(f"{pkg} : INVALID, has been moved to {result[1]}.")
-
-    for pkg in needs_review:
-        result = move_ifs(pkg, args.destination)
-        logging.info(f"{pkg} : NEEDS REVIEW, has been moved to {result[1]}.")
     
+    parent_dirs = set(pkg.parent for pkg in args.packages)
+
     for pkg in args.packages:
-        parent_dir = Path(pkg).parent
-        if not any(parent_dir.iterdir()):
-            delete_input = input(f"Delete empty directory '{parent_dir.name}'? y or n: ")
-            if delete_input == "y":
-                delete_empty_dir(parent_dir)
-                return
-            else:
-                return
+        status, reason = get_package_status_and_reason(pkg)
+
+        if status == "VALID":
+            logging.info(f"VALID: '{pkg.name}' is valid and has not been moved.")
+        elif status in ("INVALID", "NEEDS_REVIEW"):
+            set_dir(pkg, args.destination, reason)
         else:
-            logging.info(f"{parent_dir} has {len(valid)} valid packages.")
-            return
+            logging.error(f"'{pkg.name}' has not been moved due to no pkg status.")
+    
+    print("\n--- Checking source directories ---")
+    for parent_dir in parent_dirs:
+        delete_empty_dir(parent_dir)
 
 
 if __name__ == "__main__":
