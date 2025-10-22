@@ -101,17 +101,17 @@ def main():
     
     parent_dirs = set(pkg.parent for pkg in args.packages)
 
-    for pkg in args.packages:
+    for pkg in sorted(args.packages):
         status, reason = get_package_status_and_reason(pkg)
 
         if status == "VALID":
-            logging.info(f"VALID: '{pkg.name}' is valid and has not been moved.")
+            logging.info(f"VALID: '{pkg.name}' is valid & has not been moved.")
         elif status in ("INVALID", "NEEDS_REVIEW"):
             set_dir(pkg, args.destination, reason)
         else:
             logging.error(f"'{pkg.name}' has not been moved due to no pkg status.")
     
-    print("\n--- Checking source directories ---")
+    print("\nDeleting empty directories:\n")
     for parent_dir in parent_dirs:
         delete_empty_dir(parent_dir)
 
