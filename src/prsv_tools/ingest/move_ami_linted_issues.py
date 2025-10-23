@@ -41,6 +41,8 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
 def get_package_status_and_reason(package: Path) -> tuple[str, str | None]:
     if not prsvlintami.data_folder_has_valid_servicecopies_subfolder(package):
         return "INVALID", "create_scs"
+    if not prsvlintami.servicecopies_folder_has_media_files(package):
+        return "INVALID", "create_scs"
     if not prsvlintami.package_has_valid_name(package):
         return "INVALID", "no_valid_name"
     if not prsvlintami.package_has_valid_subfolder_names(package):

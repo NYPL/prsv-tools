@@ -80,6 +80,18 @@ def data_folder_has_valid_servicecopies_subfolder(package: Path) -> bool:
             f"{package.name} does not have a ServiceCopies folder, service files should be created"
         )
         return False
+    
+def servicecopies_folder_has_media_files(package: Path) -> bool:
+    """ServiceCopies folder must have media files"""
+    servicecopies_path = package / "data" / "ServiceCopies"
+    media_file_ls = [
+        x for x in servicecopies_path.iterdir() if x.is_file() and x.suffix.lower() in [".mp4", ".m4a"]
+    ]
+    if not media_file_ls:
+        LOGGER.error(f"{package.name} ServiceCopies folder does not have media files")
+        return False
+    else:
+        return True
 
 
 def data_folder_has_no_empty_folder(package: Path) -> bool:
@@ -318,6 +330,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         data_folders_have_at_least_two_files,
         package_is_a_bag,
         package_has_no_zero_bytes_file,
+        servicecopies_folder_has_media_files
     ]
     for test in strict_tests:
         if not test(package):
