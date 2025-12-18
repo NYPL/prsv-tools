@@ -84,6 +84,8 @@ def data_folder_has_valid_servicecopies_subfolder(package: Path) -> bool:
 def servicecopies_folder_has_media_files(package: Path) -> bool:
     """ServiceCopies folder must have media files"""
     servicecopies_path = package / "data" / "ServiceCopies"
+    if not servicecopies_path.exists():
+        return False
     media_file_ls = [
         x for x in servicecopies_path.iterdir() if x.is_file() and x.suffix.lower() in [".mp4", ".m4a"]
     ]

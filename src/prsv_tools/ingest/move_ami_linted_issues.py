@@ -1,6 +1,7 @@
 import argparse
 import logging
 import shutil
+import sys
 from pathlib import Path
 
 import prsv_tools.ingest.lint_ami as prsvlintami
@@ -25,8 +26,15 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
     if not base_dir or not base_dir.exists():
         logging.error(f"{package.name} not moved - '{base_dir}' does not exist.")
         return
-
-    new_dir = base_dir / new_folder_name / package.name[:3]
+    if package.parent.name in ["Audio", "Film", "Video"]:
+        new_dir = base_dir / new_folder_name / package.parent.parent.name 
+        # debug input
+        # new_dir_input = input(f"Move '{package.name}' to '{new_dir}' for issue: {new_folder_name}? (y/n): ").lower()
+        # if new_dir_input != "y":
+        #     logging.info(f"'{package.name}' not moved - user chose not to move.")
+        #     sys.exit()
+    else:
+        new_dir = base_dir / new_folder_name / package.parent.name
 
     try:
         new_dir.mkdir(parents=True, exist_ok=True)
