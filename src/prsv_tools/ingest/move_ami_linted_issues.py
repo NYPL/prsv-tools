@@ -28,11 +28,11 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
         return
     if package.parent.name in ["Audio", "Film", "Video"]:
         new_dir = base_dir / new_folder_name / package.parent.parent.name 
-        # debug input
+        # # debug input
         # new_dir_input = input(f"Move '{package.name}' to '{new_dir}' for issue: {new_folder_name}? (y/n): ").lower()
         # if new_dir_input != "y":
-        #     logging.info(f"'{package.name}' not moved - user chose not to move.")
-        #     sys.exit()
+            # logging.info(f"'{package.name}' not moved - user chose not to move.")
+            # sys.exit()
     else:
         new_dir = base_dir / new_folder_name / package.parent.name
 
@@ -98,7 +98,10 @@ def delete_empty_dir(dir_path: Path):
         try:
             delete_input = input(f"Directory '{dir_path}' is empty. Delete it? (y/n): ").lower()
             if delete_input == "y":
-                dir_path.rmdir()
+                if dir_path.name in ["Audio", "Film", "Video"]:
+                    dir_path.parent.rmdir()
+                else:
+                    dir_path.rmdir()
                 print(f"Empty directory '{dir_path}' has been deleted.")
         except OSError as e:
             print(f"Error deleting '{dir_path}': {e}")
