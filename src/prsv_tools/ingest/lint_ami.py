@@ -113,7 +113,7 @@ def data_files_are_expected_types(package: Path) -> bool:
     expected = True
     expected_types = [".mkv", ".flac", ".json", ".jpeg", ".jpg", ".dv", ".mov"]
     for file in data_file_ls:
-        if not file.suffix.lower() in expected_types:
+        if not file.suffix.lower() in expected_types and not file.name.startswith("."):
             LOGGER.error(f"{package.name} has unexpected file {file.name}")
             expected = False
     if not expected:
@@ -219,7 +219,8 @@ def data_folder_uses_streams(package: Path) -> bool:
     ]
 
     if high_region_counts:
-        LOGGER.warning(f"{package.name} has streams, {high_region_counts}.")
+        LOGGER.warning(f"{package.name} has streams: {len(high_region_counts)} found.")
+        
         return False
     else:
         return True
@@ -332,7 +333,9 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         data_folders_have_at_least_two_files,
         package_is_a_bag,
         package_has_no_zero_bytes_file,
-        servicecopies_folder_has_media_files
+        servicecopies_folder_has_media_files,
+        data_files_are_expected_types,
+        data_folder_uses_streams,
     ]
     for test in strict_tests:
         if not test(package):

@@ -1,7 +1,6 @@
 import argparse
 import logging
 import shutil
-import sys
 from pathlib import Path
 
 import prsv_tools.ingest.lint_ami as prsvlintami
@@ -31,7 +30,7 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
         # # debug input
         # new_dir_input = input(f"Move '{package.name}' to '{new_dir}' for issue: {new_folder_name}? (y/n): ").lower()
         # if new_dir_input != "y":
-            # logging.info(f"'{package.name}' not moved - user chose not to move.")
+            # logging.info(f"'{package.name}' not moved.")
             # sys.exit()
     else:
         new_dir = base_dir / new_folder_name / package.parent.name
@@ -94,10 +93,20 @@ def delete_empty_dir(dir_path: Path):
         logging.warning(f"'{dir_path.name}' is not a directory, will not delete.")
         return
 
-    if not any(dir_path.iterdir()):
+    contents = list(dir_path.iterdir())
+    
+    is_empty = len(contents) == 0
+    is_ds_store_only = len(contents) == 1 and contents[0].name == ".DS_Store"
+
+    if is_empty or is_ds_store_only:
         try:
-            delete_input = input(f"Directory '{dir_path}' is empty. Delete it? (y/n): ").lower()
+            prompt_msg = f"Directory '{dir_path}' contains only .DS_Store." if is_ds_store_only else f"Directory '{dir_path}' is empty."
+            delete_input = input(f"{prompt_msg} Delete it? (y/n): ").lower()
+            
             if delete_input == "y":
+                if is_ds_store_only:
+                    contents[0].unlink()
+
                 if dir_path.name in ["Audio", "Film", "Video"]:
                     dir_path.parent.rmdir()
                 else:
