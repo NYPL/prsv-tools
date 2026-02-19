@@ -4,14 +4,14 @@ import os
 import sys
 import logging
 import concurrent.futures
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
-import requests
+from typing import Dict, List
+import shutil
 
 import prsv_tools.manage.create_pkg_report as create_pkg_report
 import prsv_tools.utility.api as prsvapi
+import prsv_tools.ingest.move_ami_linted_issues as mv_issues
 
 def setup_logging(log_file: Path):
     logger = logging.getLogger()
@@ -74,7 +74,7 @@ def parse_args():
     parser.add_argument(
         "--destination", "-d",
         type=Path,
-        help="Path to move valid packages to. (Top level directories containing multiple packages)"
+        help="[Optional] Path to move valid packages to. (Top level directories containing multiple packages)"
     )
     parser.add_argument(
         "--credentials", "-c",
@@ -103,18 +103,6 @@ def parse_args():
     )
     return parser.parse_args()
 
-# def get_local_files(ami_path):
-#     """Recursively finds all valid files within an AMI directory."""
-#     files = set()
-#     for file_path in ami_path.rglob("*"):
-#         if file_path.is_file():
-#             filename = file_path.name.lower()
-#             if (filename not in IGNORED_FILES 
-#                 and not filename.startswith(".") 
-#                 and not filename.endswith(".old")):
-#                 files.add(file_path.name)
-#     return files
-
 def _find_matching_dirs(root: str, dirs: List[str]) -> Dict[str, List[str]]:
     """Finds 6-digit directories in a list and returns a dict."""
     matches = {}
@@ -142,10 +130,26 @@ def get_local_files(ami_path):
                 
     return files
 
+def get_local_checksums(ami_path):
+    """Parses manifest-md5.txt to create a dict of {filename: checksum}."""
+    checksums = {}
+    manifest_path = Path(ami_path) / "manifest-md5.txt"
+    if manifest_path.exists():
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    filepath = parts[-1]
+                    filename = Path(filepath).name
+
+                    for part in parts:
+                        if len(part) == 32 and all(c in '0123456789abcdefABCDEF' for c in part):
+                            checksums[filename] = part.lower()
+                            break
+    return checksums
+
 def get_preservica_objects(token, version, package_uuid, credentials_name, logger):
     """
-    Uses functions from create_pkg_report.py to traverse the package and get filenames 
-    and their file sizes.
     Returns:
         file_data: dict {filename: filesize}
         io_titles: set {io_title}
@@ -187,7 +191,10 @@ def get_preservica_objects(token, version, package_uuid, credentials_name, logge
                 bitstream = create_pkg_report.get_bitstream_details(token, version, co_ref, session, namespaces)
                 
                 if bitstream and bitstream.get('filename'):
-                    file_data[bitstream['filename']] = bitstream.get('filesize')
+                    file_data[bitstream['filename']] = {
+                        'size': bitstream.get('filesize'),
+                        'md5': bitstream.get('fixity', {}).get('MD5', '').lower()
+                    }
                 else:
                     logger.warning(f"Found CO {co_ref} without a valid filename bitstream.")
 
@@ -226,6 +233,7 @@ def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, l
 
     # Local Files {filename: size}
     local_files = get_local_files(ami_path)
+    local_checksums = get_local_checksums(ami_path)
     if not local_files:
         logger.warning(f"Skipping {ami_id}: No local files found.")
         return False 
@@ -283,7 +291,7 @@ def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, l
         
         return False 
 
-    # WARNING: IO Title Match (Bitstream mismatch)
+    # IO Title Match (Bitstream mismatch)
     elif found_as_io:
         logger.warning(f"WARNING: {ami_id} - {len(found_as_io)} files matched IO Titles but NOT Bitstream filenames.")
         for f in sorted(found_as_io):
@@ -291,21 +299,33 @@ def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, l
         
         return False
 
-    # 2. CHECK FILE SIZES
+    # check file sizes
     size_mismatch = []
     zero_byte_files = []
+    checksum_mismatch = []
 
     for fname in matching_files:
         local_size = local_files[fname]
-        prsv_size = preservica_files.get(fname)
-        
+        prsv_file_info = preservica_files.get(fname, {})
+
+        prsv_size = prsv_file_info.get('size')
+        prsv_md5 = prsv_file_info.get('md5')
+        local_md5 = local_checksums.get(fname)
+
         # debug
-        # print(f"Comparing file sizes for {fname}: Local={local_size}, Preservica={prsv_size}")
+        # print(f"Comparing file sizes for {fname}: Local={local_size}, Preservica={prsv_size}, Local MD5={local_md5}, Preservica MD5={prsv_md5}")
 
         if prsv_size == 0:
             zero_byte_files.append(fname)
         elif local_size != prsv_size:
             size_mismatch.append((fname, local_size, prsv_size))
+
+        if local_md5 and prsv_md5 and local_md5 != prsv_md5:
+            checksum_mismatch.append((fname, local_md5, prsv_md5))
+
+        # stricter check: if either checksum is missing or they don't match (ie. manifest not included)
+        # if not local_md5 or not prsv_md5 or local_md5 != prsv_md5:
+        #     checksum_mismatch.append((fname, local_md5, prsv_md5))
 
     if zero_byte_files:
         logger.error(f"FAILED: {ami_id} contains {len(zero_byte_files)} file(s) with 0 bytes in Preservica.")
@@ -317,6 +337,13 @@ def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, l
         logger.error(f"FAILED: {ami_id} contains {len(size_mismatch)} file(s) with size mismatches.")
         for fname, l_size, p_size in sorted(size_mismatch):
             list_logger.info(f" ! {fname} | Local: {l_size} bytes | Prsv: {p_size} bytes")
+        return False
+    
+    if checksum_mismatch:
+        logger.error(f"FAILED: {ami_id} contains {len(checksum_mismatch)} file(s) with checksum mismatches.")
+        for fname, l_md5, p_md5 in sorted(checksum_mismatch):
+            # debug
+            list_logger.info(f" ! {fname} | Local MD5: {l_md5} | Preservica MD5: {p_md5}")
         return False
 
     # WARNING: extra files in Preservica
@@ -342,15 +369,11 @@ def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, l
         
     return True 
 
-def move_to_delete(source_path: Path, destination_path: Path):
+def move_pkgs(source_path: Path, destination_path: Path):
     try:
-        destination_path.mkdir(parents=True, exist_ok=True)
         target_path = destination_path / source_path.parent.name / source_path.name
-        target_input = input(f"Move '{source_path}' to '{target_path}'? (press Enter to confirm)")
-        if target_input.lower() not in ['', 'y', 'yes']:
-            logging.info(f"'{source_path}' not moved to {target_path}.")
-            return
-        source_path.rename(target_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source_path), str(target_path))
         logging.info(f"Moved '{source_path}' to '{target_path}'")
     except Exception as e:
         logging.error(f"Error moving '{source_path}' to '{destination_path}': {e}")
@@ -432,12 +455,20 @@ def main():
 
     list_logger.info("\n" + "="*60)
 
-    if args.destination and valid_ids:
+    if args.destination and (valid_ids or invalid_pkgs):
         logger.info(f"\nMoving valid packages to destination: {args.destination}")
-        for ami_id in valid_ids:
-            source_paths = ami_packages[ami_id]
-            for source_path in source_paths:
-                move_to_delete(Path(source_path), args.destination)
+        if valid_ids:
+            for ami_id in valid_ids:
+                source_paths = ami_packages[ami_id]
+                for source_path in source_paths:
+                    move_pkgs(Path(source_path), Path(args.destination) / "_valid")
+        if invalid_pkgs:
+            for ami_id, _ in invalid_pkgs:
+                source_paths = ami_packages[ami_id]
+                for source_path in source_paths:
+                    move_pkgs(Path(source_path), Path(args.destination) / "_validation_failed")
+    
+    mv_issues.delete_empty_dir(args.source)
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     main()
