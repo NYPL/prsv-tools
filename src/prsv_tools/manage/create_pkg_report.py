@@ -324,17 +324,22 @@ def get_co_details(accesstoken: str, version: str, co_ref: str, session: request
 
     return details
 
-def get_generation_number(accesstoken: str, version: str, co_ref: str, session: requests.Session, namespaces) -> Optional[str]:
+def get_generation_numbers(accesstoken: str, version: str, co_ref: str, session: requests.Session, namespaces) -> list:
     """Gets CO generation number."""
     url = f"https://nypl.preservica.com/api/entity/content-objects/{co_ref}/generations"
     root = _get_entity_xml(accesstoken, session, url)
-    if root is not None:
-        gen_url_element = root.find('.//entity:Generations/entity:Generation', namespaces)
-        if gen_url_element is not None and gen_url_element.text:
-            return gen_url_element.text.split('/')[-1]
+    generations = []
     
-    logger.error(f"Failed to get generation number for CO {co_ref}")
-    return None
+    if root is not None:
+        gen_elements = root.findall('.//entity:Generations/entity:Generation', namespaces)
+        for gen_element in gen_elements:
+            if gen_element.text:
+                generations.append(gen_element.text.split('/')[-1])
+    
+    if not generations:
+        logger.error(f"Failed to get generation numbers for CO {co_ref}")
+        
+    return generations
 
 def get_formats(accesstoken: str, version: str, co_ref: str, generation: str, session: requests.Session, namespaces) -> str:
     """Gets all CO formats."""
@@ -386,6 +391,8 @@ def get_representation_details(accesstoken: str, version: str, io_ref: str, sess
             suffixed_type = f"{base_type}_{current_count}"
             
             rep_details.append({'type': suffixed_type,'name': rep.get('name', "")})
+            # debug
+            # print({'type': suffixed_type,'name': rep.get('name', "")})
     
     if not rep_details:
         logger.error(f"Failed to get representations for IO {io_ref}")
@@ -409,40 +416,45 @@ def get_generation_details(accesstoken: str, version: str, io_ref: str, rep_type
 
     return co_refs
 
-def get_bitstream_details(accesstoken: str, version: str, co_ref: str, session: requests.Session, namespaces) -> Optional[dict]:
-    """Gets bitstream details for CO."""
-    latest_gen_url = f"https://nypl.preservica.com/api/entity/content-objects/{co_ref}/generations/latest-active"
-    gen_root = _get_entity_xml(accesstoken, session, latest_gen_url)
-    bitstream_url = None
-    if gen_root is not None:
-        bitstream_element = gen_root.find('.//entity:Bitstream', namespaces)
-        if bitstream_element is not None and bitstream_element.text:
-            bitstream_url = bitstream_element.text
-
-    if not bitstream_url:
-        logger.warning(f"No bitstream URL found for CO {co_ref}")
-        return None
-
-    root = _get_entity_xml(accesstoken, session, bitstream_url)
-    if root is None:
-        return None
-        
-    details = {}
-    filename = root.find('.//xip:Filename', namespaces)
-    filesize = root.find('.//xip:FileSize', namespaces)
+def get_bitstream_details(accesstoken: str, version: str, co_ref: str, generation: str, session: requests.Session, namespaces) -> list:
+    """Gets all bitstream details for a specific generation of a CO."""
+    gen_url = f"https://nypl.preservica.com/api/entity/content-objects/{co_ref}/generations/{generation}"
+    gen_root = _get_entity_xml(accesstoken, session, gen_url)
     
-    details['filename'] = filename.text if filename is not None else None
-    details['filesize'] = int(filesize.text) if filesize is not None else None
+    all_bitstream_details = []
+    
+    if gen_root is not None:
+        bitstream_elements = gen_root.findall('.//entity:Bitstream', namespaces)
+        
+        for bitstream_element in bitstream_elements:
+            if bitstream_element is not None and bitstream_element.text:
+                bitstream_url = bitstream_element.text
+                
+                root = _get_entity_xml(accesstoken, session, bitstream_url)
+                if root is None:
+                    continue
+                    
+                details = {}
+                filename = root.find('.//xip:Filename', namespaces)
+                filesize = root.find('.//xip:FileSize', namespaces)
+                
+                details['filename'] = filename.text if filename is not None else None
+                details['filesize'] = int(filesize.text) if filesize is not None and filesize.text else None
 
-    fixity_data = {}
-    for fixity in root.findall('.//xip:Fixity', namespaces):
-        alg = fixity.find('xip:FixityAlgorithmRef', namespaces)
-        val = fixity.find('xip:FixityValue', namespaces)
-        if alg is not None and val is not None:
-            fixity_data[alg.text] = val.text
-    details['fixity'] = fixity_data
+                fixity_data = {}
+                for fixity in root.findall('.//xip:Fixity', namespaces):
+                    alg = fixity.find('xip:FixityAlgorithmRef', namespaces)
+                    val = fixity.find('xip:FixityValue', namespaces)
+                    if alg is not None and val is not None:
+                        fixity_data[alg.text] = val.text
+                details['fixity'] = fixity_data
+                
+                all_bitstream_details.append(details)
 
-    return details
+    if not all_bitstream_details:
+        logger.warning(f"No bitstreams found for CO {co_ref}, Generation {generation}")
+        
+    return all_bitstream_details
 
 def find_all_children(accesstoken: str, version: str, parent_uuid: str, so_list: list, io_list: list, session: requests.Session, namespaces):
     """Recursively finds all SO & IO children, storing IOs w/ their parent SO."""
@@ -455,7 +467,6 @@ def find_all_children(accesstoken: str, version: str, parent_uuid: str, so_list:
 
         if entity_type == 'IO':
             io_list.append({'ref': ref, 'title': title, 'parent_so_ref': parent_uuid})
-            # INSERT ADDITIONAL CO SEARCH HERE
         elif entity_type == 'SO':
             so_list.append(ref)
             find_all_children(accesstoken, version, ref, so_list, io_list, session, namespaces)
@@ -528,54 +539,60 @@ def generate_package_dataframe(start_uuid: str, accesstoken: str, version: str, 
 
         for rep in representations:
             co_refs = get_generation_details(accesstoken, version, io_ref, rep['type'], session, namespaces)
+            
             for co_ref in co_refs:
-                bitstream = get_bitstream_details(accesstoken, version, co_ref, session, namespaces)
+                generations = get_generation_numbers(accesstoken, version, co_ref, session, namespaces)
                 co_details = get_co_details(accesstoken, version, co_ref, session, namespaces)
-                generation = get_generation_number(accesstoken, version, co_ref, session, namespaces)
                 co_id = get_identifiers(accesstoken, version, 'content-objects', co_ref, session, namespaces)
-
                 
-                if bitstream and co_details and generation:
-                    formats = get_formats(accesstoken, version, co_ref, generation, session, namespaces)
-                    path_key = (rep['type'], bitstream.get('filename'))
-                    filepath_counts[path_key] += 1
-                    path_instance = filepath_counts[path_key]
+                if not generations:
+                    logger.warning(f"Could not retrieve generations for CO: {co_ref}, skipping.")
+                    continue
+                
+                for generation in generations:
+                    bitstreams = get_bitstream_details(accesstoken, version, co_ref, generation, session, namespaces)
+                    
+                    if bitstreams and co_details:
+                        formats = get_formats(accesstoken, version, co_ref, generation, session, namespaces)
+                        
+                        for bitstream in bitstreams:
+                            path_key = (rep['type'], bitstream.get('filename'))
+                            filepath_counts[path_key] += 1
+                            path_instance = filepath_counts[path_key]
 
-                    base_path_name = f"Representation_{rep['type']}"
-                    # filepath being built for now, where to find in bitstream?
-                    file_path = (f"{base_path_name}_{path_instance}/{co_details.get('co_title')}"
-                                 f"/Generation_{generation}/{bitstream.get('filename')}")
+                            base_path_name = f"Representation_{rep['type']}"
+                            file_path = (f"{base_path_name}_{path_instance}/{co_details.get('co_title')}"
+                                         f"/Generation_{generation}/{bitstream.get('filename')}")
 
-                    fixity = bitstream.get('fixity', {})
-                    row = {
-                        'Package Title': pkg_title,
-                        'Local_Path': local_path, 'IO Ref': io_ref, 'IO Title': io_title,
-                        'Parent SO Identifier': top_level_identifier, 'SO Identifier': so_id, 
-                        'IO Identifier': io_id, 'CO Identifier': co_id, 
-                        'Parent Ref': parent_so_ref, 'CO Ref': co_ref,
-                        'CO Title': co_details.get('co_title'), 'CO Parent': co_details.get('co_parent'),
-                        'Representation Type': rep['type'], 'Generation': generation,
-                        'File Path': file_path, 'File Name': bitstream.get('filename'),
-                        'File Size': bitstream.get('filesize'),
-                        'SHA512': 'SHA512' if 'SHA512' in fixity else 'NA',
-                        'SHA512ChecksumVal': fixity.get('SHA512', 'NA'),
-                        'SHA256': 'SHA256' if 'SHA256' in fixity else 'NA',
-                        'SHA256ChecksumVal': fixity.get('SHA256', 'NA'),
-                        'SHA1': 'SHA1' if 'SHA1' in fixity else 'NA',
-                        'SHA1ChecksumVal': fixity.get('SHA1', 'NA'),
-                        'MD5': 'MD5' if 'MD5' in fixity else 'NA',
-                        'MD5ChecksumVal': fixity.get('MD5', 'NA'), 'Formats': formats,
-                        **ingest_info,
-                        'SO Security Tag': so_security_tag,
-                        'Parent SO mFrag': top_level_so_mfrag,
-                        'SO mFrag': so_mfrag,
-                        'IO Security Tag': io_security_tag,
-                        'IO mFrag': io_mfrag
-                    }
-                    all_data.append(row)
-                else:
-                    # need to fix this so that nothing is skipped
-                    logger.warning(f"Could not retrieve all required details for CO: {co_ref}, skipping.")
+                            fixity = bitstream.get('fixity', {})
+                            row = {
+                                'Package Title': pkg_title,
+                                'Local_Path': local_path, 'IO Ref': io_ref, 'IO Title': io_title,
+                                'Parent SO Identifier': top_level_identifier, 'SO Identifier': so_id, 
+                                'IO Identifier': io_id, 'CO Identifier': co_id, 
+                                'Parent Ref': parent_so_ref, 'CO Ref': co_ref,
+                                'CO Title': co_details.get('co_title'), 'CO Parent': co_details.get('co_parent'),
+                                'Representation Type': rep['type'], 'Generation': generation,
+                                'File Path': file_path, 'File Name': bitstream.get('filename'),
+                                'File Size': bitstream.get('filesize'),
+                                'SHA512': 'SHA512' if 'SHA512' in fixity else 'NA',
+                                'SHA512ChecksumVal': fixity.get('SHA512', 'NA'),
+                                'SHA256': 'SHA256' if 'SHA256' in fixity else 'NA',
+                                'SHA256ChecksumVal': fixity.get('SHA256', 'NA'),
+                                'SHA1': 'SHA1' if 'SHA1' in fixity else 'NA',
+                                'SHA1ChecksumVal': fixity.get('SHA1', 'NA'),
+                                'MD5': 'MD5' if 'MD5' in fixity else 'NA',
+                                'MD5ChecksumVal': fixity.get('MD5', 'NA'), 'Formats': formats,
+                                **ingest_info,
+                                'SO Security Tag': so_security_tag,
+                                'Parent SO mFrag': top_level_so_mfrag,
+                                'SO mFrag': so_mfrag,
+                                'IO Security Tag': io_security_tag,
+                                'IO mFrag': io_mfrag
+                            }
+                            all_data.append(row)
+                    else:
+                        logger.warning(f"Could not retrieve bitstreams or details for CO: {co_ref}, Generation {generation}, skipping.")
 
     if not all_data:
         logger.info(f"No data found to write to file for {pkg_title}.\n")

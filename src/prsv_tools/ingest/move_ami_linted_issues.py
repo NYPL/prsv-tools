@@ -25,7 +25,7 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
     if not base_dir or not base_dir.exists():
         logging.error(f"{package.name} not moved - '{base_dir}' does not exist.")
         return
-    if package.parent.name in ["Audio", "Film", "Video"]:
+    if package.parent.name in ["Audio", "Film", "Video", "CD", "DVD", "Data", "VCD"]:
         new_dir = base_dir / new_folder_name / package.parent.parent.name 
         # # debug input
         # new_dir_input = input(f"Move '{package.name}' to '{new_dir}' for issue: {new_folder_name}? (y/n): ").lower()
@@ -101,16 +101,14 @@ def delete_empty_dir(dir_path: Path):
     if is_empty or is_ds_store_only:
         try:
             prompt_msg = f"Directory '{dir_path}' contains only .DS_Store." if is_ds_store_only else f"Directory '{dir_path}' is empty."
-            delete_input = input(f"{prompt_msg} Delete it? (y/n): ").lower()
-            
-            if delete_input == "y":
-                if is_ds_store_only:
-                    contents[0].unlink()
+            logging.info(f"{prompt_msg} - Deleting directory.")
+            if is_ds_store_only:
+                contents[0].unlink()
 
-                if dir_path.name in ["Audio", "Film", "Video"]:
-                    dir_path.parent.rmdir()
-                else:
-                    dir_path.rmdir()
+            if dir_path.name in ["Audio", "Film", "Video"]:
+                dir_path.parent.rmdir(recursive=True)
+            else:
+                dir_path.rmdir()
                 print(f"Empty directory '{dir_path}' has been deleted.")
         except OSError as e:
             print(f"Error deleting '{dir_path}': {e}")

@@ -13,15 +13,13 @@ LOGGER = logging.getLogger(__name__)
 def _configure_logging(log_folder: Path):
     log_fn = datetime.now().strftime("lint_%Y_%m_%d_%H_%M.log")
     log_fpath = log_folder / log_fn
-    if not log_fpath.is_file():
-        log_fpath.touch()
-
     logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s - %(levelname)8s - %(message)s",
+        level=logging.INFO,
+        format="%(levelname)8s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
-        filename=log_fpath,
         encoding="utf-8",
+        force=True,
+        handlers=[logging.FileHandler(log_fpath, mode="w"), logging.StreamHandler()],
     )
 
 
@@ -84,6 +82,9 @@ def objects_folder_has_no_empty_folder(package: Path) -> bool:
     """The objects folder should not have any empty folders, which may indicate
     an incorrect FTK export"""
     objects_path = package / "objects"
+    if not objects_path.exists():
+        LOGGER.error(f"{package.name} does not have objects folder.")
+        return False
     for i in objects_path.rglob("*"):
         if i.is_dir() and not any(i.iterdir()):
             LOGGER.error(f"{package.name} has empty folder in this package: {i.name}")
@@ -95,10 +96,17 @@ def objects_folder_has_no_empty_folder(package: Path) -> bool:
 def metadata_folder_is_flat(package: Path) -> bool:
     """The metadata folder should not have folder structure"""
     metadata_path = package / "metadata"
+    if not metadata_path.exists():
+        LOGGER.error(f"{package.name} does not have metadata folder.")
+        return False
     md_dir_ls = [x for x in metadata_path.iterdir() if x.is_dir()]
     if md_dir_ls:
-        LOGGER.error(f"{package.name} has unexpected directory: {md_dir_ls}")
-        return False
+        if "submissionDocumentation" in [d.name for d in md_dir_ls]:
+            # LOGGER.warning(f"{package.name} metadata folder has submissionDocumention folder. Passing with review.")
+            return True
+        else:
+            LOGGER.error(f"{package.name} has unexpected directory: {md_dir_ls}")
+            return False
     else:
         return True
 
@@ -106,6 +114,9 @@ def metadata_folder_is_flat(package: Path) -> bool:
 def metadata_folder_has_one_or_less_file(package: Path) -> bool:
     """The metadata folder should have zero to one file"""
     metadata_path = package / "metadata"
+    if not metadata_path.exists():
+        LOGGER.error(f"{package.name} does not have metadata folder.")
+        return False
     md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
     if len(md_file_ls) > 1:
         LOGGER.warning(
@@ -119,20 +130,26 @@ def metadata_folder_has_one_or_less_file(package: Path) -> bool:
 def metadata_file_is_expected_types(package: Path) -> bool:
     """The metadata folder can only have FTK report and/or carrier photograph(s)"""
     metadata_path = package / "metadata"
+    if not metadata_path.exists():
+        LOGGER.error(f"{package.name} does not have metadata folder.")
+        return False
     md_file_ls = [x for x in metadata_path.iterdir() if x.is_file()]
 
     expected_types = [".csv", ".tsv", ".jpg"]
     for file in md_file_ls:
-        if file.suffix.lower() in expected_types:
-            return True
-        else:
-            LOGGER.error(f"{package.name} has unexpected file {file.name}")
+        if file.suffix.lower() not in expected_types:
+            LOGGER.error(f"{package.name} has unexpected file type {file.suffix}.")
             return False
+
+    return True
 
 
 def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
     """FTK metadata name should conform to M###_(ER|DI|EM)_####.[ct]sv"""
     metadata_path = package / "metadata"
+    if not metadata_path.exists():
+        LOGGER.error(f"{package.name} does not have metadata folder.")
+        return False
     ctsv_file_ls = [
         x
         for x in metadata_path.iterdir()
@@ -140,16 +157,19 @@ def metadata_FTK_file_has_valid_filename(package: Path) -> bool:
     ]
 
     for ctsv in ctsv_file_ls:
-        if re.fullmatch(r"M\d+_(ER|DI|EM)_\d+", ctsv.stem):
-            return True
-        else:
+        if not re.fullmatch(r"M\d+_(ER|DI|EM)_\d+", ctsv.stem):
             LOGGER.error(f"{package.name} has nonconforming FTK file, {ctsv.name}.")
             return False
+
+    return True
 
 
 def objects_folder_has_file(package: Path) -> bool:
     """The objects folder must have one or more files, which can be in folder(s)"""
     objects_path = package / "objects"
+    if not objects_path.exists():
+        LOGGER.error(f"{package.name} does not have objects folder.")
+        return False
     obj_filepaths = [x for x in objects_path.rglob("*") if x.is_file()]
 
     if not any(obj_filepaths):
@@ -175,7 +195,9 @@ def package_has_no_hidden_file(package: Path) -> bool:
         if h.name.startswith(".") or h.name.startswith("Thumbs")
     ]
     if hidden_ls:
-        LOGGER.warning(f"{package.name} has hidden files {hidden_ls}")
+        LOGGER.warning(f"{package.name} has hidden files:")
+        for h in hidden_ls:
+            LOGGER.warning(f"    HIDDEN FILE: {h.name}: {h}")
         return False
     else:
         return True
@@ -186,7 +208,9 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
     all_file = [f for f in package.rglob("*") if f.is_file()]
     zero_bytes_ls = [f for f in all_file if f.stat().st_size == 0]
     if zero_bytes_ls:
-        LOGGER.error(f"{package.name} has zero bytes file {zero_bytes_ls}")
+        LOGGER.error(f"{package.name} has zero bytes file(s):")
+        for f in zero_bytes_ls:
+            LOGGER.error(f"    ZERO BYTE FILE: {f.name}: {f}")
         return False
     else:
         return True
@@ -272,6 +296,8 @@ def main():
     counter = 0
 
     for package in args.packages:
+        if "_photograph" in package.name:
+            continue
         counter += 1
         result = lint_package(package)
         if result == "valid":

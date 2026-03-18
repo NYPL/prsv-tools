@@ -45,6 +45,7 @@ move_ami_linted_issues = 'prsv_tools.ingest.move_ami_linted_issues:main'
 validate_ami_ingests = 'prsv_tools.ingest.validate_ami_ingests:main'
 export_workflows = 'prsv_tools.manage.export_workflows:main'
 export_metadata_only = 'prsv_tools.manage.export_metadata_only:main'
+create_pkg_report = 'prsv_tools.manage.create_pkg_report:main'
 
 
 [tool.mypy]

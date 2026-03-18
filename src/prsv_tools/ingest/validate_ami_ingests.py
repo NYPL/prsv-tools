@@ -1,23 +1,34 @@
-# validate prsv ingests
 import argparse
 import os
 import sys
 import logging
+import threading
 import concurrent.futures
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 import shutil
+import requests
 
 import prsv_tools.manage.create_pkg_report as create_pkg_report
 import prsv_tools.utility.api as prsvapi
 import prsv_tools.ingest.move_ami_linted_issues as mv_issues
+import prsv_tools.manage.prsv_move as prsv_move
 
-def setup_logging(log_file: Path):
+TOKEN_LOCK = threading.Lock()
+
+IGNORED_FILES = {
+    ".DS_Store", "premis-events.json", "thumbs.db",
+    "manifest-md5.txt", "tagmanifest-md5.txt", "bagit.txt", "bag-info.txt"
+}
+
+AMI_UUID_PROD = "183a74b5-7247-4fb2-8184-959366bc0cbc"
+AMI_UUID_TEST = ""
+
+
+def setup_logging(log_file: Path, is_verbose: bool):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # prevents duplicate handlers
     if logger.hasHandlers():
         logger.handlers.clear()
 
@@ -34,34 +45,40 @@ def setup_logging(log_file: Path):
     ch.setFormatter(console_formatter)
     logger.addHandler(ch)
 
-    # list logger (for clean package lists)
+    # list_logger
+    basic_formatter = logging.Formatter('%(message)s')
+
     list_logger = logging.getLogger('list_logger')
     list_logger.setLevel(logging.INFO)
-    
+    list_logger.propagate = False
     if list_logger.hasHandlers():
         list_logger.handlers.clear()
-
-    basic_formatter = logging.Formatter('%(message)s')
+        
     bh = logging.StreamHandler(sys.stdout)
     bh.setFormatter(basic_formatter)
     list_logger.addHandler(bh)
+
+    lh = logging.FileHandler(str(log_file), mode='a')
+    lh.setFormatter(basic_formatter)
+    list_logger.addHandler(lh)
+
+    manifest_logger = logging.getLogger('manifest_logger')
+    manifest_logger.setLevel(logging.INFO)
+    manifest_logger.propagate = False
+    if manifest_logger.hasHandlers():
+        manifest_logger.handlers.clear()
+
+    mh = logging.FileHandler(str(log_file), mode='a')
+    mh.setFormatter(basic_formatter)
+    manifest_logger.addHandler(mh)
+
+    if is_verbose:
+        mch = logging.StreamHandler(sys.stdout)
+        mch.setFormatter(basic_formatter)
+        manifest_logger.addHandler(mch)
     
-    list_logger.propagate = False
+    return logger, list_logger, manifest_logger
 
-    return logger, list_logger
-
-IGNORED_FILES = {
-    ".DS_Store",
-    "premis-events.json",
-    "thumbs.db",
-    "manifest-md5.txt",
-    "tagmanifest-md5.txt",
-    "bagit.txt",
-    "bag-info.txt"
-}
-
-AMI_UUID_PROD = "183a74b5-7247-4fb2-8184-959366bc0cbc"
-AMI_UUID_TEST = ""
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -74,7 +91,7 @@ def parse_args():
     parser.add_argument(
         "--destination", "-d",
         type=Path,
-        help="[Optional] Path to move valid packages to. (Top level directories containing multiple packages)"
+        help="[Optional] Path to sort valid & invalid packages to. (Top level directories containing multiple packages)"
     )
     parser.add_argument(
         "--credentials", "-c",
@@ -84,7 +101,6 @@ def parse_args():
     parser.add_argument(
         "--log_path", "-l",
         required=False,
-        default=Path(f"logs/ingest_validation_{datetime.now().strftime('%Y%m%d_%H%M')}.log"),
         type=Path,
         help="Path to save the log file."
     )
@@ -101,64 +117,92 @@ def parse_args():
         default=5,
         help="Number of concurrent threads to use (default: 5)."
     )
+    parser.add_argument(
+        "--deletion-parent-ref", "-dpf",
+        type=str,
+        required=False,
+        help="[Optional] The parent ref to move packages to if they fail validation."
+    )
     return parser.parse_args()
 
-def _find_matching_dirs(root: str, dirs: List[str]) -> Dict[str, List[str]]:
-    """Finds 6-digit directories in a list and returns a dict."""
+def get_auth_token(credentials_name):
+    with TOKEN_LOCK:
+        token = prsvapi.get_token(credentials_name)
+        version = prsvapi.find_apiversion(credentials_name)
+        return token, version
+
+def refresh_auth_token(credentials_name):
+    with TOKEN_LOCK:
+        token_file = Path(f"{credentials_name}.token.file")
+        if token_file.exists():
+            try:
+                token_file.unlink()
+            except OSError:
+                pass
+        token = prsvapi.get_token(credentials_name)
+        version = prsvapi.find_apiversion(credentials_name)
+        return token, version
+
+def _find_matching_dirs(root: str, dirs: list) -> dict:
     matches = {}
     for d in dirs:
         if len(d) == 6 and d.isdigit():
-            full_path = os.path.join(root, d)
-            if d not in matches:
-                matches[d] = []
-            matches[d].append(full_path)
+            matches.setdefault(d, []).append(os.path.join(root, d))
     return matches
 
 def get_local_files(ami_path):
-    """Recursively finds all valid files within an AMI directory and returns a dictionary of {filename: filesize}."""
+    """Returns dict of {filename: filesize}."""
     files = {}
+    broken_syms = {}
     
-    for root, dirs, filenames in os.walk(ami_path):
+    for root, dirs, filenames in os.walk(ami_path, followlinks=True):
         dirs[:] = [d for d in dirs if not d.startswith('.')]
         for name in filenames:
-            if name.startswith(".") or name.endswith(".old"):
+            if name.startswith(".") or name.endswith(".old") or name.lower() in IGNORED_FILES:
                 continue
 
-            if name.lower() not in IGNORED_FILES:
-                full_path = os.path.join(root, name)
-                files[name] = os.path.getsize(full_path)
+            full_path = Path(root) / name
+            
+            if full_path.is_symlink():
+                resolved_target = full_path.resolve()
+                if not resolved_target.exists():
+                    corrected_path = str(resolved_target).replace("/source/", "/Volumes/") 
+                    resolved_target = Path(corrected_path)
                 
-    return files
+                if resolved_target.exists() and resolved_target.is_file():
+                    files[name] = resolved_target.stat().st_size
+                else:
+                    logging.error(f"Target missing or unmounted for: {name} -> {resolved_target}")
+                    broken_syms[name] = str(resolved_target)
+                    
+            elif full_path.exists() and full_path.is_file():
+                files[name] = full_path.stat().st_size
+            else:
+                logging.error(f"File does not exist: {full_path}")
+                
+    return files, broken_syms
+
 
 def get_local_checksums(ami_path):
     """Parses manifest-md5.txt to create a dict of {filename: checksum}."""
     checksums = {}
     manifest_path = Path(ami_path) / "manifest-md5.txt"
     if manifest_path.exists():
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with manifest_path.open('r', encoding='utf-8') as f:
             for line in f:
                 parts = line.strip().split()
                 if len(parts) >= 2:
-                    filepath = parts[-1]
-                    filename = Path(filepath).name
-
+                    filename = Path(parts[-1]).name
                     for part in parts:
-                        if len(part) == 32 and all(c in '0123456789abcdefABCDEF' for c in part):
+                        if len(part) == 32 and part.isalnum():
                             checksums[filename] = part.lower()
                             break
     return checksums
 
-def get_preservica_objects(token, version, package_uuid, credentials_name, logger):
-    """
-    Returns:
-        file_data: dict {filename: filesize}
-        io_titles: set {io_title}
-    """
+
+def get_preservica_objects(token, version, package_uuid, session):
     file_data = {}
     io_titles = set()
-    
-    session = create_pkg_report.requests_retry_session()
-
     namespaces = {
         'xip': f'http://preservica.com/XIP/v{version}',
         'entity': f'http://preservica.com/EntityAPI/v{version}'
@@ -169,231 +213,274 @@ def get_preservica_objects(token, version, package_uuid, credentials_name, logge
     io_info_list = []
     
     try:
-        # Direct call to imported create_pkg_report function
         create_pkg_report.find_all_children(token, version, package_uuid, child_so_refs, io_info_list, session, namespaces)
     except Exception as e:
-        logger.error(f"Error traversing package children: {e}")
-        return file_data, io_titles
+        raise Exception(f"Failed finding children: {e}") from e
 
-    # iterate through IOs
     for io_info in io_info_list:
         io_ref = io_info['ref']
-        # record IO Title 
-        if io_info.get('title'):
-            io_titles.add(io_info['title'])
+        if title := io_info.get('title'):
+            io_titles.add(title)
         
         reps = create_pkg_report.get_representation_details(token, version, io_ref, session, namespaces)
-        
         for rep in reps:
             co_refs = create_pkg_report.get_generation_details(token, version, io_ref, rep['type'], session, namespaces)
-            
             for co_ref in co_refs:
-                bitstream = create_pkg_report.get_bitstream_details(token, version, co_ref, session, namespaces)
-                
-                if bitstream and bitstream.get('filename'):
-                    file_data[bitstream['filename']] = {
-                        'size': bitstream.get('filesize'),
-                        'md5': bitstream.get('fixity', {}).get('MD5', '').lower()
-                    }
-                else:
-                    logger.warning(f"Found CO {co_ref} without a valid filename bitstream.")
+                generations = create_pkg_report.get_generation_numbers(token, version, co_ref, session, namespaces)
+                for generation in generations:
+                    bitstreams = create_pkg_report.get_bitstream_details(token, version, co_ref, generation, session, namespaces)
+                    for bitstream in bitstreams:
+                        if bitstream and bitstream.get('filename'):
+                            file_data[bitstream['filename']] = {
+                                'size': bitstream.get('filesize'),
+                                'md5': bitstream.get('fixity', {}).get('MD5', '').lower()
+                            }
 
     return file_data, io_titles
 
-def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, list_logger, args_verbose=False):
-    """
-    Validates a single AMI package.
-    Checks:
-    1. File existence (Local vs Preservica)
-    2. 0 byte files in Preservica
-    3. Filesize mismatch between Local and Preservica
+
+def categorize_files(local_filenames, prsv_filenames, preservica_io_titles):
+    local_set = set(local_filenames)
+    prsv_set = set(prsv_filenames)
     
-    Returns: True if valid, False if invalid or skipped.
-    """
-    # duplicate local folders
-    ami_path = Path(ami_paths[0])
-    if len(ami_paths) > 1:
-        logger.warning(f"Multiple local folders found for {ami_id}, checking content of: {ami_path}")
+    matching_files = local_set & prsv_set
+    local_to_prsv_name = {f: f for f in matching_files}
+    use_transcode_match = False
 
-    logger.info(f"Checking package: {ami_id}")
-
-    try:
-        token = prsvapi.get_token(credentials_name)
-        version = prsvapi.find_apiversion(credentials_name)
-        session = create_pkg_report.requests_retry_session()
-    except Exception as e:
-        logger.error(f"Auth failed for {ami_id}: {e}")
-        return False
+    for f in local_set - matching_files:
+        if f.lower().endswith('.wav'):
+            p_name = f[:-4] + '.flac'
+            if p_name in prsv_set:
+                matching_files.add(f)
+                local_to_prsv_name[f] = p_name
+                use_transcode_match = True
+                
+    missing_from_local = prsv_set - set(local_to_prsv_name.values())
+    missing_from_preservica = local_set - matching_files
     
-    package_uuid = create_pkg_report.get_single_ami_uuid(token, ami_id, parent_uuid, session)
+    found_as_io = missing_from_preservica & preservica_io_titles
+    truly_missing = missing_from_preservica - found_as_io
 
-    if not package_uuid:
-        logger.error(f"FAILED: AMI ID {ami_id} NOT FOUND in Preservica.")
-        return False
+    return {
+        "matching": matching_files,
+        "missing_local": missing_from_local,
+        "truly_missing": truly_missing,
+        "found_as_io": found_as_io,
+        "name_mapping": local_to_prsv_name,
+        "transcoded": use_transcode_match
+    }
 
-    # Local Files {filename: size}
-    local_files = get_local_files(ami_path)
-    local_checksums = get_local_checksums(ami_path)
-    if not local_files:
-        logger.warning(f"Skipping {ami_id}: No local files found.")
-        return False 
 
-    # Preservica files {filename: size} & IO titles
-    try:
-        preservica_files, preservica_io_titles = get_preservica_objects(token, version, package_uuid, credentials_name, logger)
-    except Exception as e:
-        logger.error(f"Error retrieving files from Preservica for {ami_id}: {e}")
-        return False
-
-    # dict keys to sets for comparison
-    local_filenames = set(local_files.keys())
-    prsv_filenames = set(preservica_files.keys())
-
-    # debug
-    # print(f"Local files: {list(local_filenames)}")
-    # print(f"Preservica files: {list(prsv_filenames)}")
-
-    missing_from_preservica = local_filenames - prsv_filenames
-    missing_from_local = prsv_filenames - local_filenames
-    matching_files = local_filenames.intersection(prsv_filenames)
-
-    truly_missing = set()
-    found_as_io = set()
-
-    for f in missing_from_preservica:
-        if f in preservica_io_titles:
-            found_as_io.add(f)
-        else:
-            truly_missing.add(f)
-    
-    # print(f"Truly missing: {truly_missing}")
-    # print(f"Found as IO: {found_as_io}")
-    # print(f"Matching files: {matching_files}")
-    # print(f"Missing from Preservica: {missing_from_preservica}")
-    # print(f"Missing from Local: {missing_from_local}")
-    # print(f"Preservica Files: {preservica_files}")
-    # print(f"Preservica IO Titles: {preservica_io_titles}")
-    # print(f"Local Files: {local_files}")
-    # sys.exit(1)
-
-    # FAILURE: critical files missing (not as Bitstream OR IO)
-    if truly_missing:
-        logger.error(f"FAILED: {ami_id} exists, but is missing {len(truly_missing)} file(s) in Preservica.")
-        logger.error(f"{ami_id} - Files found Locally but MISSING in Preservica:")
-        for f in sorted(truly_missing):
-            list_logger.info(f" - {f}")
-        
-        # log IO mismatches if they exist alongside failures
-        if found_as_io:
-            logger.warning(f"{ami_id} - {len(found_as_io)} files matched IO Titles but not Bitstream filenames:")
-            for f in sorted(found_as_io):
-                list_logger.info(f" ~ {f} (IO Title Match)")
-        
-        return False 
-
-    # IO Title Match (Bitstream mismatch)
-    elif found_as_io:
-        logger.warning(f"WARNING: {ami_id} - {len(found_as_io)} files matched IO Titles but NOT Bitstream filenames.")
-        for f in sorted(found_as_io):
-            list_logger.info(f" ~ {f} (IO Title Match Only)")
-        
-        return False
-
-    # check file sizes
+def check_sizes(cats, local_files, preservica_files, local_checksums, logger):
     size_mismatch = []
     zero_byte_files = []
     checksum_mismatch = []
 
-    for fname in matching_files:
+    for fname in cats["matching"]:
+        p_name = cats["name_mapping"][fname]
         local_size = local_files[fname]
-        prsv_file_info = preservica_files.get(fname, {})
+        prsv_file_info = preservica_files.get(p_name, {})
 
-        prsv_size = prsv_file_info.get('size')
+        prsv_size = prsv_file_info.get('size', -1)
         prsv_md5 = prsv_file_info.get('md5')
         local_md5 = local_checksums.get(fname)
 
-        # debug
-        # print(f"Comparing file sizes for {fname}: Local={local_size}, Preservica={prsv_size}, Local MD5={local_md5}, Preservica MD5={prsv_md5}")
-
         if prsv_size == 0:
             zero_byte_files.append(fname)
-        elif local_size != prsv_size:
-            size_mismatch.append((fname, local_size, prsv_size))
+            continue
+            
+        is_wav_to_flac = fname.lower().endswith('.wav') and p_name.lower().endswith('.flac')
 
-        if local_md5 and prsv_md5 and local_md5 != prsv_md5:
-            checksum_mismatch.append((fname, local_md5, prsv_md5))
+        if not is_wav_to_flac:
+            if local_size != prsv_size:
+                if local_size < prsv_size and fname.lower().endswith('.json'):
+                    logger.warning(f"JSON file size mismatch, local smaller than Preservica. Marking valid. Filename: {fname}")
+                else:
+                    size_mismatch.append((fname, local_size, prsv_size))
 
-        # stricter check: if either checksum is missing or they don't match (ie. manifest not included)
-        # if not local_md5 or not prsv_md5 or local_md5 != prsv_md5:
-        #     checksum_mismatch.append((fname, local_md5, prsv_md5))
+            if local_md5 and prsv_md5 and local_md5 != prsv_md5:
+                checksum_mismatch.append((fname, local_md5, prsv_md5))
 
-    if zero_byte_files:
-        logger.error(f"FAILED: {ami_id} contains {len(zero_byte_files)} file(s) with 0 bytes in Preservica.")
-        for f in sorted(zero_byte_files):
-            list_logger.info(f" ! {f} (0 Bytes)")
-        return False
+    return zero_byte_files, size_mismatch, checksum_mismatch
 
-    if size_mismatch:
-        logger.error(f"FAILED: {ami_id} contains {len(size_mismatch)} file(s) with size mismatches.")
-        for fname, l_size, p_size in sorted(size_mismatch):
-            list_logger.info(f" ! {fname} | Local: {l_size} bytes | Prsv: {p_size} bytes")
-        return False
+
+def log_verbose_manifest(ami_id, cats, local_files, preservica_files, local_checksums, manifest_logger):
+    header = f"{'LOCAL':<55} {'PRESERVICA STATUS'}"
+    separator = f"{'-'*55} {'-'*40}"
+    output = [f"\n{ami_id} VERBOSE MANIFEST:", header, separator]
+    print_files = set(local_files.keys()).union(cats["missing_local"])
     
-    if checksum_mismatch:
-        logger.error(f"FAILED: {ami_id} contains {len(checksum_mismatch)} file(s) with checksum mismatches.")
-        for fname, l_md5, p_md5 in sorted(checksum_mismatch):
-            # debug
-            list_logger.info(f" ! {fname} | Local MD5: {l_md5} | Preservica MD5: {p_md5}")
-        return False
+    for f in sorted(print_files):
+        if f in cats["matching"]:
+            p_name = cats["name_mapping"][f]
+            l_size = local_files[f]
+            p_info = preservica_files.get(p_name, {})
+            p_size = p_info.get('size')
+            l_md5 = local_checksums.get(f)
+            p_md5 = p_info.get('md5')
+            
+            if f != p_name:
+                status_msg = f"{p_name} [WAV TO FLAC MATCH]" if f.lower().endswith('.wav') else f"{p_name} [FLAC TO WAV MATCH]"
+            elif p_size == 0:
+                status_msg = f"{f} [0 BYTES IN PRESERVICA]"
+            elif l_size != p_size:
+                status_msg = f"{f} [SIZE MISMATCH: L={l_size} vs P={p_size}]"
+            elif l_md5 and p_md5 and l_md5 != p_md5:
+                status_msg = f"{f} [MD5 MISMATCH: L={l_md5[:6]}... vs P={p_md5[:6]}...]"
+            else:
+                md5_str = "MD5 MATCH" if l_md5 and p_md5 else "NO MD5"
+                status_msg = f"{f} ({l_size} bytes | {md5_str})"
+            
+            output.append(f"{f:<55} --------> {status_msg}")
+            
+        elif f in cats["found_as_io"]:
+            output.append(f"{f:<55} --------> [FOUND AS IO TITLE ONLY]")
+        elif f in cats["truly_missing"]:
+            output.append(f"{f:<55} --------> [TRULY MISSING IN PRESERVICA]")
+        elif f in cats["missing_local"]:
+            output.append(f"{'[MISSING LOCALLY]':<55} --------> {f}")
+    
+    output.append("")
+    manifest_logger.info("\n".join(output))
 
-    # WARNING: extra files in Preservica
-    if missing_from_local:
-        logger.warning(f"WARNING: {ami_id} has {len(missing_from_local)} extra file(s) in Preservica not found locally.")
-        for f in sorted(missing_from_local):
-            list_logger.info(f" + {f} (Extra in Preservica)")
-
-    # SUCCESS
-    logger.info(f"SUCCESS: {ami_id} fully validated ({len(local_files)} files).")
-
-    if args_verbose:
-        header = f"{'LOCAL':<60} {'PRESERVICA'}"
-        separator = f"{'-'*60} {'-'*15}"
-        
-        output = [f"\n{ami_id}:", header, separator]
-        for f in sorted(matching_files):
-            size_str = f"{local_files[f]} bytes"
-            output.append(f"{f:<60} --------> {f} ({size_str})")
-        output.append("")
-        
-        list_logger.info("\n".join(output))
-        
-    return True 
 
 def move_pkgs(source_path: Path, destination_path: Path):
     try:
-        target_path = destination_path / source_path.parent.name / source_path.name
+        parent_name = source_path.parent.name
+        if parent_name in {"Audio", "Film", "Video"}:
+            target_path = destination_path / source_path.parent.parent.name / source_path.name
+        else:
+            target_path = destination_path / parent_name / source_path.name
+
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(source_path), str(target_path))
         logging.info(f"Moved '{source_path}' to '{target_path}'")
     except Exception as e:
         logging.error(f"Error moving '{source_path}' to '{destination_path}': {e}")
 
+def validate_package(ami_id, ami_paths, credentials_name, parent_uuid, logger, list_logger, manifest_logger):
+    broken_syms = {}
+    ami_path = Path(ami_paths[0])
+    
+    if len(ami_paths) > 1:
+        logger.warning(f"Multiple local folders found for {ami_id}, checking content of: {ami_path}")
+
+    logger.info(f"Checking package: {ami_id}")
+
+    local_files, broken_syms = get_local_files(ami_path)
+    local_checksums = get_local_checksums(ami_path)
+    
+    if not local_files:
+        logger.warning(f"Skipping {ami_id}: No local files found.")
+        return False, broken_syms, "No local files found"
+
+    preservica_files, preservica_io_titles = {}, set()
+    api_success = False
+    max_retries = 1
+
+    for attempt in range(max_retries + 1):
+        try:
+            token, version = get_auth_token(credentials_name)
+            session = create_pkg_report.requests_retry_session()
+            
+            package_uuid = create_pkg_report.get_single_ami_uuid(token, ami_id, parent_uuid, session)
+            
+            if not package_uuid:
+                return False, broken_syms, "Not found in Preservica"
+
+            preservica_files, preservica_io_titles = get_preservica_objects(
+                token, version, package_uuid, session
+            )
+            api_success = True
+            break #
+            
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401 and attempt < max_retries:
+                logger.warning(f"401 error for {ami_id}. Refreshing token and retrying package...")
+                refresh_auth_token(credentials_name)
+                continue
+            logger.error(f"HTTP Error retrieving {ami_id}: {e}")
+            return False, broken_syms, "HTTP Error retrieving files"
+        except Exception as e:
+            if '401' in str(e) and attempt < max_retries:
+                logger.warning(f"401 error for {ami_id}. Refreshing token and retrying package...")
+                refresh_auth_token(credentials_name)
+                continue
+            logger.error(f"Error retrieving files for {ami_id}: {e}")
+            return False, broken_syms, "Error retrieving files from Preservica"
+
+    if not api_success:
+        return False, broken_syms, "Failed to connect to Preservica"
+
+    cats = categorize_files(local_files.keys(), preservica_files.keys(), preservica_io_titles)
+    log_verbose_manifest(ami_id, cats, local_files, preservica_files, local_checksums, manifest_logger)
+
+    if cats["truly_missing"]:
+        logger.error(f"FAILED: {ami_id} missing {len(cats['truly_missing'])} file(s) in Preservica.")
+        for f in sorted(cats["truly_missing"]):
+            list_logger.info(f" - {f}")
+        if cats["found_as_io"]:
+            for f in sorted(cats["found_as_io"]):
+                list_logger.info(f" ~ {f} (IO Title Match)")
+        return False, broken_syms, "Files missing in Preservica"
+
+    elif cats["found_as_io"]:
+        logger.warning(f"WARNING: {ami_id} - {len(cats['found_as_io'])} files matched IO Titles but NOT Bitstream filenames.")
+        for f in sorted(cats["found_as_io"]):
+            list_logger.info(f" ~ {f} (IO Title Match Only)")
+        return False, broken_syms, "Bitstream mismatch (IO Title match only)"
+
+    zero_byte_files, size_mismatch, checksum_mismatch = check_sizes(
+        cats, local_files, preservica_files, local_checksums, logger
+    )
+
+    if zero_byte_files:
+        logger.error(f"FAILED: {ami_id} contains {len(zero_byte_files)} 0-byte file(s).")
+        for f in sorted(zero_byte_files):
+            list_logger.info(f" ! {f} (0 Bytes)")
+        return False, broken_syms, "0-byte files in Preservica"
+
+    if size_mismatch:
+        logger.error(f"FAILED: {ami_id} contains {len(size_mismatch)} size mismatch(es).")
+        for fname, l_size, p_size in sorted(size_mismatch):
+            list_logger.info(f" ! {fname} | Local: {l_size} bytes | Prsv: {p_size} bytes")
+        return False, broken_syms, "File size mismatch"
+    
+    if checksum_mismatch:
+        logger.error(f"FAILED: {ami_id} contains {len(checksum_mismatch)} checksum mismatch(es).")
+        for fname, l_md5, p_md5 in sorted(checksum_mismatch):
+            list_logger.info(f" ! {fname} | Local MD5: {l_md5} | Prsv MD5: {p_md5}")
+        return False, broken_syms, "File checksum mismatch"
+
+    if cats["missing_local"]:
+        logger.warning(f"WARNING: {ami_id} has {len(cats['missing_local'])} extra file(s) in Preservica.")
+        for f in sorted(cats["missing_local"]):
+            if f.endswith("_sc.mp4") or "_sc" in f:
+                list_logger.info(f" ~ {f} (Service copy file in Preservica)")
+            else:
+                list_logger.info(f" + {f} (Extra in Preservica)")
+
+    if cats["transcoded"]:
+        logger.info(f"SUCCESS: {ami_id} fully validated ({len(local_files)} files). [.wav to .flac matching]")
+    else:
+        logger.info(f"SUCCESS: {ami_id} fully validated ({len(local_files)} files).")
+        
+    return True, broken_syms, ""
+
+
 def main():
     args = parse_args()
-
-    logger, list_logger = setup_logging(args.log_path)
+    log_path = args.log_path if args.log_path else Path(f"logs/ingest_validation_{args.source.name}_{datetime.now().strftime('%Y%m%d')}.log")
+    logger, list_logger, manifest_logger = setup_logging(log_path, args.verbose)
     
-    # Determine Parent UUID based on credentials
-    parent_uuid = AMI_UUID_PROD
-    if "test" in args.credentials:
-        parent_uuid = AMI_UUID_TEST # Ensure this is set if testing
+    parent_uuid = AMI_UUID_TEST if "test" in args.credentials else AMI_UUID_PROD 
 
     logger.info(f"Scanning source directory: {args.source}")
     ami_packages = {}
     
-    for root, dirs, _ in os.walk(args.source):
+    for root, dirs, _ in os.walk(args.source, followlinks=True):
         matches = _find_matching_dirs(root, dirs)
-        for ami_id, paths in matches.items():
+        for ami_id, paths in sorted(matches.items()):
             if ami_id not in ami_packages:
                 ami_packages[ami_id] = paths
             else:
@@ -405,8 +492,16 @@ def main():
 
     logger.info(f"Found {len(ami_packages)} AMI packages.")
 
+    try:
+        get_auth_token(args.credentials)
+    except Exception as e:
+        logger.error(f"Fatal auth error before starting: {e}")
+        sys.exit(1)
+
     valid_ids = set()
-    invalid_pkgs = []  # list of tuples: (ami_id, path)
+    invalid_pkgs = []  # list of tuples: (ami_id, path, reason)
+
+    all_broken_syms = {}
     
     logger.info(f"Starting validation with {args.threads} threads...")
 
@@ -420,7 +515,7 @@ def main():
                 parent_uuid,
                 logger, 
                 list_logger, 
-                args.verbose
+                manifest_logger
             ): (ami_id, paths) 
             for ami_id, paths in ami_packages.items()
         }
@@ -428,47 +523,75 @@ def main():
         for future in concurrent.futures.as_completed(future_to_ami):
             ami_id, paths = future_to_ami[future]
             try:
-                is_valid = future.result()
+                is_valid, pkg_broken_syms, reason = future.result()
+
+                if pkg_broken_syms:
+                    all_broken_syms[ami_id] = pkg_broken_syms
                 if is_valid:
                     valid_ids.add(ami_id)
                 else:
-                    invalid_pkgs.append((ami_id, paths[0]))
+                    invalid_pkgs.append((ami_id, paths[0], reason))
             except Exception as e:
                 logger.error(f"Exception generated for {ami_id}: {e}")
-                if (ami_id, paths[0]) not in invalid_pkgs:
-                    invalid_pkgs.append((ami_id, paths[0]))
+                if not any(pkg[0] == ami_id for pkg in invalid_pkgs):
+                    invalid_pkgs.append((ami_id, paths[0], f"Exception during validation: {e}"))
     
     logger.info("Validation complete.")
 
-    # SUMMARY
-    list_logger.info("\n" + "="*60)
-    list_logger.info(F"FINAL VALIDATION SUMMARY: {(args.source).name}")
+    # --- SUMMARY LOGGING ---
+    list_logger.info(f"\n{'='*60}")
+    list_logger.info(f"FINAL VALIDATION SUMMARY [Batch / Package: {(args.source).name}]")
     list_logger.info("="*60)
 
-    list_logger.info(f"\nVALID PACKAGES ({len(valid_ids)}):")
+    list_logger.info(f"\nVALID PACKAGES ({len(valid_ids)}/{(len(valid_ids)+len(invalid_pkgs))}): ")
     # for valid_id in sorted(valid_ids):
     #     list_logger.info(f" - {valid_id}")
 
-    list_logger.info(f"\nINVALID PACKAGES ({len(invalid_pkgs)}):")
-    for ami_id, path in invalid_pkgs:
-        list_logger.info(f" - {ami_id} | Path: {path}")
+    list_logger.info(f"\nINVALID PACKAGES ({len(invalid_pkgs)}/{(len(valid_ids)+len(invalid_pkgs))}):")
+    for ami_id, path, reason in invalid_pkgs:
+        list_logger.info(f" - {ami_id} | Path: {path} (FAILED DUE TO: {reason})")
 
-    list_logger.info("\n" + "="*60)
+    # if all_broken_syms:
+        # list_logger.info(f"\nPACKAGES WITH BROKEN SYMLINKS ({len(all_broken_syms)}):")
+        # for ami_id, syms in all_broken_syms.items():
+            # list_logger.info(f" - {ami_id}")
+            # for name, target_path in syms.items():
+                # list_logger.info(f"     ! {name} (Target missing: {target_path})") 
+    if invalid_pkgs and (len(valid_ids) > 0):
+        invalid_ids_str = " ".join(ami_id for ami_id, _, _ in invalid_pkgs)
+        list_logger.info(f"\nInvalid AMI IDs: {invalid_ids_str}")
+    
+    list_logger.info(f"\n{'='*60}")
 
+    # --- MOVING LOGIC ---
     if args.destination and (valid_ids or invalid_pkgs):
+        # moved_valid = 0
+        # moved_invalid = 0
+        destination_path = Path(args.destination)
         logger.info(f"\nMoving valid packages to destination: {args.destination}")
-        if valid_ids:
-            for ami_id in valid_ids:
-                source_paths = ami_packages[ami_id]
-                for source_path in source_paths:
-                    move_pkgs(Path(source_path), Path(args.destination) / "_valid")
-        if invalid_pkgs:
-            for ami_id, _ in invalid_pkgs:
-                source_paths = ami_packages[ami_id]
-                for source_path in source_paths:
-                    move_pkgs(Path(source_path), Path(args.destination) / "_validation_failed")
+        
+        for ami_id in sorted(valid_ids):
+            for source_path in ami_packages[ami_id]:
+                move_pkgs(Path(source_path), destination_path / "_valid")
+                
+        for ami_id, _, _ in sorted(invalid_pkgs):
+            for source_path in ami_packages[ami_id]:
+                move_pkgs(Path(source_path), destination_path / "_validation_failed")
     
     mv_issues.delete_empty_dir(args.source)
 
-if _name_ == "_main_":
+    if args.deletion_parent_ref and invalid_pkgs:
+        logger.info(f"\nMoving {len(invalid_pkgs)} failed packages to deletion folder in Preservica: {args.deletion_parent_ref}")
+        invalid_ami_ids = [ami_id for ami_id, _, _ in invalid_pkgs]
+        try:
+            prsv_move.process_move_list(
+                credentials=args.credentials,
+                pkg_list=sorted(invalid_ami_ids),
+                new_parent_ref=args.deletion_parent_ref,
+                existing_logger=logger
+            )
+        except Exception as e:
+            logger.error(f"Failed to execute prsv_move: {e}")
+
+if __name__ == "__main__":
     main()
