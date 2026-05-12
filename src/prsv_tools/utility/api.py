@@ -40,7 +40,7 @@ def create_token(credential_set: str, token_file: Path) -> str:
     url = TOKEN_BASE_URL
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     payload = f"username={user}&password={pw}&tenant={tenant}"
-    response = requests.post(url, headers=headers, data=payload)
+    response = requests.post(url, headers=headers, data=payload, timeout=30)
     data = response.json()
 
     if not data["success"]:
@@ -61,7 +61,7 @@ def find_apiversion(credential_set: str) -> str:
         "Preservica-Access-Token": token,
         "Content-Type": "application/xml",
     }
-    response = requests.request("GET", schemas_url, headers=headers)
+    response = requests.request("GET", schemas_url, headers=headers, timeout=30)
     root = ET.fromstring(response.text)
 
     version_search = re.search(r"v(\d+\.\d+)\}", root.tag)

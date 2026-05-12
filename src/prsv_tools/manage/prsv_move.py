@@ -33,7 +33,7 @@ def parse_args():
         "--new-parent-ref",
         "-npf",
         required=True,
-        help="The parentref of the new folder."
+        help="The parentref of the new folder. Also accepts 'ami', 'digarch', or 'deletion'"
     )
     parser.add_argument(
         "--logpath", 
@@ -94,18 +94,18 @@ def move_entity(accesstoken, entity_uuid, new_parent_uuid, session):
             logging.error(f"Response details: {e.response.text}")
         return False
 
-def process_move_list(credentials: str, pkg_list: list, new_parent_ref: str, existing_logger=None):
-    logger = existing_logger if existing_logger else logging.getLogger(__name__)
-    
+def process_move_list(credentials: str, pkg_list: list, new_parent_ref: str, logger=None):
     session = requests_retry_session()
 
     ami_uuid = "183a74b5-7247-4fb2-8184-959366bc0cbc" if "test" not in credentials else ""
     digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08" if "test" not in credentials else "c0b9b47a-5552-4277-874e-092b3cc53af6"
+    deletion_uuid = "836a114b-839a-4af8-a4e1-001f200d6d40" if "test" not in credentials else ""
     
     search_locations = {
         "DigAMI": ami_uuid,
         "DigArch": digarch_uuid,
-        "Root": ""
+        "ToDelete": deletion_uuid,
+        # "DupesDeleteParent": "5d407164-368f-484e-8127-16eb41c9a389" # dupes folder
     }
 
     failed_moves = set()
@@ -155,29 +155,54 @@ def process_move_list(credentials: str, pkg_list: list, new_parent_ref: str, exi
         for pkg in sorted(list(failed_moves)):
             logger.info(f"- {pkg}")
 
+    return len(failed_moves)
+
 def main():
     args = parse_args()
 
     log_path = args.logpath if args.logpath else Path.cwd()
     log_file = log_path / f"prsv_move_{datetime.datetime.now().strftime('%Y%m%d')}.log"
-    logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler()
+    ]
+)
     logger = logging.getLogger(__name__)
 
+    ami_uuid = "183a74b5-7247-4fb2-8184-959366bc0cbc" if "test" not in args.credentials else ""
+    digarch_uuid = "e80315bc-42f5-44da-807f-446f78621c08" if "test" not in args.credentials else ""
+    deletion_uuid = "836a114b-839a-4af8-a4e1-001f200d6d40" if "test" not in args.credentials else ""
+
+    if "ami" in args.new_parent_ref:
+        n_parent = ami_uuid
+    elif "digarch" in args.new_parent_ref:
+        n_parent = digarch_uuid
+    else:
+        n_parent = args.new_parent_ref
+
+    num_failed = 0
     if args.pkgtitle:
-        process_move_list(
+        num_failed = process_move_list(
             credentials=args.credentials,
             pkg_list=args.pkgtitle,
-            new_parent_ref=args.new_parent_ref,
-            existing_logger=logger
+            new_parent_ref=n_parent,
+            logger=logger
         )
     elif args.directory:
         pkg_titles = [p.stem for p in args.directory.iterdir() if p.is_dir()]
-        process_move_list(
+        num_failed = process_move_list(
             credentials=args.credentials,
-            pkg_list=pkg_titles,
-            new_parent_ref=args.new_parent_ref,
-            existing_logger=logger
+            pkg_list=sorted(pkg_titles),
+            new_parent_ref=n_parent,
+            logger=logger
         )
+
+    if num_failed == 0:
+        logging.shutdown()
+        log_file.unlink(missing_ok=True)
 
 if __name__ == "__main__":
     main()
