@@ -1,21 +1,17 @@
-import argparse
 import json
 import sys
 from pathlib import Path
 from typing import Any
+import prsv_tools.utility.cli as prsvcli
 
 
-def fuzzy_compare(obj1: Any, obj2: Any, path: str = "") -> list[str]:
-    """
-    Recursively compares two objects and returns a list of differences.
-    Strings are compared case-insensitively.
-    Dictionary key order is ignored.
-    """
+def fuzzy_compare(obj1: Any, obj2: Any, path: str = "") -> tuple[list[str], list[str]]:
     diffs = []
+    warnings = []
 
     if type(obj1) != type(obj2):
         diffs.append(f"Type mismatch at {path or 'root'}: {type(obj1).__name__} vs {type(obj2).__name__}")
-        return diffs
+        return diffs, warnings
 
     if isinstance(obj1, dict):
         keys1 = set(obj1.keys())
@@ -29,10 +25,11 @@ def fuzzy_compare(obj1: Any, obj2: Any, path: str = "") -> list[str]:
             if missing_in_1:
                 diffs.append(f"Keys missing in first file at {path or 'root'}: {missing_in_1}")
 
-        # Compare common keys
         for key in keys1 & keys2:
             new_path = f"{path}.{key}" if path else key
-            diffs.extend(fuzzy_compare(obj1[key], obj2[key], new_path))
+            sub_diffs, sub_warns = fuzzy_compare(obj1[key], obj2[key], new_path)
+            diffs.extend(sub_diffs)
+            warnings.extend(sub_warns)
 
     elif isinstance(obj1, list):
         if len(obj1) != len(obj2):
@@ -40,21 +37,34 @@ def fuzzy_compare(obj1: Any, obj2: Any, path: str = "") -> list[str]:
         else:
             for i, (item1, item2) in enumerate(zip(obj1, obj2)):
                 new_path = f"{path}[{i}]"
-                diffs.extend(fuzzy_compare(item1, item2, new_path))
+                sub_diffs, sub_warns = fuzzy_compare(item1, item2, new_path)
+                diffs.extend(sub_diffs)
+                warnings.extend(sub_warns)
 
     elif isinstance(obj1, str):
         if obj1.lower() != obj2.lower():
-            diffs.append(f"Value mismatch at {path or 'root'}: '{obj1}' vs '{obj2}'")
+            if "referencefilename" in path.lower() and (
+                obj2.lower() == f"{obj1.lower()}_em.wav" or 
+                obj1.lower() == f"{obj2.lower()}_em.wav"
+            ):
+                warnings.append(f"Allowed value variation at {path or 'root'}: '{obj1}' vs '{obj2}'")
+            elif "referencefilename" in path.lower() and (
+                obj2.lower() == f"{obj1.lower()}_pm.wav" or 
+                obj1.lower() == f"{obj2.lower()}_pm.wav"
+            ):
+                warnings.append(f"Allowed value variation at {path or 'root'}: '{obj1}' vs '{obj2}'")
+            else:
+                diffs.append(f"Value mismatch at {path or 'root'}: '{obj1}' vs '{obj2}'")
 
     else:
         if obj1 != obj2:
             diffs.append(f"Value mismatch at {path or 'root'}: {obj1} vs {obj2}")
 
-    return diffs
+    return diffs, warnings
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Compare two JSON files with fuzzy matching.")
+    parser = prsvcli.Parser()
     parser.add_argument("file1", type=Path, help="Path to the first JSON file")
     parser.add_argument("file2", type=Path, help="Path to the second JSON file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print all differences")
@@ -80,7 +90,12 @@ def main():
         print(f"Error parsing JSON: {e}")
         sys.exit(1)
 
-    differences = fuzzy_compare(data1, data2)
+    differences, warnings = fuzzy_compare(data1, data2)
+    
+    if warnings:
+        print(f"Found {len(warnings)} acceptable variation(s):")
+        for w in warnings:
+            print(f" - {w}")
 
     if not differences:
         print("JSON files match (fuzzy).")
@@ -91,7 +106,6 @@ def main():
             for d in differences:
                 print(f" - {d}")
         else:
-            # Print just the first few if not verbose
             for d in differences[:5]:
                 print(f" - {d}")
             if len(differences) > 5:

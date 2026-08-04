@@ -25,6 +25,12 @@ def parse_args():
         help="One or more titles of packages to find and move, separated by a space."
     )
     parser.add_argument(
+        "--pkguuid",
+        "-u",
+        nargs='+',
+        help="One or more UUIDs of packages to move directly, separated by a space."
+    )
+    parser.add_argument(
         "--directory",
         help= "Path to a directory of packages to move.",
         type=Path
@@ -94,7 +100,10 @@ def move_entity(accesstoken, entity_uuid, new_parent_uuid, session):
             logging.error(f"Response details: {e.response.text}")
         return False
 
-def process_move_list(credentials: str, pkg_list: list, new_parent_ref: str, logger=None):
+def process_move_list(credentials: str, pkg_list: list = None, new_parent_ref: str = None, logger=None, uuid_list: list = None):
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     session = requests_retry_session()
 
     ami_uuid = "183a74b5-7247-4fb2-8184-959366bc0cbc" if "test" not in credentials else ""
@@ -112,39 +121,52 @@ def process_move_list(credentials: str, pkg_list: list, new_parent_ref: str, log
     successful_moves = set()
     deletion_exists = set()
 
-    logger.info(f"Starting move workflow for {len(pkg_list)} packages.")
+    accesstoken = prsvapi.get_token(credentials)
 
-    for pkg_title in pkg_list:
-        logger.info(f"--- Processing: {pkg_title} ---")
-        
-        accesstoken = prsvapi.get_token(credentials)
-        
-        if fetch_uuid_by_title(accesstoken, pkg_title, new_parent_ref, session):
-            logger.info(f"SKIPPED: '{pkg_title}' already in destination.")
-            deletion_exists.add(pkg_title)
-            continue
-
-        found_uuid = None
-        for name, parent_uuid in search_locations.items():
-            if parent_uuid is None: 
-                continue 
-            
-            found_uuid = fetch_uuid_by_title(accesstoken, pkg_title, parent_uuid, session)
-            if found_uuid:
-                logger.info(f"Found '{pkg_title}' in {name} ({found_uuid})")
-                break
-        
-        if found_uuid:
-            success = move_entity(accesstoken, found_uuid, new_parent_ref, session)
+    if uuid_list:
+        logger.info(f"Starting move workflow for {len(uuid_list)} package UUIDs.")
+        for pkg_uuid in uuid_list:
+            logger.info(f"--- Processing UUID: {pkg_uuid} ---")
+            success = move_entity(accesstoken, pkg_uuid, new_parent_ref, session)
             if success:
-                logger.info(f"MOVED: '{pkg_title}' moved successfully.")
-                successful_moves.add(pkg_title)
+                logger.info(f"MOVED: Package UUID '{pkg_uuid}' moved successfully.")
+                successful_moves.add(pkg_uuid)
             else:
-                logger.error(f"FAILED: Could not move '{pkg_title}'.")
+                logger.error(f"FAILED: Could not move package UUID '{pkg_uuid}'.")
+                failed_moves.add(pkg_uuid)
+
+    if pkg_list:
+        logger.info(f"Starting move workflow for {len(pkg_list)} packages.")
+
+        for pkg_title in pkg_list:
+            logger.info(f"--- Processing: {pkg_title} ---")
+            
+            if fetch_uuid_by_title(accesstoken, pkg_title, new_parent_ref, session):
+                logger.info(f"SKIPPED: '{pkg_title}' already in destination.")
+                deletion_exists.add(pkg_title)
+                continue
+
+            found_uuid = None
+            for name, parent_uuid in search_locations.items():
+                if parent_uuid is None: 
+                    continue 
+                
+                found_uuid = fetch_uuid_by_title(accesstoken, pkg_title, parent_uuid, session)
+                if found_uuid:
+                    logger.info(f"Found '{pkg_title}' in {name} ({found_uuid})")
+                    break
+            
+            if found_uuid:
+                success = move_entity(accesstoken, found_uuid, new_parent_ref, session)
+                if success:
+                    logger.info(f"MOVED: '{pkg_title}' moved successfully.")
+                    successful_moves.add(pkg_title)
+                else:
+                    logger.error(f"FAILED: Could not move '{pkg_title}'.")
+                    failed_moves.add(pkg_title)
+            else:
+                logger.warning(f"NOT FOUND: '{pkg_title}' could not be found in source folders.")
                 failed_moves.add(pkg_title)
-        else:
-            logger.warning(f"NOT FOUND: '{pkg_title}' could not be found in source folders.")
-            failed_moves.add(pkg_title)
 
     logger.info("\n--- MOVE SUMMARY ---")
     logger.info(f"Successful: {len(successful_moves)}")
@@ -180,14 +202,17 @@ def main():
         n_parent = ami_uuid
     elif "digarch" in args.new_parent_ref:
         n_parent = digarch_uuid
+    elif "deletion" in args.new_parent_ref:
+        n_parent = deletion_uuid
     else:
         n_parent = args.new_parent_ref
 
     num_failed = 0
-    if args.pkgtitle:
+    if args.pkguuid or args.pkgtitle:
         num_failed = process_move_list(
             credentials=args.credentials,
             pkg_list=args.pkgtitle,
+            uuid_list=args.pkguuid,
             new_parent_ref=n_parent,
             logger=logger
         )

@@ -51,6 +51,7 @@ create_pkg_report = 'prsv_tools.manage.create_pkg_report:main'
 prsv_move = 'prsv_tools.manage.prsv_move:main'
 locate_metadata_jpegs = 'prsv_tools.manage.locate_metadata_jpegs:main'
 download_bitstream_content = 'prsv_tools.manage.download_bitstream_content:main'
+move_er_linted_issues = 'prsv_tools.ingest.move_er_linted_issues:main'
 
 
 [tool.mypy]

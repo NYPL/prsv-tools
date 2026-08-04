@@ -56,6 +56,9 @@ def package_has_valid_subfolder_names(package: Path) -> bool:
 
     if found in [expected_a, expected_b]:
         return True
+    elif found == {".DS_Store", "objects", "metadata"}:
+        LOGGER.warning(f"{package.name} has hidden files, but will pass this test (package_has_valid_subfolder_names).")
+        return True
     else:
         LOGGER.error(
             f"{package.name} subfolders should have objects and metadata and/or access, found {found}"
@@ -222,7 +225,7 @@ def access_files_match_with_objects(package: Path) -> bool:
     objects_dir = package / "objects"
 
     if not access_dir.exists():
-        LOGGER.info(f"{package.name} does not have access folder. It will be skipped")
+        LOGGER.info(f"{package.name} does not have access folder, not testable.")
         return True
     else:
         access_fn = [
@@ -257,7 +260,6 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
 
     less_strict_tests = [
         metadata_folder_has_one_or_less_file,
-        package_has_no_hidden_file,
         access_files_match_with_objects,
     ]
 
@@ -275,6 +277,7 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         metadata_FTK_file_has_valid_filename,
         objects_folder_has_file,
         package_has_no_bag,
+        package_has_no_hidden_file,
         package_has_no_zero_bytes_file,
     ]
 
