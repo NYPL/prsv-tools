@@ -18,6 +18,12 @@ def parse_args() -> argparse.Namespace:
         type=prsvcli.extant_dir,
         help="path to a destination directory",
     )
+    parser.add_argument(
+        "--ignore_regions",
+        "-r",
+        action='store_true',
+        help="ignore packages that have multiple regions",
+    )
     return parser.parse_args()
 
 
@@ -25,7 +31,7 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
     if not base_dir or not base_dir.exists():
         logging.error(f"{package.name} not moved - '{base_dir}' does not exist.")
         return
-    if package.parent.name in ["Audio", "Film", "Video"]:
+    if package.parent.name in ["Audio", "Film", "Video", "CD", "DVD", "Data", "VCD"]:
         new_dir = base_dir / new_folder_name / package.parent.parent.name 
         # # debug input
         # new_dir_input = input(f"Move '{package.name}' to '{new_dir}' for issue: {new_folder_name}? (y/n): ").lower()
@@ -45,7 +51,7 @@ def set_dir(package: Path, base_dir: Path, new_folder_name: str):
         logging.error(f"'{package.name}' not moved - {e}")
 
 
-def get_package_status_and_reason(package: Path) -> tuple[str, str | None]:
+def get_package_status_and_reason(package: Path, ignore_regions: bool = False) -> tuple[str, str | None]:
     if not prsvlintami.data_folder_has_valid_servicecopies_subfolder(package):
         return "INVALID", "create_scs"
     if not prsvlintami.servicecopies_folder_has_media_files(package):
@@ -74,16 +80,23 @@ def get_package_status_and_reason(package: Path) -> tuple[str, str | None]:
         return "INVALID", "not_bagged"
     if not prsvlintami.package_has_no_zero_bytes_file(package):
         return "INVALID", "0byte_files"
-    if not prsvlintami.region_files_used_correctly(package):
-        return "INVALID", "multiple_regions"
 
+    if not prsvlintami.region_files_used_correctly(package) and not ignore_regions:
+        return "INVALID", "multiple_regions"
+    elif not prsvlintami.region_files_used_correctly(package) and ignore_regions:
+        return "NEEDS_REVIEW", None
+    
 
     if not prsvlintami.tags_folder_has_one_to_four_files(package):
-        return "NEEDS_REVIEW", "tags_invalid_file_count"
+        return "INVALID", "tags_invalid_file_count"
     if not prsvlintami.data_folder_uses_streams(package):
         return "NEEDS_REVIEW", "has_streams"
     if not prsvlintami.package_has_no_hidden_file(package):
-        return "NEEDS_REVIEW", "has_hidden_files"
+        return "INVALID", "has_hidden_files"
+    if not prsvlintami.data_folder_has_valid_preservation_masters_folder(package):
+        return "INVALID", "missing_pms"
+    if not prsvlintami.preservationmasters_folder_has_media_files(package):
+        return "INVALID", "missing_pms"
 
     return "VALID", None
 
@@ -101,17 +114,19 @@ def delete_empty_dir(dir_path: Path):
     if is_empty or is_ds_store_only:
         try:
             prompt_msg = f"Directory '{dir_path}' contains only .DS_Store." if is_ds_store_only else f"Directory '{dir_path}' is empty."
-            delete_input = input(f"{prompt_msg} Delete it? (y/n): ").lower()
-            
-            if delete_input == "y":
-                if is_ds_store_only:
-                    contents[0].unlink()
+            logging.info(f"{prompt_msg} - Deleting directory.")
+            if is_ds_store_only:
+                contents[0].unlink()
 
-                if dir_path.name in ["Audio", "Film", "Video"]:
+            dir_path.rmdir()
+            logging.info(f"Empty directory '{dir_path}' has been deleted.")
+
+            if dir_path.name in ["Audio", "Film", "Video"]:
+                try:
                     dir_path.parent.rmdir()
-                else:
-                    dir_path.rmdir()
-                print(f"Empty directory '{dir_path}' has been deleted.")
+                    logging.info(f"Empty parent directory '{dir_path.parent}' has been deleted.")
+                except OSError:
+                    pass
         except OSError as e:
             print(f"Error deleting '{dir_path}': {e}")
     else:
@@ -123,12 +138,16 @@ def main():
     
     parent_dirs = set(pkg.parent for pkg in args.packages)
 
+    ignore_regions = True if args.ignore_regions else False
+
     for pkg in sorted(args.packages):
-        status, reason = get_package_status_and_reason(pkg)
+        status, reason = get_package_status_and_reason(pkg, ignore_regions)
 
         if status == "VALID":
             logging.info(f"VALID: '{pkg.name}' is valid & has not been moved.")
-        elif status in ("INVALID", "NEEDS_REVIEW"):
+        elif status == "NEEDS_REVIEW":
+            logging.warning(f"NEEDS REVIEW: {pkg.name} has streams or multiple regions, but has not been moved.")
+        elif status == "INVALID" and reason is not None:
             set_dir(pkg, args.destination, reason)
         else:
             logging.error(f"'{pkg.name}' has not been moved due to no pkg status.")

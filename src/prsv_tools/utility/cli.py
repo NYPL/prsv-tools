@@ -28,10 +28,12 @@ class Parser(argparse.ArgumentParser):
     def add_packagedirectory(self) -> None:
         self.add_argument(
             "--directory",
+            "-d",
             type=list_of_paths,
+            nargs="+",
             dest="packages",
             action=ExtendUnique,
-            help="path to a directory of packages",
+            help="path to a directory of packages (can accept multiple)",
         )
 
     CWD = Path(".")
@@ -96,9 +98,18 @@ class ExtendUnique(argparse.Action):
         items = getattr(namespace, self.dest, None)
 
         if items is None:
-            items = set(values)
-        elif isinstance(items, set):
-            items = items.union(values)
+            items = set()
+        elif not isinstance(items, set):
+            items = set(items)
+
+        if isinstance(values, list):
+            for val in values:
+                if isinstance(val, list):
+                    items.update(val)
+                else:
+                    items.add(val)
+        else:
+            items.add(values)
 
         setattr(namespace, self.dest, items)
 

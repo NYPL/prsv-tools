@@ -95,6 +95,29 @@ def servicecopies_folder_has_media_files(package: Path) -> bool:
     else:
         return True
 
+def data_folder_has_valid_preservation_masters_folder(package: Path) -> bool:
+    """Third level folders must include a PreservationMasters folder"""
+    if (package / "data" / "PreservationMasters").exists():
+        return True
+    else:
+        LOGGER.error(
+            f"{package.name} does not have a PreservationMasters folder, PM files should be created"
+        )
+        return False
+
+def preservationmasters_folder_has_media_files(package: Path) -> bool:
+    """PreservationMasters folder must have media files"""
+    preservationmasters_path = package / "data" / "PreservationMasters"
+    if not preservationmasters_path.exists():
+        return False
+    media_file_ls = [
+        x for x in preservationmasters_path.iterdir() if x.is_file() and x.suffix.lower() in [".mkv", ".mov", ".flac", ".wav", ".iso", ".dv"]
+    ]
+    if not media_file_ls:
+        LOGGER.error(f"{package.name} PreservationMasters folder does not have media files")
+        return False
+    else:
+        return True
 
 def data_folder_has_no_empty_folder(package: Path) -> bool:
     """The data folder should not have any empty folders"""
@@ -289,7 +312,6 @@ def package_has_no_zero_bytes_file(package: Path) -> bool:
     else:
         return True
 
-
 def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
     """Run all linting tests against a package"""
     result = "valid"
@@ -306,6 +328,8 @@ def lint_package(package: Path) -> Literal["valid", "invalid", "needs review"]:
         package_has_valid_subfolder_names,
         data_folder_has_valid_subfolders,
         data_folder_has_valid_servicecopies_subfolder,
+        data_folder_has_valid_preservation_masters_folder,
+        preservationmasters_folder_has_media_files,
         data_folder_has_no_empty_folder,
         tags_folder_is_flat,
         tag_file_is_expected_types,
