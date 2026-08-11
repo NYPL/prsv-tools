@@ -15,7 +15,7 @@ pycurl==7.43.0.6
 PyGObject==3.38.0
 PySimpleSOAP==1.16.2
 python-apt==2.2.1
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 python-debian==0.1.39
 python-debianbts==3.1.0
 reportbug==7.10.3+deb11u1
